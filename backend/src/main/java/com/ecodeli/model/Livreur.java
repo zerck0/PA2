@@ -1,20 +1,44 @@
-package com.ecodeli.backend.model;  // Vérifie que ça correspond !
+package com.ecodeli.model;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Entity;
 
 @Entity
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class Livreur {
+public class Livreur extends Utilisateur {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String vehicule;
+    private boolean permisVerif;
+    private double note;
+    private boolean dossierValide;
 
-    private String nom;
-    private String telephone;
-    private String email;
-    private boolean disponible;
+    public String getVehicule() {
+        return vehicule;
+    }
+
+    public void setVehicule(String vehicule) {
+        this.vehicule = vehicule;
+    }
+
+    public boolean isPermisVerif() {
+        return permisVerif;
+    }
+
+    public void setPermisVerif(boolean permisVerif) {
+        this.permisVerif = permisVerif;
+    }
+
+    public double getNote() {
+        return note;
+    }
+
+    public void setNote(double note) {
+        this.note = note;
+    }
+
+    public boolean isDossierValide() {
+        return dossierValide;
+    }
+
+    public void setDossierValide(boolean dossierValide) {
+        this.dossierValide = dossierValide;
+    }
 }

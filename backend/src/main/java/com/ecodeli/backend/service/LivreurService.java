@@ -1,7 +1,7 @@
 package com.ecodeli.backend.service;
 
-import com.ecodeli.backend.model.Livreur;
 import com.ecodeli.backend.repository.LivreurRepository;
+import com.ecodeli.model.Livreur;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
