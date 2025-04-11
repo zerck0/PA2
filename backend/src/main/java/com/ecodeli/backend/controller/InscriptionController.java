@@ -1,6 +1,6 @@
 package com.ecodeli.backend.controller;
 
-import com.ecodeli.dto.InscriptionDTO;
+import com.ecodeli.model.dto.InscriptionDTO;
 import com.ecodeli.model.*;
 import com.ecodeli.backend.repository.*;
 import org.springframework.http.ResponseEntity;
@@ -57,7 +57,7 @@ public class InscriptionController {
                 Commercant com = new Commercant();
                 com.setNom(dto.nom);
                 com.setEmail(dto.email);
-                com.setSiret(dto.siret);
+                com.setSIRET(dto.siret);
                 com.setRole(Utilisateur.Role.COMMERCANT);
                 return ResponseEntity.ok(commercantRepo.save(com));
             }

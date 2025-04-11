@@ -8,7 +8,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/livreurs")
-@CrossOrigin(origins = "http://localhost:3000") // Pour ton front React
+@CrossOrigin(origins = "http://localhost:3000")
 public class LivreurController {
 
     private final LivreurRepository livreurRepository;

@@ -3,7 +3,7 @@ package com.ecodeli.model;
 import jakarta.persistence.Entity;
 
 @Entity
-public class Commerçant extends Utilisateur {
+public class Commercant extends Utilisateur {
     private String nomEntreprise;
     private String SIRET;
     private String adresseCommerce;
