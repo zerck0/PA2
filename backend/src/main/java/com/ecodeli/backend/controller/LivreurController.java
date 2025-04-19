@@ -8,7 +8,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/livreurs")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
 public class LivreurController {
 
     private final LivreurRepository livreurRepository;
@@ -30,5 +30,10 @@ public class LivreurController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         livreurRepository.deleteById(id);
+    }
+
+    @GetMapping("/count")
+    public long countLivreurs() {
+        return livreurRepository.count();
     }
 }

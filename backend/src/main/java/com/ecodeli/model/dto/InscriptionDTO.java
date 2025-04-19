@@ -11,7 +11,7 @@ public class InscriptionDTO {
     // Champs spécifiques
     public String vehicule;         // pour livreur
     public boolean permisVerif;     // pour livreur
-    private double note;            // pour livreur
     public String siret;            // pour commerçant
     public String typeService;      // pour prestataire
+    public Double tarifHoraire;     // pour prestataire
 }

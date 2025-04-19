@@ -1,7 +1,9 @@
 package com.ecodeli.model;
 
 import jakarta.persistence.Entity;
+import lombok.Data;
 
+@Data
 @Entity
 public class Client extends Utilisateur{
     private boolean tutorielVu;
@@ -10,7 +12,4 @@ public class Client extends Utilisateur{
         return tutorielVu;
     }
 
-    public void setTutorielVu(boolean tutorielVu) {
-        this.tutorielVu = tutorielVu;
-    }
 }

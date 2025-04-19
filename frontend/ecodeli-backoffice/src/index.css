@@ -1,9 +1,80 @@
-body, html {
-  margin: 0;
-  padding: 0;
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
 }
 
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1050;
+  overflow-x: hidden;
+  overflow-y: auto;
+  outline: 0;
+}
+
+.modal-dialog {
+  position: relative;
+  margin: 1.75rem auto;
+  pointer-events: none;
+}
+
+.modal-content {
+  pointer-events: auto;
+}
+
+/* Ajout aux styles existants */
+
+.dashboard-card {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-5px);
+}
+
+.icon-wrapper {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 80px;
+  height: 80px;
+  transition: all 0.3s ease;
+}
+
+.dashboard-card:hover .icon-wrapper {
+  transform: scale(1.1);
+}
+
+.counter-box {
+  position: relative;
+  font-family: 'Arial', sans-serif;
+}
+
+.counter-box::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  width: 40px;
+  height: 3px;
+  background-color: currentColor;
+  transform: translateX(-50%);
+  opacity: 0.5;
+}
+
+.feature-badge {
+  transition: all 0.2s ease;
+}
+
+.feature-badge:hover {
+  transform: translateY(-2px);
 }

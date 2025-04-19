@@ -7,6 +7,8 @@ import Navbar from './components/Navbar.tsx';
 import Accueil from './pages/Accueil.tsx';
 import Utilisateurs from './pages/Utilisateurs.tsx';
 import Livreurs from './pages/Livreurs.tsx';
+import Annonces from './pages/Annonces.tsx';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
   return (
@@ -17,6 +19,7 @@ function App() {
           <Route path="/" element={<Accueil />} />
           <Route path="/utilisateurs" element={<Utilisateurs />} />
           <Route path="/livreurs" element={<Livreurs />} />
+          <Route path="/annonces" element={<Annonces />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
