@@ -56,20 +56,40 @@ function Accueil() {
       color: "primary"
     },
     {
-      icon: "truck",
-      title: "Livreurs",
-      description: "Gérer les livreurs",
-      count: stats.totalLivreurs,
-      linkTo: "/livreurs",
-      color: "success"
-    },
-    {
       icon: "megaphone-fill",
       title: "Annonces",
       description: "Gérer les annonces",
       count: stats.totalAnnonces,
       linkTo: "/annonces",
       color: "info"
+    },
+    {
+      icon: "file-earmark-text",
+      title: "Contrats",
+      description: "Gérer les contrats",
+      linkTo: "/contrats",
+      color: "dark"
+    },
+    {
+      icon: "receipt",
+      title: "Factures",
+      description: "Gérer la facturation",
+      linkTo: "/factures",
+      color: "danger"
+    },
+    {
+      icon: "box-seam",
+      title: "Box",
+      description: "Gérer les box de stockage",
+      linkTo: "/box",
+      color: "primary"
+    },
+    {
+      icon: "send",
+      title: "Livraisons",
+      description: "Gérer les livraisons",
+      linkTo: "/livraisons",
+      color: "success"
     }
   ];
 

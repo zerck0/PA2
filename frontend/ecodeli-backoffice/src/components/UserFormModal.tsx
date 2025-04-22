@@ -8,6 +8,7 @@ interface UserFormModalProps {
   formData: FormData;
   onSubmit: (e: React.FormEvent) => Promise<void>;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+  isEdit?: boolean;
 }
 
 const UserFormModal: React.FC<UserFormModalProps> = ({
@@ -15,7 +16,8 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
   onHide,
   formData,
   onSubmit,
-  onChange
+  onChange,
+  isEdit
 }) => {
   const renderSpecificFields = () => {
     switch (formData.role) {
@@ -102,7 +104,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-person-plus me-2"></i>
-            Nouvel utilisateur
+            {isEdit ? "Modifier l'utilisateur" : "Nouvel utilisateur"}
           </Modal.Title>
         </Modal.Header>
         
@@ -206,7 +208,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
           </Button>
           <Button variant="success" type="submit">
             <i className="bi bi-check-lg me-2"></i>
-            Créer l'utilisateur
+            {isEdit ? "Modifier l'utilisateur" : "Créer l'utilisateur"}
           </Button>
         </Modal.Footer>
       </Form>

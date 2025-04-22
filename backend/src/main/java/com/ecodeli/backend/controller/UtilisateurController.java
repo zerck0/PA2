@@ -8,6 +8,11 @@ import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
+import com.ecodeli.model.Livreur;
+import com.ecodeli.model.Prestataire;
+import com.ecodeli.model.Commercant;
+import com.ecodeli.model.dto.InscriptionDTO;
+
 @RestController
 @RequestMapping("/api/utilisateurs")
 @CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
@@ -48,5 +53,41 @@ public class UtilisateurController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateUtilisateur(@PathVariable Long id, @RequestBody InscriptionDTO dto) {
+        return utilisateurService.getUtilisateurById(id)
+            .map(utilisateur -> {
+                utilisateur.setNom(dto.nom);
+                utilisateur.setPrenom(dto.prenom);
+                utilisateur.setEmail(dto.email);
+                utilisateur.setTelephone(dto.telephone);
+                utilisateur.setRole(Utilisateur.Role.valueOf(dto.role.toUpperCase()));
+
+                switch (dto.role.toUpperCase()) {
+                    case "LIVREUR" -> {
+                        if (utilisateur instanceof Livreur liv) {
+                            liv.setVehicule(dto.vehicule);
+                            liv.setPermisVerif(dto.permisVerif);
+                        }
+                    }
+                    case "COMMERCANT" -> {
+                        if (utilisateur instanceof Commercant com) {
+                            com.setSIRET(dto.siret);
+                        }
+                    }
+                    case "PRESTATAIRE" -> {
+                        if (utilisateur instanceof Prestataire pres) {
+                            pres.setTypeService(dto.typeService);
+                            if (dto.tarifHoraire != null) pres.setTarifHoraire(dto.tarifHoraire.floatValue());
+                        }
+                    }
+                    // CLIENT n'a pas de champs spécifiques à modifier ici
+                }
+
+                return ResponseEntity.ok(utilisateurService.saveUtilisateur(utilisateur));
+            })
+            .orElse(ResponseEntity.notFound().build());
     }
 }

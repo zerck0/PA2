@@ -15,6 +15,7 @@ function Utilisateurs() {
     password: '',
     telephone: ''
   });
+  const [editUserId, setEditUserId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchUtilisateurs();
@@ -38,16 +39,23 @@ function Utilisateurs() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:8080/api/inscription', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-      
-      if (!response.ok) throw new Error('Erreur lors de la création');
-      
+      if (editUserId) {
+        // Modification
+        const response = await fetch(`http://localhost:8080/api/utilisateurs/${editUserId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        if (!response.ok) throw new Error('Erreur lors de la modification');
+      } else {
+        // Création
+        const response = await fetch('http://localhost:8080/api/inscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        if (!response.ok) throw new Error('Erreur lors de la création');
+      }
       fetchUtilisateurs();
       setShowModal(false);
       setFormData({
@@ -58,8 +66,9 @@ function Utilisateurs() {
         password: '',
         telephone: ''
       });
+      setEditUserId(null);
     } catch (err) {
-      setError('Erreur lors de la création de l\'utilisateur');
+      setError(editUserId ? 'Erreur lors de la modification de l\'utilisateur' : 'Erreur lors de la création de l\'utilisateur');
     }
   };
 
@@ -96,7 +105,23 @@ function Utilisateurs() {
         <h2>Utilisateurs</h2>
         <button 
           className="btn btn-primary" 
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setFormData({
+              role: 'CLIENT',
+              nom: '',
+              prenom: '',
+              email: '',
+              password: '',
+              telephone: '',
+              vehicule: '',
+              permisVerif: false,
+              siret: '',
+              typeService: '',
+              tarifHoraire: undefined
+            });
+            setEditUserId(null);
+            setShowModal(true);
+          }}
         >
           Ajouter un utilisateur
         </button>
@@ -104,10 +129,14 @@ function Utilisateurs() {
 
       <UserFormModal
         show={showModal}
-        onHide={() => setShowModal(false)}
+        onHide={() => {
+          setShowModal(false);
+          setEditUserId(null);
+        }}
         formData={formData}
         onSubmit={handleSubmit}
         onChange={handleInputChange}
+        isEdit={!!editUserId}
       />
 
       <div className="card">
@@ -146,9 +175,15 @@ function Utilisateurs() {
                               nom: user.nom,
                               prenom: user.prenom || '',
                               email: user.email,
-                              password: '', // Laissé vide pour la modification
-                              telephone: user.telephone || ''
+                              password: '', // Laisser vide pour la modification
+                              telephone: user.telephone || '',
+                              vehicule: (user as any).vehicule || '',
+                              permisVerif: (user as any).permisVerif || false,
+                              siret: (user as any).siret || '',
+                              typeService: (user as any).typeService || '',
+                              tarifHoraire: (user as any).tarifHoraire || undefined
                             });
+                            setEditUserId(user.id);
                             setShowModal(true);
                           }}
                         >

@@ -35,4 +35,8 @@ public class UtilisateurService {
     public long countUtilisateurs() {
         return utilisateurRepository.count();
     }
+
+    public Utilisateur saveUtilisateur(Utilisateur utilisateur) {
+        return utilisateurRepository.save(utilisateur);
+    }
 }
