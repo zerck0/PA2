@@ -16,15 +16,20 @@ function Utilisateurs() {
     telephone: ''
   });
   const [editUserId, setEditUserId] = useState<number | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string>('ALL');
 
   useEffect(() => {
-    fetchUtilisateurs();
-  }, []);
+    fetchUtilisateurs(selectedRole);
+  }, [selectedRole]);
 
-  const fetchUtilisateurs = async () => {
+  const fetchUtilisateurs = async (role?: string) => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8080/api/utilisateurs');
+      let url = 'http://localhost:8080/api/utilisateurs';
+      if (role && role !== 'ALL') {
+        url += `/role/${role}`;
+      }
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Erreur lors de la récupération des utilisateurs');
       const data = await response.json();
       setUtilisateurs(data);
@@ -40,7 +45,6 @@ function Utilisateurs() {
     e.preventDefault();
     try {
       if (editUserId) {
-        // Modification
         const response = await fetch(`http://localhost:8080/api/utilisateurs/${editUserId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -48,7 +52,6 @@ function Utilisateurs() {
         });
         if (!response.ok) throw new Error('Erreur lors de la modification');
       } else {
-        // Création
         const response = await fetch('http://localhost:8080/api/inscription', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -73,7 +76,7 @@ function Utilisateurs() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target as HTMLInputElement; // Type assertion pour accéder à checked
+    const { name, value, type } = e.target as HTMLInputElement;
     
     setFormData(prev => ({
       ...prev,
@@ -103,28 +106,42 @@ function Utilisateurs() {
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Utilisateurs</h2>
-        <button 
-          className="btn btn-primary" 
-          onClick={() => {
-            setFormData({
-              role: 'CLIENT',
-              nom: '',
-              prenom: '',
-              email: '',
-              password: '',
-              telephone: '',
-              vehicule: '',
-              permisVerif: false,
-              siret: '',
-              typeService: '',
-              tarifHoraire: undefined
-            });
-            setEditUserId(null);
-            setShowModal(true);
-          }}
-        >
-          Ajouter un utilisateur
-        </button>
+        <div className="d-flex gap-3">
+          <select
+            className="form-select"
+            style={{ width: 180 }}
+            value={selectedRole}
+            onChange={e => setSelectedRole(e.target.value)}
+          >
+            <option value="ALL">Tous les rôles</option>
+            <option value="CLIENT">Client</option>
+            <option value="LIVREUR">Livreur</option>
+            <option value="COMMERCANT">Commerçant</option>
+            <option value="PRESTATAIRE">Prestataire</option>
+          </select>
+          <button 
+            className="btn btn-primary" 
+            onClick={() => {
+              setFormData({
+                role: 'CLIENT',
+                nom: '',
+                prenom: '',
+                email: '',
+                password: '',
+                telephone: '',
+                vehicule: '',
+                permisVerif: false,
+                siret: '',
+                typeService: '',
+                tarifHoraire: undefined
+              });
+              setEditUserId(null);
+              setShowModal(true);
+            }}
+          >
+            Ajouter un utilisateur
+          </button>
+        </div>
       </div>
 
       <UserFormModal
@@ -175,7 +192,7 @@ function Utilisateurs() {
                               nom: user.nom,
                               prenom: user.prenom || '',
                               email: user.email,
-                              password: '', // Laisser vide pour la modification
+                              password: '',
                               telephone: user.telephone || '',
                               vehicule: (user as any).vehicule || '',
                               permisVerif: (user as any).permisVerif || false,
