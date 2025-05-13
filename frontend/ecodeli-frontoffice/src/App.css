@@ -1,8 +1,11 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
 }
 
 .logo {
@@ -39,4 +42,233 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Styles généraux */
+body {
+  font-family: 'DM Sans', 'Roboto', sans-serif;
+  color: #333;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1 0 auto;
+  min-height: calc(100vh - 150px);
+}
+
+/* Animations et effets */
+.hover-card {
+  transition: all 0.3s ease;
+}
+
+.hover-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Étapes */
+.step-circle {
+  width: 60px;
+  height: 60px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-family: 'Yeseva One', serif;
+  margin: 0 auto 1.5rem;
+}
+
+/* Pour les icônes */
+.icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.hover-card:hover .icon-wrapper {
+  transform: scale(1.1);
+}
+
+/* Hero section */
+.hero-section {
+  margin-top: -56px; /* Ajustez en fonction de la hauteur de votre navbar */
+  position: relative;
+}
+
+.hero-bg {
+  position: relative;
+}
+
+.hero-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-bg {
+    height: 60vh !important;
+  }
+}
+
+/* Variables de couleurs selon la charte graphique */
+:root {
+  --primary-color: #2D8A3E;  /* Vert principal */
+  --primary-light: #9AC49B;  /* Vert clair */
+  --primary-medium: #79B17B; /* Vert intermédiaire */
+  --primary-pale: #BCD8BB;   /* Beige/vert pâle */
+  --secondary-color: #1B3C73; /* Bleu foncé */
+  --dark-color: #212529;     /* Gris foncé pour texte */
+  --white: #FFFFFF;
+}
+
+/* Styles pour le formulaire d'inscription */
+.registration-card {
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+.form-control-lg, .form-select-lg {
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  border: 1px solid #dee2e6;
+  background-color: var(--light-color);
+}
+
+.form-control-lg:focus, .form-select-lg:focus {
+  box-shadow: 0 0 0 0.2rem rgba(209, 59, 39, 0.25);
+  border-color: #e97766;
+}
+
+.form-label {
+  color: var(--dark-color);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+/* Style pour les boutons */
+.btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover, .btn-primary:active, .btn-primary:focus {
+  background-color: #246831 !important;
+  border-color: #246831 !important;
+  box-shadow: 0 0 0 0.25rem rgba(209, 59, 39, 0.25) !important;
+}
+
+.btn-outline-primary {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+}
+
+/* Style pour les liens */
+a.text-primary {
+  color: var(--primary-color) !important;
+}
+
+a.text-primary:hover {
+  color: #b93321 !important;
+}
+
+/* Style pour la case à cocher */
+.custom-checkbox .form-check-input:checked {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.custom-checkbox .form-check-input:focus {
+  border-color: #e97766;
+  box-shadow: 0 0 0 0.25rem rgba(209, 59, 39, 0.25);
+}
+
+/* Animation de chargement */
+.spin {
+  animation: spinner 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spinner {
+  to {transform: rotate(360deg);}
+}
+
+/* Textes et titres */
+h2.text-primary {
+  color: var(--primary-color) !important;
+}
+
+.text-muted {
+  color: #6c757d !important;
+}
+
+h1, h2, h3, h4, h5, h6, .display-1, .display-2, .display-3, .display-4 {
+  font-family: 'Yeseva One', serif;
+}
+
+.text-primary {
+  color: var(--primary-color) !important;
+}
+
+/* Formulaires */
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 0.25rem rgba(45, 138, 62, 0.25);
+}
+
+/* Cards */
+.card {
+  border-radius: 10px;
+  border: none;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Spinner de chargement */
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top: 4px solid var(--primary-color);
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

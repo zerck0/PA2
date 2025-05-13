@@ -1,7 +1,22 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  /* Couleurs principales de la charte EcoDeli */
+  --primary-color: #2D8A3E; /* Vert principal */
+  --primary-light: #9AC49B; /* Vert clair */
+  --primary-medium: #79B17B; /* Vert intermédiaire */
+  --primary-pale: #BCD8BB; /* Beige/vert pâle */
+  --secondary-color: #1B3C73; /* Bleu foncé */
+  --white: #FFFFFF;
+  --black: #212529;
+  
+  /* Polices */
+  font-family: 'DM Sans', 'Roboto', system-ui, sans-serif;
+  line-height: 1.6;
   font-weight: 400;
+  
+  /* Autres variables */
+  --border-radius: 8px;
+  --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
@@ -22,12 +37,25 @@ a:hover {
   color: #535bf2;
 }
 
+/* Utiliser la police Yeseva One pour les titres */
+h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display-6 {
+  font-family: 'Yeseva One', serif;
+  font-weight: 700;
+}
+
 body {
   margin: 0;
+  min-height: 100vh;
+  background-color: var(--white);
+  color: var(--black);
   display: flex;
   place-items: center;
   min-width: 320px;
-  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1 0 auto;
+  min-height: calc(100vh - 150px); /* Pour que le footer reste en bas */
 }
 
 h1 {
@@ -35,6 +63,7 @@ h1 {
   line-height: 1.1;
 }
 
+/* Styles des boutons */
 button {
   border-radius: 8px;
   border: 1px solid transparent;
@@ -52,6 +81,98 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: var(--white);
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+}
+
+.btn-primary:hover, 
+.btn-primary:focus, 
+.btn-primary:active {
+  background-color: #246831;
+  border-color: #246831;
+  box-shadow: 0 0 0 0.25rem rgba(45, 138, 62, 0.25);
+}
+
+.btn-outline-primary {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  border-radius: var(--border-radius);
+}
+
+.btn-outline-primary:hover, 
+.btn-outline-primary:focus, 
+.btn-outline-primary:active {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+  color: var(--white);
+}
+
+/* Styles pour les cards */
+.card {
+  border-radius: var(--border-radius);
+  border: none;
+  box-shadow: var(--box-shadow);
+}
+
+/* Animations et effets */
+.hover-card {
+  transition: var(--transition);
+  overflow: hidden;
+}
+
+.hover-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Étapes */
+.step-circle {
+  width: 50px;
+  height: 50px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+/* Icon wrapper */
+.icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.hover-card:hover .icon-wrapper {
+  transform: scale(1.1);
+}
+
+/* Hero section */
+.hero-section {
+  margin-top: -56px;
+  position: relative;
+}
+
+/* Media queries */
+@media (max-width: 768px) {
+  .hero-bg {
+    height: 60vh !important;
+  }
 }
 
 @media (prefers-color-scheme: light) {
