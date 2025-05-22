@@ -1,14 +1,15 @@
 import { Container, Row, Col, Button, Card } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Home = () => {
   // Image pour la section Hero
-  const heroImageUrl = "https://images.unsplash.com/photo-1580674285054-bed31e145f59?ixlib=rb-4.0.1&auto=format&fit=crop&w=1350&q=80";
+  const heroImageUrl = "";
+  const navigate = useNavigate();
 
   return (
     <>
-      {/* Section Hero */}
-      <section className="py-5 text-center position-relative hero-section">
+      {/* Section Hero - CORRIGER LA CLASSE CSS */}
+      <section className="position-relative"> {/* Supprimez py-5 et hero-section */}
         <div 
           className="hero-bg"
           style={{
@@ -19,7 +20,8 @@ const Home = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'white'
+            color: 'white',
+            marginTop: '0' // Ajout de cette ligne
           }}
         >
           <Container>
@@ -37,16 +39,14 @@ const Home = () => {
                     variant="primary" 
                     size="lg" 
                     className="btn-primary"
-                    as={Link}
-                    to="/register"
+                    onClick={() => navigate('/register')}
                   >
                     Rejoindre la communauté
                   </Button>
                   <Button 
                     variant="outline-light" 
                     size="lg"
-                    as={Link}
-                    to="/how-it-works"
+                    onClick={() => navigate('/how-it-works')}
                   >
                     Comment ça marche ?
                   </Button>
@@ -78,8 +78,7 @@ const Home = () => {
                   <Button 
                     variant="outline-primary" 
                     className="mt-3"
-                    as={Link}
-                    to="/livraison"
+                    onClick={() => navigate('/livraison')}
                   >
                     En savoir plus
                   </Button>
@@ -101,8 +100,7 @@ const Home = () => {
                   <Button 
                     variant="outline-primary" 
                     className="mt-3"
-                    as={Link}
-                    to="/services"
+                    onClick={() => navigate('/services')}
                   >
                     En savoir plus
                   </Button>
@@ -124,8 +122,7 @@ const Home = () => {
                   <Button 
                     variant="outline-primary" 
                     className="mt-3"
-                    as={Link}
-                    to="/stockage"
+                    onClick={() => navigate('/stockage')}
                   >
                     En savoir plus
                   </Button>
@@ -181,8 +178,7 @@ const Home = () => {
               variant="primary" 
               size="lg"
               className="btn-primary"
-              as={Link}
-              to="/register"
+              onClick={() => navigate('/register')}
             >
               Commencer maintenant
             </Button>

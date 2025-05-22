@@ -1,37 +1,38 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { Container, Row, Col, Form, Button, Card, Alert } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { AuthContext } from '../contexts/AuthContext';
 
 const Login = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login, loading } = useContext(AuthContext);
+
+  // Récupérer l'URL de redirection si elle existe
+  const from = (location.state as any)?.from?.pathname || '/dashboard';
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [validated, setValidated] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation simple
-    if (!email || !password) {
-      setError('Veuillez remplir tous les champs');
+    const form = e.currentTarget as HTMLFormElement;
+    if (form.checkValidity() === false) {
+      e.stopPropagation();
+      setValidated(true);
       return;
     }
     
-    setLoading(true);
     setError('');
     
     try {
-      // Simuler une requête API
-      // À remplacer par une vraie requête d'authentification
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Redirection à implémenter
-      console.log('Connecté avec:', email);
-      
-    } catch (err) {
-      setError('Email ou mot de passe incorrect');
-    } finally {
-      setLoading(false);
+      await login(email, password);
+      navigate(from);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Email ou mot de passe incorrect');
     }
   };
 
@@ -45,7 +46,7 @@ const Login = () => {
               
               {error && <Alert variant="danger">{error}</Alert>}
               
-              <Form onSubmit={handleSubmit}>
+              <Form noValidate validated={validated} onSubmit={handleSubmit}>
                 <Form.Group className="mb-3">
                   <Form.Label>Email</Form.Label>
                   <Form.Control
@@ -55,6 +56,9 @@ const Login = () => {
                     placeholder="Votre adresse email"
                     required
                   />
+                  <Form.Control.Feedback type="invalid">
+                    Veuillez entrer une adresse email valide.
+                  </Form.Control.Feedback>
                 </Form.Group>
                 
                 <Form.Group className="mb-3">
@@ -66,6 +70,9 @@ const Login = () => {
                     placeholder="Votre mot de passe"
                     required
                   />
+                  <Form.Control.Feedback type="invalid">
+                    Veuillez entrer votre mot de passe.
+                  </Form.Control.Feedback>
                 </Form.Group>
                 
                 <div className="d-flex justify-content-between align-items-center mb-4">

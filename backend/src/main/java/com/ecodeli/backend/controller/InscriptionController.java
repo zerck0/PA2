@@ -3,11 +3,16 @@ package com.ecodeli.backend.controller;
 import com.ecodeli.model.dto.InscriptionDTO;
 import com.ecodeli.model.*;
 import com.ecodeli.backend.repository.*;
+import com.ecodeli.backend.security.JwtService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/inscription")
@@ -18,6 +23,12 @@ public class InscriptionController {
     private final ClientRepository clientRepo;
     private final CommercantRepository commercantRepo;
     private final PrestataireRepository prestataireRepo;
+
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public InscriptionController(
             LivreurRepository livreurRepo,
@@ -36,6 +47,7 @@ public class InscriptionController {
         try {
             // Champs communs à tous les utilisateurs
             LocalDate dateCreation = LocalDate.now();
+            Utilisateur utilisateur; // L'utilisateur créé
             
             switch (dto.role.toUpperCase()) {
                 case "LIVREUR" -> {
@@ -46,14 +58,14 @@ public class InscriptionController {
                     livreur.setPermisVerif(dto.permisVerif);
                     livreur.setNote(0.0); // Note initiale
                     livreur.setDossierValide(false); // Par défaut
-                    return ResponseEntity.ok(livreurRepo.save(livreur));
+                    utilisateur = livreurRepo.save(livreur);
                 }
                 case "CLIENT" -> {
                     Client client = new Client();
                     setCommonFields(client, dto, dateCreation);
                     client.setRole(Utilisateur.Role.CLIENT);
                     client.setTutorielVu(false); // Par défaut
-                    return ResponseEntity.ok(clientRepo.save(client));
+                    utilisateur = clientRepo.save(client);
                 }
                 case "COMMERCANT" -> {
                     Commercant commercant = new Commercant();
@@ -64,7 +76,7 @@ public class InscriptionController {
                     // Optionnel : à compléter plus tard
                     commercant.setNomEntreprise("");
                     commercant.setAdresseCommerce("");
-                    return ResponseEntity.ok(commercantRepo.save(commercant));
+                    utilisateur = commercantRepo.save(commercant);
                 }
                 case "PRESTATAIRE" -> {
                     Prestataire prestataire = new Prestataire();
@@ -74,12 +86,31 @@ public class InscriptionController {
                     prestataire.setVerifDossier(false); // Par défaut
                     prestataire.setTarifHoraire(dto.tarifHoraire != null ? dto.tarifHoraire.floatValue() : 0f);
                     prestataire.setNote(0f); // Note initiale
-                    return ResponseEntity.ok(prestataireRepo.save(prestataire));
+                    utilisateur = prestataireRepo.save(prestataire);
                 }
                 default -> {
                     return ResponseEntity.badRequest().body("Rôle invalide: " + dto.role);
                 }
             }
+            
+            // Génération du token JWT
+            String token = jwtService.generateToken(utilisateur);
+            
+            // Préparation de la réponse
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", token);
+            
+            // Informations de l'utilisateur (sans le mot de passe)
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("id", utilisateur.getId());
+            userInfo.put("nom", utilisateur.getNom());
+            userInfo.put("prenom", utilisateur.getPrenom());
+            userInfo.put("email", utilisateur.getEmail());
+            userInfo.put("role", utilisateur.getRole().toString());
+            
+            response.put("user", userInfo);
+            
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -91,7 +122,7 @@ public class InscriptionController {
         utilisateur.setNom(dto.nom);
         utilisateur.setPrenom(dto.prenom);
         utilisateur.setEmail(dto.email);
-        utilisateur.setPassword(dto.password); // À hasher dans une version future
+        utilisateur.setPassword(passwordEncoder.encode(dto.password)); // Hashage du mot de passe
         utilisateur.setTelephone(dto.telephone);
         utilisateur.setDateCreation(dateCreation);
         // Champs optionnels à remplir plus tard

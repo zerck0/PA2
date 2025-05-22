@@ -97,7 +97,7 @@ body {
 
 /* Hero section */
 .hero-section {
-  margin-top: -56px; /* Ajustez en fonction de la hauteur de votre navbar */
+  margin-top: -56px; /* Cela fait remonter le hero par-dessus le header */
   position: relative;
 }
 
