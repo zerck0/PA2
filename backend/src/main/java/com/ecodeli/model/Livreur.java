@@ -2,9 +2,11 @@ package com.ecodeli.model;
 
 import jakarta.persistence.Entity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-@Data
 @Entity
+@Data
+@EqualsAndHashCode(callSuper = false)
 public class Livreur extends Utilisateur {
 
     private String vehicule;

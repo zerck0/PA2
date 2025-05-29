@@ -1,14 +1,18 @@
 package com.ecodeli.backend.controller;
 
-import com.ecodeli.model.dto.InscriptionDTO;
 import com.ecodeli.model.*;
+import com.ecodeli.model.dto.InscriptionDTO;
 import com.ecodeli.backend.repository.*;
 import com.ecodeli.backend.security.JwtService;
+import com.ecodeli.backend.service.UtilisateurService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -17,12 +21,16 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/inscription")
 @CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
+@Validated
 public class InscriptionController {
 
     private final LivreurRepository livreurRepo;
     private final ClientRepository clientRepo;
     private final CommercantRepository commercantRepo;
     private final PrestataireRepository prestataireRepo;
+
+    @Autowired
+    private UtilisateurService utilisateurService; // ← Ajoutez cette ligne
 
     @Autowired
     private JwtService jwtService;
@@ -43,11 +51,26 @@ public class InscriptionController {
     }
 
     @PostMapping
-    public ResponseEntity<?> inscrire(@RequestBody InscriptionDTO dto) {
+    public ResponseEntity<?> inscrire(@Valid @RequestBody InscriptionDTO dto) {
         try {
+            // 1. Vérifier si l'email existe déjà
+            if (utilisateurService.existsByEmail(dto.email)) {
+                return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", "Cette adresse email est déjà utilisée"));
+            }
+            
+            // 2. Validation des champs selon le rôle
+            String validationError = validateRoleSpecificFields(dto);
+            if (validationError != null) {
+                return ResponseEntity
+                    .badRequest()
+                    .body(Map.of("message", validationError));
+            }
+            
             // Champs communs à tous les utilisateurs
             LocalDate dateCreation = LocalDate.now();
-            Utilisateur utilisateur; // L'utilisateur créé
+            Utilisateur utilisateur;
             
             switch (dto.role.toUpperCase()) {
                 case "LIVREUR" -> {
@@ -56,8 +79,8 @@ public class InscriptionController {
                     livreur.setRole(Utilisateur.Role.LIVREUR);
                     livreur.setVehicule(dto.vehicule);
                     livreur.setPermisVerif(dto.permisVerif);
-                    livreur.setNote(0.0); // Note initiale
-                    livreur.setDossierValide(false); // Par défaut
+                    livreur.setNote(0.0);
+                    livreur.setDossierValide(false);
                     utilisateur = livreurRepo.save(livreur);
                 }
                 case "CLIENT" -> {
@@ -111,10 +134,14 @@ public class InscriptionController {
             response.put("user", userInfo);
             
             return ResponseEntity.ok(response);
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(Map.of("message", "Cette adresse email est déjà utilisée"));
         } catch (Exception e) {
             return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Erreur lors de la création: " + e.getMessage());
+                .body(Map.of("message", "Erreur lors de la création: " + e.getMessage()));
         }
     }
 
@@ -129,5 +156,41 @@ public class InscriptionController {
         utilisateur.setAdresse("");
         utilisateur.setVille("");
         utilisateur.setCodepostal("");
+    }
+
+    private String validateRoleSpecificFields(InscriptionDTO dto) {
+        switch (dto.role.toUpperCase()) {
+            case "LIVREUR":
+                if (dto.vehicule == null || dto.vehicule.trim().isEmpty()) {
+                    return "Le type de véhicule est obligatoire pour un livreur";
+                }
+                if (!dto.permisVerif) {
+                    return "La certification du permis est obligatoire pour un livreur";
+                }
+                break;
+                
+            case "COMMERCANT":
+                if (dto.siret == null || dto.siret.trim().isEmpty()) {
+                    return "Le numéro SIRET est obligatoire pour un commerçant";
+                }
+                if (!isValidSIRET(dto.siret)) {
+                    return "Le numéro SIRET n'est pas valide (14 chiffres requis)";
+                }
+                break;
+                
+            case "PRESTATAIRE":
+                if (dto.typeService == null || dto.typeService.trim().isEmpty()) {
+                    return "Le type de service est obligatoire pour un prestataire";
+                }
+                if (dto.tarifHoraire == null || dto.tarifHoraire <= 0) {
+                    return "Le tarif horaire doit être supérieur à 0";
+                }
+                break;
+        }
+        return null;
+    }
+
+    private boolean isValidSIRET(String siret) {
+        return siret.matches("\\d{14}");
     }
 }

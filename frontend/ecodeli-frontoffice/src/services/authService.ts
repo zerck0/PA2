@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api';
+const API_BASE_URL = 'http://localhost:8080';  // ← Base sans /api
 
 export interface RegisterData {
   role: string;
@@ -34,7 +34,7 @@ export interface AuthResponse {
 
 const authService = {
   register: async (userData: RegisterData): Promise<AuthResponse> => {
-    const response = await axios.post(`${API_URL}/inscription`, userData);
+    const response = await axios.post(`${API_BASE_URL}/api/inscription`, userData);
     if (response.data) {
       localStorage.setItem('user', JSON.stringify(response.data));
     }
@@ -42,7 +42,10 @@ const authService = {
   },
   
   login: async (credentials: LoginData): Promise<AuthResponse> => {
-    const response = await axios.post(`${API_URL}/login`, credentials);
+    const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+      email: credentials.email,
+      password: credentials.password
+    });
     if (response.data) {
       localStorage.setItem('user', JSON.stringify(response.data));
     }
@@ -59,6 +62,15 @@ const authService = {
       return JSON.parse(userJson);
     }
     return null;
+  },
+
+  checkEmailAvailability: async (email: string): Promise<boolean> => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/auth/check-email?email=${email}`);
+      return response.data.available;
+    } catch (error) {
+      return false;
+    }
   }
 };
 

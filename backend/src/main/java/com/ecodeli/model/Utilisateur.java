@@ -12,17 +12,20 @@ public abstract class Utilisateur {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    protected Long id;
+    private Long id;
 
-    protected String nom;
-    protected String prenom;
-    protected String email;
-    protected String password;
-    protected String adresse;
-    protected String ville;
-    protected String codepostal;
-    protected String telephone;
-    protected LocalDate dateCreation;
+    private String nom;
+    private String prenom;
+
+    @Column(unique = true, nullable = false)
+    private String email;
+
+    private String password;
+    private String adresse;
+    private String ville;
+    private String codepostal;
+    private String telephone;
+    private LocalDate dateCreation;
 
     @Enumerated(EnumType.STRING)
     protected Role role;

@@ -25,7 +25,6 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Autowired
     public AuthController(UtilisateurService utilisateurService, JwtService jwtService) {
         this.utilisateurService = utilisateurService;
         this.jwtService = jwtService;
@@ -33,6 +32,8 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
+
+        
         Optional<Utilisateur> utilisateurOpt = utilisateurService.findByEmail(loginDTO.email);
         
         if (utilisateurOpt.isEmpty()) {
@@ -44,12 +45,14 @@ public class AuthController {
         Utilisateur utilisateur = utilisateurOpt.get();
         
         // Vérification du mot de passe avec BCrypt
-        if (!passwordEncoder.matches(loginDTO.password, utilisateur.getPassword())) {
+        boolean passwordMatches = passwordEncoder.matches(loginDTO.password, utilisateur.getPassword());
+        
+        if (!passwordMatches) {
             return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("message", "Email ou mot de passe incorrect"));
         }
-        
+                
         // Génération du token JWT
         String token = jwtService.generateToken(utilisateur);
         
@@ -108,5 +111,11 @@ public class AuthController {
                 "message", "Token invalid: " + e.getMessage()
             ));
         }
+    }
+
+    @GetMapping("/check-email")
+    public ResponseEntity<?> checkEmailAvailability(@RequestParam String email) {
+        boolean isAvailable = !utilisateurService.existsByEmail(email);
+        return ResponseEntity.ok(Map.of("available", isAvailable));
     }
 }
