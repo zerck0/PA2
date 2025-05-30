@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080';  // ← Base sans /api
+const API_BASE_URL = 'http://localhost:8080';
 
 export interface RegisterData {
   role: string;

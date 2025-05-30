@@ -21,8 +21,8 @@ const RoleSpecificFields: React.FC<RoleSpecificFieldsProps> = ({
           <Row>
             <Col md={6}>
               <Form.Group className="mb-3">
-                <Form.Label>Type de véhicule</Form.Label>
-                <Form.Control
+                <Form.Label>Type de véhicule *</Form.Label>
+                <Form.Select
                   name="vehicule"
                   value={formData.vehicule || ''}
                   onChange={onChange}
@@ -34,21 +34,29 @@ const RoleSpecificFields: React.FC<RoleSpecificFieldsProps> = ({
                   <option value="SCOOTER">Scooter</option>
                   <option value="VOITURE">Voiture</option>
                   <option value="CAMIONNETTE">Camionnette</option>
-                </Form.Control>
-                {errors.vehicule && <div className="invalid-feedback d-block">{errors.vehicule}</div>}
+                </Form.Select>
+                <Form.Control.Feedback type="invalid">
+                  {errors.vehicule}
+                </Form.Control.Feedback>
               </Form.Group>
             </Col>
             <Col md={6}>
               <Form.Group className="mb-3">
-                <Form.Check
-                  type="checkbox"
-                  name="permisVerif"
-                  label="Je certifie avoir un permis de conduire valide"
-                  checked={formData.permisVerif || false}
-                  onChange={onChange}
-                  className="mt-4"
-                />
-                {errors.permisVerif && <div className="invalid-feedback d-block">{errors.permisVerif}</div>}
+                <div className="mt-4">
+                  <Form.Check
+                    type="checkbox"
+                    name="permisVerif"
+                    label="Je certifie avoir un permis de conduire valide"
+                    checked={formData.permisVerif || false}
+                    onChange={onChange}
+                    isInvalid={!!errors.permisVerif}
+                  />
+                  {errors.permisVerif && (
+                    <div className="invalid-feedback d-block">
+                      {errors.permisVerif}
+                    </div>
+                  )}
+                </div>
               </Form.Group>
             </Col>
           </Row>
@@ -60,19 +68,23 @@ const RoleSpecificFields: React.FC<RoleSpecificFieldsProps> = ({
         <div className="mb-4 p-3 bg-light rounded">
           <h6 className="mb-3">Informations commerçant</h6>
           <Form.Group className="mb-3">
-            <Form.Label>Numéro SIRET</Form.Label>
+            <Form.Label>Numéro SIRET *</Form.Label>
             <Form.Control
+              type="text"
               name="siret"
               value={formData.siret || ''}
               onChange={onChange}
               placeholder="14 chiffres"
               maxLength={14}
               required
+              isInvalid={!!errors.siret}
             />
             <Form.Text className="text-muted">
               Votre numéro SIRET à 14 chiffres
             </Form.Text>
-            {errors.siret && <div className="invalid-feedback d-block">{errors.siret}</div>}
+            <Form.Control.Feedback type="invalid">
+              {errors.siret}
+            </Form.Control.Feedback>
           </Form.Group>
         </div>
       );
@@ -84,12 +96,13 @@ const RoleSpecificFields: React.FC<RoleSpecificFieldsProps> = ({
           <Row>
             <Col md={6}>
               <Form.Group className="mb-3">
-                <Form.Label>Type de service</Form.Label>
+                <Form.Label>Type de service *</Form.Label>
                 <Form.Select
                   name="typeService"
                   value={formData.typeService || ''}
                   onChange={onChange}
                   required
+                  isInvalid={!!errors.typeService}
                 >
                   <option value="">Sélectionnez votre service</option>
                   <option value="MENAGE">Ménage</option>
@@ -99,12 +112,14 @@ const RoleSpecificFields: React.FC<RoleSpecificFieldsProps> = ({
                   <option value="COURSES">Courses</option>
                   <option value="AUTRE">Autre</option>
                 </Form.Select>
-                {errors.typeService && <div className="invalid-feedback d-block">{errors.typeService}</div>}
+                <Form.Control.Feedback type="invalid">
+                  {errors.typeService}
+                </Form.Control.Feedback>
               </Form.Group>
             </Col>
             <Col md={6}>
               <Form.Group className="mb-3">
-                <Form.Label>Tarif horaire (€)</Form.Label>
+                <Form.Label>Tarif horaire (€) *</Form.Label>
                 <Form.Control
                   type="number"
                   name="tarifHoraire"
@@ -114,8 +129,11 @@ const RoleSpecificFields: React.FC<RoleSpecificFieldsProps> = ({
                   step="0.5"
                   placeholder="Ex: 15.50"
                   required
+                  isInvalid={!!errors.tarifHoraire}
                 />
-                {errors.tarifHoraire && <div className="invalid-feedback d-block">{errors.tarifHoraire}</div>}
+                <Form.Control.Feedback type="invalid">
+                  {errors.tarifHoraire}
+                </Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>

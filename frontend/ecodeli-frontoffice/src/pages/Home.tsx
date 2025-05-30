@@ -1,61 +1,53 @@
 import { Container, Row, Col, Button, Card } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import logoEco from '../assets/logoEco.png';
 
 const Home = () => {
-  // Image pour la section Hero
-  const heroImageUrl = "";
   const navigate = useNavigate();
 
   return (
     <>
-      {/* Section Hero - CORRIGER LA CLASSE CSS */}
-      <section className="position-relative"> {/* Supprimez py-5 et hero-section */}
-        <div 
-          className="hero-bg"
-          style={{
-            backgroundImage: `linear-gradient(rgba(45, 138, 62, 0.7), rgba(27, 60, 115, 0.7)), url(${heroImageUrl})`,
-            height: '70vh',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            marginTop: '0' // Ajout de cette ligne
-          }}
-        >
-          <Container>
-            <Row className="justify-content-center">
-              <Col lg={8}>
-                <h1 className="display-4 fw-bold mb-4" style={{ fontFamily: 'Yeseva One, serif' }}>
-                  Livraison éco-responsable et solidaire
-                </h1>
-                <p className="lead mb-5">
-                  Rejoignez notre communauté de livreurs et d'expéditeurs pour des livraisons plus vertes,
-                  plus économiques et plus humaines.
-                </p>
-                <div className="d-grid gap-3 d-sm-flex justify-content-sm-center">
-                  <Button 
-                    variant="primary" 
-                    size="lg" 
-                    className="btn-primary"
-                    onClick={() => navigate('/register')}
-                  >
-                    Rejoindre la communauté
-                  </Button>
-                  <Button 
-                    variant="outline-light" 
-                    size="lg"
-                    onClick={() => navigate('/how-it-works')}
-                  >
-                    Comment ça marche ?
-                  </Button>
-                </div>
-              </Col>
-            </Row>
-          </Container>
-        </div>
-      </section>
+      {/* Section Welcome */}
+      <Container className="my-5 pt-5">
+        <Row className="text-center mb-5">
+          <Col>
+            <img 
+              src={logoEco} 
+              alt="EcoDeli" 
+              height="80" 
+              className="mb-4"
+              style={{ maxWidth: '200px' }}
+            />
+            <h1 className="display-4 text-primary mb-3" style={{ fontFamily: 'Yeseva One, serif' }}>
+              EcoDeli
+            </h1>
+            <h2 className="h4 text-secondary mb-4">
+              Livraison éco-responsable et solidaire
+            </h2>
+            <p className="lead mb-5 text-muted">
+              Rejoignez notre communauté de livreurs et d'expéditeurs pour des livraisons plus vertes,
+              plus économiques et plus humaines.
+            </p>
+            <div className="d-grid gap-3 d-sm-flex justify-content-sm-center">
+              <Button 
+                variant="primary" 
+                size="lg" 
+                className="btn-primary"
+                onClick={() => navigate('/register')}
+              >
+                Rejoindre la communauté
+              </Button>
+              <Button 
+                variant="outline-primary" 
+                size="lg"
+                onClick={() => navigate('/how-it-works')}
+              >
+                Comment ça marche ?
+              </Button>
+            </div>
+          </Col>
+        </Row>
+      </Container>
 
       {/* Section Services */}
       <section className="py-5" style={{ backgroundColor: '#f8f9fa' }}>

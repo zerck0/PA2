@@ -20,11 +20,6 @@ const Livraison = () => {
               </Button>
             </Col>
             <Col lg={6} className="d-none d-lg-block">
-              <img 
-                src="https://images.unsplash.com/photo-1616832880334-b1004d9808da?ixlib=rb-4.0.1&auto=format&fit=crop&w=1350&q=80" 
-                alt="Livraison de colis" 
-                className="img-fluid rounded" 
-              />
             </Col>
           </Row>
         </Container>

@@ -1,210 +1,267 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Badge, Button, Form } from 'react-bootstrap';
+import React, { useState, useEffect, useContext } from 'react';
+import { Container, Row, Col, Badge, Button, Form, Alert, Spinner } from 'react-bootstrap';
+import { AuthContext } from '../contexts/AuthContext';
+import { useAnnonces } from '../hooks/useAnnonces';
+import { ANNONCE_STATUS } from '../constants/appConfig';
+import { AnnonceCard } from '../components/annonces';
 
-interface Annonce {
-  id: number;
-  titre: string;
-  description: string;
-  type: string;
-  villeDepart: string;
-  villeArrivee: string;
-  dateCreation: string;
-  dateLivraison: string;
-  prix: number;
-  statut: string;
-  distance: number;
-}
-
+/**
+ * Page des annonces disponibles pour les livreurs
+ * Utilise le composant AnnonceCard unifié avec des actions spécifiques livreur
+ */
 const LivreurAnnonces: React.FC = () => {
-  const [annonces, setAnnonces] = useState<Annonce[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { currentUser } = useContext(AuthContext);
+  const { annonces, isLoading, error, clearError } = useAnnonces();
   const [filtreStatut, setFiltreStatut] = useState('');
 
-  useEffect(() => {
-    // Simuler une requête API pour charger les annonces disponibles pour un livreur
-    setTimeout(() => {
-      const mockAnnonces: Annonce[] = [
-        {
-          id: 1,
-          titre: "Livraison de colis urgent",
-          description: "Petit colis à livrer, dimensions 20x30x10cm, poids 2kg",
-          type: "LIVRAISON",
-          villeDepart: "Paris",
-          villeArrivee: "Lyon",
-          dateCreation: "2023-07-15",
-          dateLivraison: "2023-07-20",
-          prix: 40.50,
-          statut: "DISPONIBLE",
-          distance: 465
-        },
-        {
-          id: 2,
-          titre: "Transport de commode antique",
-          description: "Commode en bois à manipuler avec précaution",
-          type: "TRANSPORT",
-          villeDepart: "Marseille",
-          villeArrivee: "Nice",
-          dateCreation: "2023-07-14",
-          dateLivraison: "2023-07-25",
-          prix: 120.00,
-          statut: "EN_LIVRAISON",
-          distance: 200
-        },
-        {
-          id: 3,
-          titre: "Accompagnement pour courses",
-          description: "Aide pour faire les courses pour une personne âgée",
-          type: "SERVICE",
-          villeDepart: "Lille",
-          villeArrivee: "Lille",
-          dateCreation: "2023-07-10",
-          dateLivraison: "2023-07-18",
-          prix: 30.00,
-          statut: "TERMINEE",
-          distance: 0
-        },
-        {
-          id: 4,
-          titre: "Transport d'ordinateur",
-          description: "Ordinateur portable à remettre en main propre",
-          type: "LIVRAISON",
-          villeDepart: "Lyon",
-          villeArrivee: "Grenoble",
-          dateCreation: "2023-07-16",
-          dateLivraison: "2023-07-22",
-          prix: 25.00,
-          statut: "DISPONIBLE",
-          distance: 110
-        }
-      ];
-      
-      setAnnonces(mockAnnonces);
-      setLoading(false);
-    }, 1000);
-  }, []);
+  // Filtrer les annonces selon le statut pour les livreurs
+  const filteredAnnonces = annonces.filter(annonce => {
+    // Filtrer par statut si sélectionné
+    if (filtreStatut && annonce.status !== filtreStatut) {
+      return false;
+    }
+    
+    // Afficher seulement les annonces pertinentes pour les livreurs
+    return annonce.status === ANNONCE_STATUS.ACTIVE || 
+           annonce.status === ANNONCE_STATUS.EN_COURS || 
+           annonce.status === ANNONCE_STATUS.TERMINEE;
+  });
 
-  const filteredAnnonces = annonces.filter(annonce => 
-    filtreStatut === '' || annonce.statut === filtreStatut
-  );
-
-  const getStatutBadge = (statut: string) => {
-    switch (statut) {
-      case 'DISPONIBLE': return <Badge bg="success">Disponible</Badge>;
-      case 'EN_LIVRAISON': return <Badge bg="info">En livraison</Badge>;
-      case 'TERMINEE': return <Badge bg="secondary">Terminée</Badge>;
-      default: return <Badge bg="secondary">{statut}</Badge>;
+  /**
+   * Gestion des actions spécifiques aux livreurs
+   */
+  const handleLivreurAction = (action: string, annonce: any) => {
+    switch (action) {
+      case 'view':
+        console.log('Voir détails de l\'annonce:', annonce.id);
+        // TODO: Implémenter la navigation vers la page de détail
+        break;
+      case 'accept':
+        console.log('Accepter l\'annonce:', annonce.id);
+        // TODO: Implémenter l'API pour accepter une annonce
+        alert(`Fonctionnalité à implémenter : Accepter l'annonce #${annonce.id}`);
+        break;
+      case 'complete':
+        console.log('Terminer la livraison:', annonce.id);
+        // TODO: Implémenter l'API pour terminer une livraison
+        alert(`Fonctionnalité à implémenter : Terminer la livraison #${annonce.id}`);
+        break;
+      case 'contact':
+        console.log('Contacter le client:', annonce.id);
+        // TODO: Implémenter la messagerie
+        break;
+      default:
+        console.log('Action non reconnue:', action);
     }
   };
 
-  const handleAccepter = (id: number) => {
-    // Simuler l'acceptation d'une annonce par le livreur
-    setAnnonces(prev => 
-      prev.map(annonce => 
-        annonce.id === id ? { ...annonce, statut: 'EN_LIVRAISON' } : annonce
-      )
+  /**
+   * Composant AnnonceCard adapté pour les livreurs avec boutons contextuels
+   */
+  const LivreurAnnonceCard: React.FC<{ annonce: any }> = ({ annonce }) => {
+    return (
+      <div className="position-relative">
+        <AnnonceCard
+          annonce={annonce}
+          showActions={false} // On gère les actions manuellement
+          variant="default"
+        />
+        
+        {/* Actions spécifiques livreur en overlay */}
+        <div className="position-absolute bottom-0 end-0 start-0 p-3 bg-white border-top">
+          <div className="d-grid gap-2">
+            {annonce.status === ANNONCE_STATUS.ACTIVE && (
+              <>
+                <Button 
+                  variant="success" 
+                  size="sm"
+                  onClick={() => handleLivreurAction('accept', annonce)}
+                >
+                  <i className="bi bi-check-circle me-1"></i>
+                  Accepter cette mission
+                </Button>
+                <Button 
+                  variant="outline-primary" 
+                  size="sm"
+                  onClick={() => handleLivreurAction('contact', annonce)}
+                >
+                  <i className="bi bi-chat-dots me-1"></i>
+                  Contacter le client
+                </Button>
+              </>
+            )}
+            
+            {annonce.status === ANNONCE_STATUS.EN_COURS && (
+              <>
+                <Button 
+                  variant="primary" 
+                  size="sm"
+                  onClick={() => handleLivreurAction('complete', annonce)}
+                >
+                  <i className="bi bi-check-square me-1"></i>
+                  Marquer comme terminé
+                </Button>
+                <Button 
+                  variant="outline-secondary" 
+                  size="sm"
+                  onClick={() => handleLivreurAction('contact', annonce)}
+                >
+                  <i className="bi bi-chat-dots me-1"></i>
+                  Contacter le client
+                </Button>
+              </>
+            )}
+            
+            {annonce.status === ANNONCE_STATUS.TERMINEE && (
+              <div className="text-center">
+                <span className="text-success small">
+                  <i className="bi bi-check-circle-fill me-1"></i>
+                  Mission terminée
+                </span>
+              </div>
+            )}
+            
+            <Button 
+              variant="outline-info" 
+              size="sm"
+              onClick={() => handleLivreurAction('view', annonce)}
+            >
+              <i className="bi bi-eye me-1"></i>
+              Voir tous les détails
+            </Button>
+          </div>
+        </div>
+      </div>
     );
-    alert(`Vous avez accepté l'annonce #${id}. Une notification a été envoyée au client.`);
   };
 
-  const handleTerminer = (id: number) => {
-    // Simuler la fin d'une livraison
-    setAnnonces(prev => 
-      prev.map(annonce => 
-        annonce.id === id ? { ...annonce, statut: 'TERMINEE' } : annonce
-      )
+  if (!currentUser) {
+    return (
+      <Container className="py-5">
+        <Alert variant="warning">
+          <i className="bi bi-exclamation-triangle me-2"></i>
+          Vous devez être connecté en tant que livreur pour accéder à cette page.
+        </Alert>
+      </Container>
     );
-    alert(`Livraison #${id} terminée avec succès. Merci !`);
-  };
+  }
 
   return (
-    <Container className="py-5">
-      <h2 className="mb-4">Mes missions de livraison</h2>
+    <Container className="py-4">
+      {/* En-tête */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 className="text-primary mb-2">
+            <i className="bi bi-truck me-2"></i>
+            Annonces disponibles
+          </h1>
+          <p className="text-muted">
+            Trouvez des missions de livraison et de transport près de chez vous
+          </p>
+        </div>
+        <Button 
+          variant="outline-secondary" 
+          size="sm"
+          onClick={() => window.location.reload()}
+          disabled={isLoading}
+        >
+          <i className="bi bi-arrow-clockwise me-1"></i>
+          Actualiser
+        </Button>
+      </div>
 
-      <div className="mb-4">
-        <Row>
-          <Col md={6}>
+      {/* Filtres */}
+      <Row className="mb-4">
+        <Col md={6}>
+          <Form.Group>
+            <Form.Label>
+              <i className="bi bi-funnel me-1"></i>
+              Filtrer par statut
+            </Form.Label>
             <Form.Select
               value={filtreStatut}
               onChange={(e) => setFiltreStatut(e.target.value)}
-              className="mb-3"
             >
               <option value="">Tous les statuts</option>
-              <option value="DISPONIBLE">Disponibles</option>
-              <option value="EN_LIVRAISON">En cours</option>
-              <option value="TERMINEE">Terminées</option>
+              <option value={ANNONCE_STATUS.ACTIVE}>Disponibles</option>
+              <option value={ANNONCE_STATUS.EN_COURS}>Mes missions en cours</option>
+              <option value={ANNONCE_STATUS.TERMINEE}>Mes missions terminées</option>
             </Form.Select>
-          </Col>
-        </Row>
-      </div>
+          </Form.Group>
+        </Col>
+      </Row>
+
+      {/* Affichage des erreurs */}
+      {error && (
+        <Alert variant="danger" dismissible onClose={clearError}>
+          <i className="bi bi-exclamation-triangle me-2"></i>
+          {error}
+        </Alert>
+      )}
       
-      {loading ? (
+      {/* Zone d'affichage */}
+      {isLoading ? (
         <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Chargement...</span>
-          </div>
-          <p className="mt-3">Chargement des annonces...</p>
-        </div>
-      ) : filteredAnnonces.length === 0 ? (
-        <div className="text-center py-5">
-          <p className="mb-0">Aucune mission ne correspond aux critères.</p>
+          <Spinner animation="border" variant="primary" />
+          <p className="mt-3 text-muted">Chargement des missions disponibles...</p>
         </div>
       ) : (
-        <Row>
-          {filteredAnnonces.map(annonce => (
-            <Col md={6} lg={4} className="mb-4" key={annonce.id}>
-              <Card className="h-100 border-0 shadow-sm">
-                <Card.Body>
-                  <div className="d-flex justify-content-between mb-2">
-                    <div>{getStatutBadge(annonce.statut)}</div>
-                    <div><Badge bg="dark">{annonce.type}</Badge></div>
-                  </div>
-                  <Card.Title className="mb-2">{annonce.titre}</Card.Title>
-                  <Card.Text className="mb-3">{annonce.description}</Card.Text>
-                  
-                  <div className="mb-2">
-                    <small className="text-muted d-block">
-                      <i className="bi bi-geo-alt me-1"></i>
-                      De {annonce.villeDepart} à {annonce.villeArrivee}
-                      {annonce.distance > 0 && ` • ${annonce.distance} km`}
-                    </small>
-                  </div>
-                  
-                  <div className="mb-3">
-                    <small className="text-muted d-block">
-                      <i className="bi bi-calendar me-1"></i>
-                      Livraison prévue le {new Date(annonce.dateLivraison).toLocaleDateString('fr-FR')}
-                    </small>
-                  </div>
-                  
-                  <div className="d-flex justify-content-between align-items-center">
-                    <span className="fs-5 fw-bold text-primary">{annonce.prix.toFixed(2)} €</span>
-                    {annonce.statut === 'DISPONIBLE' && (
-                      <Button 
-                        variant="outline-success" 
-                        size="sm"
-                        onClick={() => handleAccepter(annonce.id)}
-                      >
-                        Accepter
-                      </Button>
-                    )}
-                    {annonce.statut === 'EN_LIVRAISON' && (
-                      <Button 
-                        variant="outline-primary" 
-                        size="sm"
-                        onClick={() => handleTerminer(annonce.id)}
-                      >
-                        Terminer
-                      </Button>
-                    )}
-                    {annonce.statut === 'TERMINEE' && (
-                      <span className="text-muted small">Terminée le {new Date().toLocaleDateString('fr-FR')}</span>
-                    )}
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+        <>
+          {/* Compteur de résultats */}
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <h5 className="mb-1">
+                <i className="bi bi-list-check me-2"></i>
+                {filteredAnnonces.length} mission{filteredAnnonces.length !== 1 ? 's' : ''} 
+                {filtreStatut && ` • ${filtreStatut.toLowerCase()}`}
+              </h5>
+              {annonces.length > 0 && (
+                <small className="text-muted">
+                  Total disponible : {annonces.length} annonce{annonces.length !== 1 ? 's' : ''}
+                </small>
+              )}
+            </div>
+            
+            {filtreStatut && (
+              <Badge bg="primary" className="fs-6">
+                Filtre actif
+              </Badge>
+            )}
+          </div>
+
+          {/* Liste des annonces */}
+          {filteredAnnonces.length === 0 ? (
+            <div className="text-center py-5">
+              <i className="bi bi-inbox display-1 text-muted opacity-50"></i>
+              <h4 className="text-muted mt-3">
+                {filtreStatut ? 'Aucune mission trouvée' : 'Aucune mission disponible'}
+              </h4>
+              <p className="text-muted">
+                {filtreStatut 
+                  ? 'Essayez de modifier le filtre pour voir plus de missions'
+                  : 'Revenez plus tard pour découvrir de nouvelles opportunités'
+                }
+              </p>
+              {filtreStatut && (
+                <Button 
+                  variant="outline-primary"
+                  onClick={() => setFiltreStatut('')}
+                >
+                  <i className="bi bi-arrow-clockwise me-1"></i>
+                  Voir toutes les missions
+                </Button>
+              )}
+            </div>
+          ) : (
+            <Row>
+              {filteredAnnonces.map(annonce => (
+                <Col md={6} lg={4} className="mb-4" key={annonce.id}>
+                  <LivreurAnnonceCard annonce={annonce} />
+                </Col>
+              ))}
+            </Row>
+          )}
+        </>
       )}
     </Container>
   );

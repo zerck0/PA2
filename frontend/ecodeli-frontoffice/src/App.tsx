@@ -17,7 +17,9 @@ import Annonces from './pages/Annonces';
 import CreateAnnonce from './pages/CreateAnnonce';
 import Messages from './pages/Messages';
 import LivreurAnnonces from './pages/LivreurAnnonces';
+import LivreurMissions from './pages/LivreurMissions';
 import CommercantContrats from './pages/CommercantContrats';
+import TestNavigation from './pages/TestNavigation';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -39,25 +41,40 @@ function App() {
               <Route path="/stockage" element={<Stockage />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/test-navigation" element={<TestNavigation />} />
+              <Route path="/annonces" element={<Annonces />} />
               
               {/* Routes protégées - utilisateur connecté */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/annonces/creer" element={<CreateAnnonce />} />
                 <Route path="/messages" element={<Messages />} />
+                <Route path="/profile" element={<Dashboard />} />
+                <Route path="/settings" element={<Dashboard />} />
               </Route>
               
-              {/* Routes protégées - rôles spécifiques */}
+              {/* Routes protégées - LIVREUR */}
               <Route element={<ProtectedRoute requiredRoles={['LIVREUR']} />}>
                 <Route path="/livreur/annonces" element={<LivreurAnnonces />} />
+                <Route path="/livreur/missions" element={<LivreurMissions />} />
               </Route>
               
+              {/* Routes protégées - COMMERCANT */}
               <Route element={<ProtectedRoute requiredRoles={['COMMERCANT']} />}>
                 <Route path="/commercant/contrats" element={<CommercantContrats />} />
+                <Route path="/commercant/annonces" element={<Annonces />} />
               </Route>
               
-              {/* Route publique */}
-              <Route path="/annonces" element={<Annonces />} />
+              {/* Routes protégées - CLIENT */}
+              <Route element={<ProtectedRoute requiredRoles={['CLIENT']} />}>
+                <Route path="/client/annonces" element={<Annonces />} />
+              </Route>
+              
+              {/* Routes protégées - PRESTATAIRE */}
+              <Route element={<ProtectedRoute requiredRoles={['PRESTATAIRE']} />}>
+                <Route path="/prestataire/prestations" element={<Dashboard />} />
+                <Route path="/prestataire/calendrier" element={<Dashboard />} />
+              </Route>
               
               {/* Route 404 */}
               <Route path="*" element={<NotFound />} />

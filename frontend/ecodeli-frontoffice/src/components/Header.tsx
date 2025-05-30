@@ -1,11 +1,11 @@
 import { useContext } from 'react';
-import { Navbar, Nav, Container, Button, NavDropdown } from 'react-bootstrap';
+import { Navbar, Nav, Container } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
-
-// Type personnalisé pour résoudre les problèmes de compatibilité entre React Bootstrap et React Router
-type LinkComponentProps = any;
-const LinkComponent = Link as unknown as React.ComponentType<LinkComponentProps>;
+import { getNavigationMenus } from '../config/menuConfig';
+import NavigationItem from './NavigationItem';
+import UserProfileMenu from './UserProfileMenu';
+import logoEco from '../assets/logoEco.png';
 
 const Header = () => {
   const { currentUser, logout } = useContext(AuthContext);
@@ -15,49 +15,57 @@ const Header = () => {
     logout();
     navigate('/');
   };
+
+  // Obtenir les menus de navigation publics
+  const navigationMenus = getNavigationMenus();
   
   return (
-    <Navbar bg="white" expand="lg" className="shadow-sm">
+    <Navbar 
+      expand="lg" 
+      className="shadow-sm sticky-top navbar-ecodeli"
+      style={{ backgroundColor: 'var(--primary-color)' }}
+    >
       <Container>
-        <Navbar.Brand as={LinkComponent} to="/">
-          <img src="/logo.svg" alt="EcoDeli" height="40" />
+        <Navbar.Brand as={Link} to="/">
+          <img 
+            src={logoEco} 
+            alt="EcoDeli" 
+            height="45" 
+            className="d-inline-block align-top"
+            style={{ maxWidth: '200px' }}
+          />
         </Navbar.Brand>
         <Navbar.Toggle aria-controls="navbar-nav" />
         <Navbar.Collapse id="navbar-nav">
+          {/* Navigation principale - Menus publics uniquement */}
           <Nav className="me-auto">
-            <Nav.Link as={LinkComponent} to="/annonces">Annonces</Nav.Link>
-            <Nav.Link as={LinkComponent} to="/livraison">Livraison</Nav.Link>
-            <Nav.Link as={LinkComponent} to="/stockage">Stockage</Nav.Link>
-            <Nav.Link as={LinkComponent} to="/how-it-works">Comment ça marche</Nav.Link>
+            {navigationMenus.map((menu, index) => (
+              <NavigationItem key={index} item={menu} />
+            ))}
           </Nav>
           
-          {currentUser ? (
-            <Nav>
-              {/* Menu différent selon le rôle */}
-              {currentUser.user.role === 'LIVREUR' && (
-                <Nav.Link as={LinkComponent} to="/livreur/annonces">Mes missions</Nav.Link>
-              )}
-              
-              {currentUser.user.role === 'COMMERCANT' && (
-                <Nav.Link as={LinkComponent} to="/commercant/contrats">Mes contrats</Nav.Link>
-              )}
-              
-              <NavDropdown 
-                title={`${currentUser.user.prenom} ${currentUser.user.nom}`} 
-                id="user-dropdown"
-              >
-                <NavDropdown.Item as={LinkComponent} to="/dashboard">Tableau de bord</NavDropdown.Item>
-                <NavDropdown.Item as={LinkComponent} to="/profile">Mon profil</NavDropdown.Item>
-                <NavDropdown.Divider />
-                <NavDropdown.Item onClick={handleLogout}>Déconnexion</NavDropdown.Item>
-              </NavDropdown>
-            </Nav>
-          ) : (
-            <Nav>
-              <Nav.Link as={LinkComponent} to="/login" className="me-2">Connexion</Nav.Link>
-              <Button as={LinkComponent} to="/register" variant="primary">S'inscrire</Button>
-            </Nav>
-          )}
+          {/* Section droite - Profil utilisateur ou boutons d'auth */}
+          <Nav>
+            {currentUser ? (
+              /* Menu profil pour utilisateur connecté */
+              <UserProfileMenu 
+                user={currentUser.user} 
+                onLogout={handleLogout}
+              />
+            ) : (
+              /* Boutons pour utilisateur non connecté */
+              <>
+                <Link to="/login" className="nav-link me-2 navbar-link">
+                  <i className="bi bi-box-arrow-in-right me-1"></i>
+                  Connexion
+                </Link>
+                <Link to="/register" className="btn btn-success btn-navbar">
+                  <i className="bi bi-person-plus me-1"></i>
+                  S'inscrire
+                </Link>
+              </>
+            )}
+          </Nav>
         </Navbar.Collapse>
       </Container>
     </Navbar>

@@ -50,11 +50,6 @@ const Stockage = () => {
               </Button>
             </Col>
             <Col lg={6} className="d-none d-lg-block">
-              <img 
-                src="https://images.unsplash.com/photo-1530973428-5bf2db2e4d00?ixlib=rb-4.0.1&auto=format&fit=crop&w=1350&q=80" 
-                alt="Stockage temporaire" 
-                className="img-fluid rounded" 
-              />
             </Col>
           </Row>
         </Container>

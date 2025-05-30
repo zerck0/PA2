@@ -1,92 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Table, Badge, Button, Modal, Form } from 'react-bootstrap';
+import React, { useState, useContext } from 'react';
+import { Container, Row, Col, Card, Badge, Button, Modal, Form, Alert } from 'react-bootstrap';
+import { AuthContext } from '../contexts/AuthContext';
 
-interface Contrat {
-  id: number;
-  dateDebut: string;
-  dateFin: string;
-  statut: string;
-  type: string;
-  montantMensuel: number;
-  paiementAJour: boolean;
+interface ContratDemande {
+  type: 'STANDARD' | 'PREMIUM';
   services: string[];
 }
 
 const CommercantContrats: React.FC = () => {
-  const [contrats, setContrats] = useState<Contrat[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { currentUser } = useContext(AuthContext);
   const [showModal, setShowModal] = useState(false);
-  const [formulaireContrat, setFormulaireContrat] = useState({
+  const [success, setSuccess] = useState(false);
+  const [formulaireContrat, setFormulaireContrat] = useState<ContratDemande>({
     type: 'STANDARD',
     services: ['LIVRAISON_LOCALE']
   });
 
-  useEffect(() => {
-    // Simuler une requête API
-    setTimeout(() => {
-      const mockContrats: Contrat[] = [
-        {
-          id: 1,
-          dateDebut: "2023-01-15",
-          dateFin: "2024-01-14",
-          statut: "ACTIF",
-          type: "PREMIUM",
-          montantMensuel: 129.99,
-          paiementAJour: true,
-          services: ["LIVRAISON_LOCALE", "LACHER_CHARIOT", "STOCKAGE_TEMPORAIRE"]
-        },
-        {
-          id: 2,
-          dateDebut: "2022-06-01",
-          dateFin: "2023-06-01",
-          statut: "EXPIRE",
-          type: "STANDARD",
-          montantMensuel: 79.99,
-          paiementAJour: true,
-          services: ["LIVRAISON_LOCALE"]
-        }
-      ];
-      
-      setContrats(mockContrats);
-      setLoading(false);
-    }, 1000);
-  }, []);
-
-  const getStatutBadge = (statut: string) => {
-    switch (statut) {
-      case 'ACTIF': return <Badge bg="success">Actif</Badge>;
-      case 'EXPIRE': return <Badge bg="secondary">Expiré</Badge>;
-      case 'EN_ATTENTE': return <Badge bg="warning">En attente</Badge>;
-      default: return <Badge bg="secondary">{statut}</Badge>;
-    }
-  };
-
-  const getTypeBadge = (type: string) => {
-    switch (type) {
-      case 'STANDARD': return <Badge bg="info">Standard</Badge>;
-      case 'PREMIUM': return <Badge bg="primary">Premium</Badge>;
-      case 'ENTERPRISE': return <Badge bg="dark">Enterprise</Badge>;
-      default: return <Badge bg="secondary">{type}</Badge>;
-    }
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simuler la création d'un nouveau contrat
-    const newContract: Contrat = {
-      id: Math.floor(Math.random() * 1000),
-      dateDebut: new Date().toISOString().split('T')[0],
-      dateFin: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
-      statut: "EN_ATTENTE",
-      type: formulaireContrat.type,
-      montantMensuel: formulaireContrat.type === 'STANDARD' ? 79.99 : 129.99,
-      paiementAJour: true,
-      services: formulaireContrat.services
-    };
-    
-    setContrats([...contrats, newContract]);
+    // TODO: Implémenter l'API pour créer une demande de contrat
+    setSuccess(true);
     setShowModal(false);
-    alert("Votre demande de contrat a été envoyée avec succès. Elle sera traitée par notre service commercial.");
+    setTimeout(() => setSuccess(false), 5000);
   };
 
   const handleServiceChange = (service: string) => {
@@ -99,6 +34,17 @@ const CommercantContrats: React.FC = () => {
     });
   };
 
+  if (!currentUser) {
+    return (
+      <Container className="py-5">
+        <Alert variant="warning">
+          <i className="bi bi-exclamation-triangle me-2"></i>
+          Vous devez être connecté pour accéder à cette page.
+        </Alert>
+      </Container>
+    );
+  }
+
   return (
     <Container className="py-5">
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -108,79 +54,94 @@ const CommercantContrats: React.FC = () => {
         </Button>
       </div>
 
-      {loading ? (
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Chargement...</span>
-          </div>
-          <p className="mt-3">Chargement des contrats...</p>
-        </div>
-      ) : contrats.length === 0 ? (
-        <Card className="border-0 shadow-sm text-center p-5">
-          <Card.Body>
-            <h5>Vous n'avez pas encore de contrat</h5>
-            <p className="text-muted mb-4">
-              Pour bénéficier de nos services de livraison en tant que commerçant, vous devez souscrire à un contrat.
-            </p>
-            <Button variant="primary" onClick={() => setShowModal(true)}>
-              Demander un contrat
-            </Button>
-          </Card.Body>
-        </Card>
-      ) : (
-        <Card className="border-0 shadow-sm">
-          <Card.Body className="p-0">
-            <Table responsive hover className="mb-0">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Type</th>
-                  <th>Statut</th>
-                  <th>Début</th>
-                  <th>Fin</th>
-                  <th>Mensualité</th>
-                  <th>Services inclus</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {contrats.map(contrat => (
-                  <tr key={contrat.id}>
-                    <td>#{contrat.id}</td>
-                    <td>{getTypeBadge(contrat.type)}</td>
-                    <td>{getStatutBadge(contrat.statut)}</td>
-                    <td>{new Date(contrat.dateDebut).toLocaleDateString('fr-FR')}</td>
-                    <td>{new Date(contrat.dateFin).toLocaleDateString('fr-FR')}</td>
-                    <td>{contrat.montantMensuel.toFixed(2)} €/mois</td>
-                    <td>
-                      {contrat.services.map(service => (
-                        <Badge bg="light" text="dark" className="me-1 mb-1" key={service}>
-                          {service.replace('_', ' ')}
-                        </Badge>
-                      ))}
-                    </td>
-                    <td>
-                      {contrat.statut === 'ACTIF' ? (
-                        <Button variant="outline-primary" size="sm">
-                          Voir détails
-                        </Button>
-                      ) : contrat.statut === 'EXPIRE' ? (
-                        <Button variant="outline-success" size="sm" onClick={() => setShowModal(true)}>
-                          Renouveler
-                        </Button>
-                      ) : (
-                        <Button variant="outline-secondary" size="sm" disabled>
-                          En attente
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </Card.Body>
-        </Card>
+      {success && (
+        <Alert variant="success" className="mb-4">
+          <i className="bi bi-check-circle me-2"></i>
+          Votre demande de contrat a été envoyée avec succès. Notre équipe commerciale vous contactera sous 48h.
+        </Alert>
       )}
+
+      <Card className="border-0 shadow-sm text-center p-5">
+        <Card.Body>
+          <i className="bi bi-file-earmark-text display-1 text-muted mb-4"></i>
+          <h5>Aucun contrat actif</h5>
+          <p className="text-muted mb-4">
+            Pour bénéficier de nos services de livraison en tant que commerçant, vous devez souscrire à un contrat.
+            Nos offres sont conçues pour s'adapter à vos besoins spécifiques.
+          </p>
+          <Button variant="primary" onClick={() => setShowModal(true)}>
+            Demander un contrat
+          </Button>
+        </Card.Body>
+      </Card>
+
+      {/* Informations sur les offres */}
+      <Row className="mt-5">
+        <Col md={6}>
+          <Card className="h-100 border-0 shadow-sm">
+            <Card.Body className="p-4">
+              <div className="text-center mb-3">
+                <Badge bg="info" className="fs-6 px-3 py-2">STANDARD</Badge>
+              </div>
+              <h4 className="text-center">79,99 € / mois</h4>
+              <ul className="list-unstyled mt-4">
+                <li className="mb-2">
+                  <i className="bi bi-check-circle text-success me-2"></i>
+                  Livraison locale dans un rayon de 20km
+                </li>
+                <li className="mb-2">
+                  <i className="bi bi-check-circle text-success me-2"></i>
+                  Interface de gestion des commandes
+                </li>
+                <li className="mb-2">
+                  <i className="bi bi-check-circle text-success me-2"></i>
+                  Support client email
+                </li>
+                <li className="mb-2">
+                  <i className="bi bi-check-circle text-success me-2"></i>
+                  Commission réduite de 5%
+                </li>
+              </ul>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={6}>
+          <Card className="h-100 border-0 shadow-sm border-primary">
+            <Card.Body className="p-4">
+              <div className="text-center mb-3">
+                <Badge bg="primary" className="fs-6 px-3 py-2">PREMIUM</Badge>
+              </div>
+              <h4 className="text-center">129,99 € / mois</h4>
+              <ul className="list-unstyled mt-4">
+                <li className="mb-2">
+                  <i className="bi bi-check-circle text-success me-2"></i>
+                  Livraison locale dans un rayon de 50km
+                </li>
+                <li className="mb-2">
+                  <i className="bi bi-check-circle text-success me-2"></i>
+                  Service "Lâcher de chariot"
+                </li>
+                <li className="mb-2">
+                  <i className="bi bi-check-circle text-success me-2"></i>
+                  Stockage temporaire inclus
+                </li>
+                <li className="mb-2">
+                  <i className="bi bi-check-circle text-success me-2"></i>
+                  Support client prioritaire
+                </li>
+                <li className="mb-2">
+                  <i className="bi bi-check-circle text-success me-2"></i>
+                  Commission réduite de 3%
+                </li>
+                <li className="mb-2">
+                  <i className="bi bi-check-circle text-success me-2"></i>
+                  Analytics avancées
+                </li>
+              </ul>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
       {/* Fenêtre modale de demande de contrat */}
       <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
@@ -190,7 +151,7 @@ const CommercantContrats: React.FC = () => {
         <Modal.Body>
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-4">
-              <Form.Label>Type de contrat</Form.Label>
+              <Form.Label>Type de contrat *</Form.Label>
               <div>
                 <Form.Check
                   inline
@@ -214,7 +175,7 @@ const CommercantContrats: React.FC = () => {
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Label>Services souhaités</Form.Label>
+              <Form.Label>Services souhaités *</Form.Label>
               <div>
                 <Form.Check
                   type="checkbox"
@@ -231,6 +192,7 @@ const CommercantContrats: React.FC = () => {
                   checked={formulaireContrat.services.includes('LACHER_CHARIOT')}
                   onChange={() => handleServiceChange('LACHER_CHARIOT')}
                   className="mb-2"
+                  disabled={formulaireContrat.type === 'STANDARD'}
                 />
                 <Form.Check
                   type="checkbox"
@@ -238,14 +200,25 @@ const CommercantContrats: React.FC = () => {
                   label="Stockage temporaire pour vos marchandises"
                   checked={formulaireContrat.services.includes('STOCKAGE_TEMPORAIRE')}
                   onChange={() => handleServiceChange('STOCKAGE_TEMPORAIRE')}
+                  disabled={formulaireContrat.type === 'STANDARD'}
                 />
               </div>
+              {formulaireContrat.type === 'STANDARD' && (
+                <Form.Text className="text-muted">
+                  Les services avancés nécessitent un contrat Premium
+                </Form.Text>
+              )}
             </Form.Group>
             
             <div className="mt-4">
-              <h6>Informations sur le contrat</h6>
+              <h6>Informations importantes</h6>
               <p className="small text-muted">
-                En soumettant ce formulaire, vous demandez la création d'un contrat commerçant avec EcoDeli. Un conseiller vous contactera pour finaliser les détails du contrat et vous accompagner dans la mise en place des services.
+                En soumettant ce formulaire, vous demandez la création d'un contrat commerçant avec EcoDeli. 
+                Un conseiller vous contactera sous 48h pour finaliser les détails du contrat et vous accompagner 
+                dans la mise en place des services.
+              </p>
+              <p className="small text-muted">
+                <strong>Engagement :</strong> Contrat d'1 an minimum, résiliable avec un préavis de 30 jours.
               </p>
             </div>
           </Form>

@@ -3,6 +3,7 @@ import Home from '../pages/Home';
 import Register from '../pages/Register';
 import Login from '../pages/Login';
 import Annonces from '../pages/Annonces';
+import CreateAnnonce from '../pages/CreateAnnonce';
 import Services from '../pages/Services';
 //import About from '../pages/About';
 //import HowItWorks from '../pages/HowItWorks';
@@ -18,6 +19,7 @@ const AppRoutes = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
       <Route path="/annonces" element={<Annonces />} />
+      <Route path="/create-annonce" element={<CreateAnnonce />} />
       <Route path="/services" element={<Services />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/dashboard" element={<Dashboard />} />

@@ -1,169 +1,201 @@
-import { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Form, Button, Badge } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Container, Row, Col, Button, Form, Alert, Badge } from 'react-bootstrap';
+import { useAnnonces } from '../hooks/useAnnonces';
+import { ANNONCE_TYPE_CONFIG, ANNONCE_TYPES } from '../constants/appConfig';
+import { AnnonceType } from '../types';
+import { AnnonceCard } from '../components/annonces';
 
-interface Annonce {
-  id: number;
-  titre: string;
-  description: string;
-  type: string;
-  villeDepart: string;
-  villeArrivee: string;
-  dateCreation: string;
-  dateLivraison: string;
-  prix: number;
-  statut: string;
-}
-
-const Annonces = () => {
-  const [annonces, setAnnonces] = useState<Annonce[]>([]);
-  const [loading, setLoading] = useState(true);
+/**
+ * Page d'affichage des annonces EcoDeli - Connectée à la base de données
+ * Interface simplifiée avec filtres en haut de page - Utilise le composant AnnonceCard unifié
+ */
+const Annonces: React.FC = () => {
+  // Hook pour récupérer les annonces depuis la BDD
+  const { annonces, isLoading, error, clearError } = useAnnonces();
+  
+  // États locaux pour les filtres de recherche
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('');
+  const [filterAnnonceType, setFilterAnnonceType] = useState<AnnonceType | ''>('');
 
-  useEffect(() => {
-    // Simuler une requête API
-    setTimeout(() => {
-      // Exemples d'annonces
-      const mockAnnonces: Annonce[] = [
-        {
-          id: 1,
-          titre: "Livraison de petit colis",
-          description: "Petit colis à livrer, dimensions 20x30x10cm, poids 2kg",
-          type: "LIVRAISON",
-          villeDepart: "Paris",
-          villeArrivee: "Lyon",
-          dateCreation: "2023-07-15",
-          dateLivraison: "2023-07-20",
-          prix: 15.50,
-          statut: "EN_COURS"
-        },
-        {
-          id: 2,
-          titre: "Transport de meubles",
-          description: "Table et chaises à transporter, besoin d'une camionnette",
-          type: "TRANSPORT",
-          villeDepart: "Marseille",
-          villeArrivee: "Nice",
-          dateCreation: "2023-07-14",
-          dateLivraison: "2023-07-25",
-          prix: 75.00,
-          statut: "EN_ATTENTE"
-        },
-        {
-          id: 3,
-          titre: "Accompagnement à un rendez-vous médical",
-          description: "Besoin d'accompagnement pour une personne âgée à un rendez-vous médical",
-          type: "SERVICE",
-          villeDepart: "Lille",
-          villeArrivee: "Lille",
-          dateCreation: "2023-07-10",
-          dateLivraison: "2023-07-18",
-          prix: 30.00,
-          statut: "VALIDEE"
-        }
-      ];
-      
-      setAnnonces(mockAnnonces);
-      setLoading(false);
-    }, 1000);
-  }, []);
-
-  const filteredAnnonces = annonces.filter(annonce => {
+  // Filtrage côté client des annonces récupérées
+  const filteredAnnonces = annonces.filter((annonce) => {
     const matchesSearch = searchTerm === '' || 
       annonce.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      annonce.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      annonce.villeDepart.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      annonce.villeArrivee.toLowerCase().includes(searchTerm.toLowerCase());
-      
-    const matchesType = filterType === '' || annonce.type === filterType;
+      annonce.description.toLowerCase().includes(searchTerm.toLowerCase());
     
-    return matchesSearch && matchesType;
+    const matchesAnnonceType = filterAnnonceType === '' || annonce.typeAnnonce === filterAnnonceType;
+    
+    return matchesSearch && matchesAnnonceType;
   });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'EN_ATTENTE': return <Badge bg="warning">En attente</Badge>;
-      case 'VALIDEE': return <Badge bg="success">Validée</Badge>;
-      case 'EN_COURS': return <Badge bg="info">En cours</Badge>;
-      case 'TERMINEE': return <Badge bg="secondary">Terminée</Badge>;
-      default: return <Badge bg="secondary">{status}</Badge>;
+  /**
+   * Réinitialise tous les filtres
+   */
+  const resetFilters = () => {
+    setSearchTerm('');
+    setFilterAnnonceType('');
+  };
+
+  /**
+   * Gestion des actions sur les annonces
+   */
+  const handleAnnonceAction = (action: string, annonce: any) => {
+    switch (action) {
+      case 'view':
+        console.log('Voir détails de l\'annonce:', annonce.id);
+        // TODO: Implémenter la navigation vers la page de détail
+        break;
+      case 'contact':
+        console.log('Contacter pour l\'annonce:', annonce.id);
+        // TODO: Implémenter la messagerie
+        break;
+      default:
+        console.log('Action non reconnue:', action);
     }
   };
 
   return (
-    <Container className="py-5">
-      <h2 className="mb-4">Annonces</h2>
-      
+    <Container className="py-4">
+      {/* En-tête de la page */}
       <Row className="mb-4">
-        <Col md={8}>
-          <Form.Control
-            type="text"
-            placeholder="Rechercher une annonce..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </Col>
-        <Col md={4}>
-          <Form.Select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-          >
-            <option value="">Tous les types</option>
-            <option value="LIVRAISON">Livraison</option>
-            <option value="TRANSPORT">Transport</option>
-            <option value="SERVICE">Service</option>
-          </Form.Select>
+        <Col>
+          <h1 className="text-primary mb-3">
+            <i className="bi bi-megaphone me-2"></i>
+            Annonces EcoDeli
+          </h1>
+          <p className="text-muted">
+            Découvrez les services disponibles : livraisons, transport de personnes, services à domicile et bien plus !
+          </p>
         </Col>
       </Row>
-      
-      {loading ? (
+
+      {/* Affichage des erreurs de chargement */}
+      {error && (
+        <Alert variant="danger" dismissible onClose={clearError}>
+          <i className="bi bi-exclamation-triangle me-2"></i>
+          {error}
+        </Alert>
+      )}
+
+      {/* Barre de filtres simplifiée */}
+      <Row className="mb-4">
+        <Col md={5}>
+          <Form.Group>
+            <Form.Label>
+              <i className="bi bi-search me-1"></i>
+              Rechercher par nom
+            </Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="Rechercher dans les titres et descriptions..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </Form.Group>
+        </Col>
+        <Col md={5}>
+          <Form.Group>
+            <Form.Label>
+              <i className="bi bi-tag me-1"></i>
+              Type d'annonce
+            </Form.Label>
+            <Form.Select
+              value={filterAnnonceType}
+              onChange={(e) => setFilterAnnonceType(e.target.value as AnnonceType | '')}
+            >
+              <option value="">Tous les types d'annonces</option>
+              {Object.entries(ANNONCE_TYPE_CONFIG).map(([key, config]) => (
+                <option key={key} value={key}>
+                  {config.label}
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+        </Col>
+        <Col md={2} className="d-flex align-items-end">
+          <Button
+            variant="outline-secondary"
+            onClick={resetFilters}
+            disabled={!searchTerm && !filterAnnonceType}
+            className="w-100"
+          >
+            <i className="bi bi-arrow-clockwise me-1"></i>
+            Effacer
+          </Button>
+        </Col>
+      </Row>
+
+      {/* Zone d'affichage des annonces */}
+      {/* Indicateur de chargement */}
+      {isLoading ? (
         <div className="text-center py-5">
           <div className="spinner-border text-primary" role="status">
             <span className="visually-hidden">Chargement...</span>
           </div>
-          <p className="mt-3">Chargement des annonces...</p>
+          <p className="mt-2 text-muted">Chargement des annonces depuis la base de données...</p>
         </div>
       ) : (
         <>
-          {filteredAnnonces.length === 0 ? (
-            <div className="text-center py-5">
-              <p>Aucune annonce ne correspond à vos critères.</p>
+          {/* En-tête avec compteur de résultats */}
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <h5 className="mb-1">
+                <i className="bi bi-list-ul me-2"></i>
+                {filteredAnnonces.length} annonce{filteredAnnonces.length !== 1 ? 's' : ''} 
+                {filterAnnonceType && ` • ${ANNONCE_TYPE_CONFIG[filterAnnonceType]?.label}`}
+              </h5>
+              {annonces.length > 0 && (
+                <small className="text-muted">
+                  Total disponible : {annonces.length} annonce{annonces.length !== 1 ? 's' : ''}
+                </small>
+              )}
             </div>
-          ) : (
+            
+            {/* Indicateur de filtres actifs */}
+            {(filterAnnonceType || searchTerm) && (
+              <Badge bg="primary" className="fs-6">
+                Filtres actifs
+              </Badge>
+            )}
+          </div>
+
+          {/* Liste des annonces ou message si vide */}
+          {filteredAnnonces.length > 0 ? (
             <Row>
-              {filteredAnnonces.map(annonce => (
-                <Col md={6} lg={4} className="mb-4" key={annonce.id}>
-                  <Card className="h-100 border-0 shadow-sm">
-                    <Card.Body>
-                      <div className="d-flex justify-content-between mb-2">
-                        <div>{getStatusBadge(annonce.statut)}</div>
-                        <div><Badge bg="dark">{annonce.type}</Badge></div>
-                      </div>
-                      <Card.Title>{annonce.titre}</Card.Title>
-                      <Card.Text>{annonce.description}</Card.Text>
-                      <div className="mb-3">
-                        <small className="text-muted">
-                          <i className="bi bi-geo-alt me-1"></i>
-                          De {annonce.villeDepart} à {annonce.villeArrivee}
-                        </small>
-                      </div>
-                      <div className="mb-3">
-                        <small className="text-muted">
-                          <i className="bi bi-calendar me-1"></i>
-                          Livraison le {new Date(annonce.dateLivraison).toLocaleDateString('fr-FR')}
-                        </small>
-                      </div>
-                      <div className="d-flex justify-content-between align-items-center">
-                        <span className="fs-5 fw-bold text-primary">{annonce.prix.toFixed(2)} €</span>
-                        <Button variant="outline-primary" size="sm">
-                          Voir détails
-                        </Button>
-                      </div>
-                    </Card.Body>
-                  </Card>
+              {filteredAnnonces.map((annonce) => (
+                <Col md={6} lg={4} key={annonce.id} className="mb-4">
+                  <AnnonceCard
+                    annonce={annonce}
+                    showActions={true}
+                    onAction={handleAnnonceAction}
+                    variant="default"
+                  />
                 </Col>
               ))}
             </Row>
+          ) : (
+            // Message d'absence de résultats
+            <div className="text-center py-5">
+              <i className="bi bi-search display-1 text-muted opacity-50"></i>
+              <h4 className="text-muted mt-3">
+                {searchTerm || filterAnnonceType ? 'Aucune annonce trouvée' : 'Aucune annonce disponible'}
+              </h4>
+              <p className="text-muted">
+                {searchTerm || filterAnnonceType
+                  ? 'Essayez de modifier vos critères de recherche ou élargissez votre sélection'
+                  : 'Il n\'y a pas encore d\'annonces dans la base de données'
+                }
+              </p>
+              {(searchTerm || filterAnnonceType) && (
+                <Button 
+                  variant="outline-primary"
+                  onClick={resetFilters}
+                >
+                  <i className="bi bi-arrow-clockwise me-1"></i>
+                  Voir toutes les annonces
+                </Button>
+              )}
+            </div>
           )}
         </>
       )}
