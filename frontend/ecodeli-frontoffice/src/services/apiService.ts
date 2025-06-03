@@ -194,7 +194,7 @@ class ApiService {
    * Inscription utilisateur
    */
   async register(userData: any) {
-    return this.post(`${API_CONFIG.ENDPOINTS.AUTH}/register`, userData);
+    return this.post('/inscription', userData);
   }
 
   /**

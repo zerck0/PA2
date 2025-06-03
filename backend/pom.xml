@@ -28,7 +28,7 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
-	</properties>
+	</properties>	mvnw.cmd spring-boot:run	mvnw.cmd spring-boot:run
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

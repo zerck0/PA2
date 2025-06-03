@@ -1,0 +1,46 @@
+# Fichiers et dossiers à exclure du contexte Docker pour le backend Spring Boot
+
+# Build artifacts
+target/
+!target/*.jar
+*.jar
+*.war
+*.ear
+*.class
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.settings/
+.project
+.classpath
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+logfile
+
+# Maven wrapper files (on garde mvnw pour le build)
+# .mvn/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Test files
+src/test/
+
+# Temporary files
+*.tmp
+*.temp

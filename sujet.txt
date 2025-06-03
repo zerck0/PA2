@@ -3,8 +3,13 @@ EcoDeli 2024-2025
  Projet annuel 2024-2025 page 1
 
 EcoDeli
-EcoDeli (ED) est une société proposant une solution de crowdshipping, un système de livraison qui fait intervenir les particuliers pour acheminer un colis à destination. Ceux-ci peuvent assurer aussi bien l’entièreté qu'une partie de la livraison. Ce concept consiste à mettre en relation une personne ou une entreprise ayant un colis à expédier avec une personne qui accepte volontairement d’effectuer la livraison. Les objectifs sont de réduire l’impact de la livraison, favoriser le pouvoir d’achat et de lutter contre l’isolement.
-Le fonctionnement d’EcoDeli est donc basé sur la mise en relation de voyageurs ou de conducteurs validés par la société, avec des expéditeurs qui cherchent à envoyer un colis ou à acheter un produit introuvable chez eux. Les expéditeurs peuvent être de simples particuliers ou des commerçants/entreprises partenaires. Évidemment, commerçants, livreurs et particuliers doivent avoir un compte pour pouvoir bénéficier des services offerts par l'entreprise.
+EcoDeli (ED) est une société proposant une solution de crowdshipping, un système de livraison qui fait intervenir les particuliers pour acheminer un colis à destination. Ceux-ci peuvent assurer aussi bien l’entièreté qu'une partie 
+de la livraison. Ce concept consiste à mettre en relation une personne ou une entreprise ayant un colis à expédier avec une personne qui accepte volontairement d’effectuer la livraison. Les objectifs sont de réduire l’impact de la 
+livraison, favoriser le pouvoir d’achat et de lutter contre l’isolement.
+
+Le fonctionnement d’EcoDeli est donc basé sur la mise en relation de voyageurs ou de conducteurs validés par la société, avec des expéditeurs qui cherchent à envoyer un colis ou à acheter un produit introuvable chez eux.
+ Les expéditeurs peuvent être de simples particuliers ou des commerçants/entreprises partenaires. Évidemment, commerçants, livreurs et particuliers doivent avoir un compte pour pouvoir bénéficier des services offerts par l'entreprise.
+
 EcoDeli offre un grand nombre de services autour du transport de colis :
 - gestion des annonces proposées par les particuliers ou les commerçants (un particulier peut
 par exemple annoncer sur le site un besoin de faire transporter un colis de Paris à Marseille),
@@ -70,7 +75,8 @@ EcoDeli dispose d’une seule application permettant de rassembler un grand nomb
 ● Un espace réservé aux prestataires (ceux qui assurent un service à la personne),
 ● Un back office d'administration générale.
 Partie dédiée aux livreurs (recrutement, facturation, paiement)
-Pour pouvoir travailler avec EcoDeli, un livreur occasionnel doit avoir fait une demande sur le site, demande qui doit être validée par la société grâce aux pièces justificatives demandées. Il pourra ensuite assurer des livraisons et/ou transports demandés par des clients.
+Pour pouvoir travailler avec EcoDeli, un livreur occasionnel doit avoir fait une demande sur le site, demande qui doit être validée par la société grâce aux pièces justificatives demandées.
+ Il pourra ensuite assurer des livraisons et/ou transports demandés par des clients.
 Il lui est également possible d’indiquer à l’avance les trajets qu’il va effectuer, auquel cas une notification lui est adressée si un client a déposé une annonce correspondante.
 Il doit donc avoir un espace lui permettant de :
 ● gérer ses annonces,
@@ -88,7 +94,8 @@ Chaque commerçant souhaitant travailler avec EcoDeli doit pouvoir au travers d�
 page 5
 
 Partie dédiée aux clients (contrats, annonces, prestations proposée et commandes rattachées)
-Les clients disposent d'un espace personnel sur lequel ils peuvent déposer une annonce et sont avertis des différentes activités proposées par EcoDeli. Ils peuvent réserver des services, prendre des rendez- vous avec les prestataires, gérer leur paiement etc ... au travers de la plateforme.
+Les clients disposent d'un espace personnel sur lequel ils peuvent déposer une annonce et sont avertis des différentes activités proposées par EcoDeli. Ils peuvent réserver des services,
+ prendre des rendez- vous avec les prestataires, gérer leur paiement etc ... au travers de la plateforme.
 Ils doivent aussi avoir accès aux informations concernant les box loués pour le stockage temporaire de biens.
 Attention, pour que le client se sente à l'aise avec le site, un tutoriel sur le site sera affichable à la première connexion (bloquer l’utilisateur et utiliser des overlays).
 Partie dédiée aux prestataires

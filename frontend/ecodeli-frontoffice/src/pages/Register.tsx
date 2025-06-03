@@ -13,7 +13,7 @@ import logoEco from '../assets/logoEco.png';
  */
 const Register = () => {
   // Hooks pour l'authentification et la gestion du formulaire
-  const { loading, error, validated, handleRegister, validateForm, setError } = useAuth();
+  const { isLoading, error, register, clearError } = useAuth();
   const {
     formData,
     errors,
@@ -32,7 +32,7 @@ const Register = () => {
     const form = e.currentTarget as HTMLFormElement;
     
     // Validation du formulaire (HTML5 + validation personnalisée)
-    const isFormValid = validateForm(form);
+    const isFormValid = form.checkValidity();
     const isDataValid = validate();
     
     if (!isFormValid || !isDataValid) {
@@ -42,13 +42,18 @@ const Register = () => {
     
     // Vérifier que l'email est disponible
     if (emailAvailable === false) {
-      setError('Cette adresse email est déjà utilisée. Veuillez en choisir une autre.');
+      clearError();
+      // Cette validation sera gérée par le backend
       return;
     }
     
     // Inscription de l'utilisateur
-    const { confirmPassword, ...userData } = formData;
-    await handleRegister(userData);
+    const { confirmPassword, password, ...rest } = formData;
+    const userData = {
+      ...rest,
+      motDePasse: password
+    };
+    await register(userData as any);
   };
 
   /**
@@ -79,7 +84,7 @@ const Register = () => {
         value={formData.role}
         onChange={handleChange}
         required
-        disabled={loading}
+        disabled={isLoading}
       >
         <option value="CLIENT">
           Client - Je souhaite utiliser les services
@@ -107,7 +112,7 @@ const Register = () => {
     <Form.Group className="mb-4">
       <Form.Check
         required
-        disabled={loading}
+        disabled={isLoading}
         label={
           <span>
             J'accepte les{' '}
@@ -150,7 +155,7 @@ const Register = () => {
               {renderError()}
               
               {/* Formulaire d'inscription */}
-              <Form noValidate validated={validated} onSubmit={handleSubmit}>
+              <Form noValidate onSubmit={handleSubmit}>
                 {/* Sélecteur de rôle */}
                 {renderRoleSelector()}
                 
@@ -178,9 +183,9 @@ const Register = () => {
                   variant="primary"
                   type="submit"
                   className="w-100"
-                  disabled={loading}
+                  disabled={isLoading}
                 >
-                  {loading ? (
+                  {isLoading ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                       Inscription en cours...
