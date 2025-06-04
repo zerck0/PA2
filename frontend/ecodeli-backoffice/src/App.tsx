@@ -1,7 +1,6 @@
 // Structure de projet Vite + React + TypeScript
-// Ce fichier est le point d’entrée App.tsx avec une base de back-office pour EcoDeli
+// Ce fichier est le point d'entrée App.tsx avec une base de back-office pour EcoDeli
 
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar.tsx';
 import Accueil from './pages/Accueil.tsx';

@@ -20,7 +20,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/inscription")
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "http://localhost:5174"})
 @Validated
 public class InscriptionController {
 
@@ -149,7 +149,7 @@ public class InscriptionController {
         utilisateur.setNom(dto.nom);
         utilisateur.setPrenom(dto.prenom);
         utilisateur.setEmail(dto.email);
-        utilisateur.setPassword(passwordEncoder.encode(dto.password)); // Hashage du mot de passe
+        utilisateur.setPassword(passwordEncoder.encode(dto.motDePasse)); // Hashage du mot de passe
         utilisateur.setTelephone(dto.telephone);
         utilisateur.setDateCreation(dateCreation);
         // Champs optionnels à remplir plus tard

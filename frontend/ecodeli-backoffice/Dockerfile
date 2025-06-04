@@ -14,7 +14,10 @@ WORKDIR /app
 COPY package*.json ./
 
 # Installation des dépendances (optimisation des layers Docker)
-RUN npm ci --only=production
+RUN npm ci
+
+# Installation globale de TypeScript pour rendre tsc disponible
+RUN npm install -g typescript
 
 # Copie du code source
 COPY . .

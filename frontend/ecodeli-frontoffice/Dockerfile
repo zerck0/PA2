@@ -13,8 +13,11 @@ WORKDIR /app
 # Copie des fichiers de dépendances
 COPY package*.json ./
 
-# Installation des dépendances (optimisation des layers Docker)
-RUN npm ci --only=production
+# Installation des dépendances (y compris celles de développement nécessaires pour le build)
+RUN npm ci
+
+# Installation globale de TypeScript pour rendre tsc disponible
+RUN npm install -g typescript
 
 # Copie du code source
 COPY . .
@@ -37,7 +40,6 @@ RUN addgroup -g 1001 -S ecodeli && \
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # Configuration nginx personnalisée
-COPY --from=build /app/dist /usr/share/nginx/html
 RUN echo 'server { \
     listen 80; \
     listen [::]:80; \

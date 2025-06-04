@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, Row, Col, Container, Spinner } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 

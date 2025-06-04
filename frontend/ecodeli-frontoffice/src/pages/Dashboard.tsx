@@ -1,150 +1,149 @@
-import React from 'react';
-import { Container, Row, Col, Card, Nav, Tab, Alert } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
-import { useDashboardData } from '../hooks/useDashboardData';
-import { 
-  DashboardOverview, 
-  DashboardAnnonces, 
-  DashboardProfile, 
-  getDashboardTabs 
-} from '../components/dashboard';
+import React, { useState, useEffect } from 'react';
+import Layout from '../components/Layout';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Loading from '../components/ui/Loading';
+import { useAuth } from '../hooks/useAuth';
+import { useApi } from '../hooks/useApi';
+import { annonceApi } from '../services/api';
+import { Annonce } from '../types';
+import { getRoleLabel } from '../utils/helpers';
 
-const Dashboard = () => {
-  const { currentUser, annonces, loading, error } = useDashboardData();
-  const navigate = useNavigate();
+const Dashboard: React.FC = () => {
+  const { currentUser } = useAuth();
+  const [activeTab, setActiveTab] = useState('overview');
+  
+  const { 
+    data: annonces, 
+    loading: annoncesLoading, 
+    execute: loadAnnonces 
+  } = useApi<Annonce[]>(annonceApi.getAll);
+
+  useEffect(() => {
+    loadAnnonces();
+  }, []);
 
   if (!currentUser) {
     return (
-      <Container className="py-5 page-content">
-        <Alert variant="warning">
-          <i className="bi bi-exclamation-triangle me-2"></i>
-          Vous devez être connecté pour accéder à votre tableau de bord.
-        </Alert>
-      </Container>
+      <Layout>
+        <div className="text-center">
+          <p>Veuillez vous connecter pour accéder au dashboard.</p>
+        </div>
+      </Layout>
     );
   }
 
-  const tabs = getDashboardTabs(currentUser.user.role);
+  const renderOverview = () => (
+    <Card title="Vue d'ensemble">
+      <div className="row">
+        <div className="col-md-6">
+          <h6>Informations personnelles</h6>
+          <p><strong>Nom:</strong> {currentUser.user.prenom} {currentUser.user.nom}</p>
+          <p><strong>Email:</strong> {currentUser.user.email}</p>
+          <p><strong>Rôle:</strong> {getRoleLabel(currentUser.user.role)}</p>
+        </div>
+        <div className="col-md-6">
+          <h6>Statistiques</h6>
+          <p><strong>Annonces totales:</strong> {annonces?.length || 0}</p>
+          <p><strong>Statut:</strong> Actif</p>
+        </div>
+      </div>
+    </Card>
+  );
 
-  const renderTabContent = (tabKey: string) => {
-    switch (tabKey) {
-      case 'apercu':
-        return <DashboardOverview currentUser={currentUser} annonces={annonces} />;
-      
-      case 'annonces':
-        return <DashboardAnnonces annonces={annonces} loading={loading} error={error} />;
-      
-      case 'profil':
-        return <DashboardProfile currentUser={currentUser} annonces={annonces} />;
-      
-      case 'messages':
-        return (
-          <div>
-            <h4 className="mb-4">Messages</h4>
-            <div className="text-center py-5">
-              <i className="bi bi-envelope display-1 text-muted"></i>
-              <h5 className="mt-3">Aucun message</h5>
-              <p className="text-muted">Votre boîte de réception est vide.</p>
-              <button 
-                onClick={() => navigate('/messages')} 
-                className="btn btn-outline-primary"
-              >
-                Aller à la messagerie
-              </button>
-            </div>
-          </div>
-        );
+  const renderAnnonces = () => (
+    <Card title="Mes annonces">
+      {annoncesLoading ? (
+        <Loading />
+      ) : (
+        <div>
+          {annonces && annonces.length > 0 ? (
+            annonces.map((annonce) => (
+              <div key={annonce.id} className="border p-3 mb-2 rounded">
+                <h6>{annonce.titre}</h6>
+                <p className="mb-1">{annonce.description}</p>
+                <small className="text-muted">
+                  {annonce.villeDepart} → {annonce.villeArrivee}
+                  {annonce.prix && ` - ${annonce.prix}€`}
+                </small>
+              </div>
+            ))
+          ) : (
+            <p>Aucune annonce trouvée.</p>
+          )}
+        </div>
+      )}
+    </Card>
+  );
 
-      case 'livraisons':
-        return (
-          <div>
-            <h4 className="mb-4">
-              {currentUser?.user?.role === 'LIVREUR' ? 'Mes livraisons' : 'Mes commandes'}
-            </h4>
-            <div className="text-center py-5">
-              <i className={`bi ${currentUser?.user?.role === 'LIVREUR' ? 'bi-truck' : 'bi-box'} display-1 text-muted`}></i>
-              <h5 className="mt-3">Aucune livraison</h5>
-              <p className="text-muted">
-                {currentUser?.user?.role === 'LIVREUR' 
-                  ? 'Vous n\'avez pas encore accepté de missions.'
-                  : 'Vous n\'avez pas encore de livraisons en cours.'
-                }
-              </p>
-            </div>
-          </div>
-        );
-
-      case 'contrat':
-        return (
-          <div>
-            <h4 className="mb-4">Mon contrat commerçant</h4>
-            <div className="text-center py-5">
-              <i className="bi bi-file-text display-1 text-muted"></i>
-              <h5 className="mt-3">Aucun contrat actif</h5>
-              <p className="text-muted">Vous n'avez pas encore de contrat avec EcoDeli.</p>
-              <button 
-                onClick={() => navigate('/commercant-contrats')} 
-                className="btn btn-primary"
-              >
-                Demander un contrat
-              </button>
-            </div>
-          </div>
-        );
-
-      default:
-        return (
-          <div>
-            <h4 className="mb-4">Fonctionnalité à venir</h4>
-            <div className="text-center py-5">
-              <i className="bi bi-tools display-1 text-muted"></i>
-              <h5 className="mt-3">En développement</h5>
-              <p className="text-muted">Cette fonctionnalité sera bientôt disponible.</p>
-            </div>
-          </div>
-        );
-    }
-  };
+  const renderProfile = () => (
+    <Card title="Mon profil">
+      <form>
+        <div className="mb-3">
+          <label className="form-label">Prénom</label>
+          <input 
+            type="text" 
+            className="form-control" 
+            value={currentUser.user.prenom} 
+            readOnly 
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Nom</label>
+          <input 
+            type="text" 
+            className="form-control" 
+            value={currentUser.user.nom} 
+            readOnly 
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Email</label>
+          <input 
+            type="email" 
+            className="form-control" 
+            value={currentUser.user.email} 
+            readOnly 
+          />
+        </div>
+        <Button variant="primary">Modifier le profil</Button>
+      </form>
+    </Card>
+  );
 
   return (
-    <Container className="py-5 page-content">
-      <h2 className="mb-4">Mon tableau de bord</h2>
+    <Layout>
+      <h2 className="mb-4">Dashboard - {getRoleLabel(currentUser.user.role)}</h2>
       
-      <Tab.Container defaultActiveKey="apercu">
-        <Row>
-          <Col md={3} className="mb-4">
-            <Card className="border-0 shadow-sm">
-              <Card.Body>
-                <Nav variant="pills" className="flex-column">
-                  {tabs.map(tab => (
-                    <Nav.Item key={tab.key}>
-                      <Nav.Link eventKey={tab.key}>
-                        <i className={`${tab.icon} me-2`}></i>
-                        {tab.title}
-                      </Nav.Link>
-                    </Nav.Item>
-                  ))}
-                </Nav>
-              </Card.Body>
-            </Card>
-          </Col>
-          
-          <Col md={9}>
-            <Card className="border-0 shadow-sm">
-              <Card.Body>
-                <Tab.Content>
-                  {tabs.map(tab => (
-                    <Tab.Pane key={tab.key} eventKey={tab.key}>
-                      {renderTabContent(tab.key)}
-                    </Tab.Pane>
-                  ))}
-                </Tab.Content>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      </Tab.Container>
-    </Container>
+      {/* Navigation simple */}
+      <div className="mb-4">
+        <Button
+          variant={activeTab === 'overview' ? 'primary' : 'secondary'}
+          onClick={() => setActiveTab('overview')}
+          className="me-2"
+        >
+          Vue d'ensemble
+        </Button>
+        <Button
+          variant={activeTab === 'annonces' ? 'primary' : 'secondary'}
+          onClick={() => setActiveTab('annonces')}
+          className="me-2"
+        >
+          Annonces
+        </Button>
+        <Button
+          variant={activeTab === 'profile' ? 'primary' : 'secondary'}
+          onClick={() => setActiveTab('profile')}
+        >
+          Profil
+        </Button>
+      </div>
+
+      {/* Contenu selon l'onglet */}
+      {activeTab === 'overview' && renderOverview()}
+      {activeTab === 'annonces' && renderAnnonces()}
+      {activeTab === 'profile' && renderProfile()}
+    </Layout>
   );
 };
 

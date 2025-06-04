@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import authService, { AuthResponse } from '../services/authService';
+import { authApi } from '../services/api';
+import { AuthResponse } from '../types';
 
 interface AuthContextType {
   currentUser: AuthResponse | null;
@@ -17,16 +18,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const user = authService.getCurrentUser();
-    setCurrentUser(user);
+    // Vérifier si un utilisateur est déjà connecté au démarrage
+    const token = localStorage.getItem('authToken');
+    const userData = localStorage.getItem('currentUser');
+    
+    if (token && userData) {
+      try {
+        setCurrentUser(JSON.parse(userData));
+      } catch (error) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
+      }
+    }
     setLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const userData = await authService.login({ email, password });
-      setCurrentUser(userData);
+      const response = await authApi.login({ email, password });
+      
+      // Stocker le token et les données utilisateur
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('currentUser', JSON.stringify(response));
+      
+      setCurrentUser(response);
+    } catch (error) {
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -35,15 +53,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const register = async (userData: any) => {
     setLoading(true);
     try {
-      const user = await authService.register(userData);
-      setCurrentUser(user);
+      const response = await authApi.register(userData);
+      
+      // Stocker le token et les données utilisateur si la réponse contient un token
+      if (response.token) {
+        localStorage.setItem('authToken', response.token);
+        localStorage.setItem('currentUser', JSON.stringify(response));
+        setCurrentUser(response);
+      }
+    } catch (error) {
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
   const logout = () => {
-    authService.logout();
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
     setCurrentUser(null);
   };
 

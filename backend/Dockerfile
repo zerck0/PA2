@@ -1,6 +1,6 @@
 # Dockerfile multi-étapes pour le backend Spring Boot
 # Étape 1: BUILD - Construction de l'application
-FROM openjdk:21-jdk-slim AS build
+FROM eclipse-temurin:21-jdk AS build
 
 # Métadonnées de l'image
 LABEL maintainer="Tom Georgin"
@@ -29,7 +29,7 @@ COPY src src
 RUN mvn clean package -DskipTests -B
 
 # Étape 2: RUNTIME - Exécution de l'application
-FROM openjdk:21-jre-slim AS runtime
+FROM eclipse-temurin:21-jre AS runtime
 
 # Métadonnées de l'image finale
 LABEL maintainer="Tom Georgin"
