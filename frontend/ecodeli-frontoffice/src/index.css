@@ -1,46 +1,30 @@
 :root {
   /* Couleurs principales de la charte EcoDeli */
-  --primary-color: #2D8A3E; /* Vert principal */
-  --primary-light: #9AC49B; /* Vert clair */
-  --primary-medium: #79B17B; /* Vert intermédiaire */
-  --primary-pale: #BCD8BB; /* Beige/vert pâle */
-  --secondary-color: #1B3C73; /* Bleu foncé */
+  --primary-color: #2D8A3E;
+  --primary-light: #9AC49B;
+  --secondary-color: #1B3C73;
   --white: #FFFFFF;
   --black: #212529;
   
-  /* Polices */
-  font-family: 'DM Sans', 'Roboto', system-ui, sans-serif;
-  line-height: 1.6;
-  font-weight: 400;
-  
-  /* Autres variables */
+  /* Variables générales */
   --border-radius: 8px;
   --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   --transition: all 0.3s ease;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* Police par défaut */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+  
+  /* Mode sombre/clair */
+  color-scheme: light;
+  color: var(--black);
+  background-color: var(--white);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-/* Utiliser la police Yeseva One pour les titres */
-h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display-6 {
-  font-family: 'Yeseva One', serif;
-  font-weight: 700;
 }
 
 body {
@@ -51,42 +35,47 @@ body {
   min-width: 320px;
 }
 
+#root {
+  min-height: 100vh;
+}
+
+/* Zone de contenu principal */
 .main-content {
   flex: 1 0 auto;
-  min-height: calc(100vh - 150px); /* Pour que le footer reste en bas */
+  min-height: calc(100vh - 150px);
+}
+
+/* Titres */
+h1, h2, h3, h4, h5, h6, .display-1, .display-2, .display-3, .display-4, .display-5, .display-6 {
+  font-weight: 700;
+  color: var(--black);
 }
 
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+  font-size: 2.5rem;
+  line-height: 1.2;
 }
 
-/* Styles des boutons */
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
+/* Liens */
+a {
   font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
 }
 
+a:hover {
+  color: #246831;
+}
+
+/* Boutons principaux */
 .btn-primary {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
   color: var(--white);
   border-radius: var(--border-radius);
   transition: var(--transition);
+  font-weight: 600;
 }
 
 .btn-primary:hover, 
@@ -116,72 +105,38 @@ button:focus-visible {
   color: var(--white);
 }
 
-/* Styles pour les cards */
+/* Cards */
 .card {
   border-radius: var(--border-radius);
-  border: none;
+  border: 1px solid #dee2e6;
   box-shadow: var(--box-shadow);
 }
 
-/* Animations et effets */
+/* Effets hover */
 .hover-card {
   transition: var(--transition);
   overflow: hidden;
 }
 
 .hover-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-3px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
 }
 
-/* Étapes */
-.step-circle {
-  width: 50px;
-  height: 50px;
-  background-color: var(--primary-color);
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  font-weight: bold;
-}
-
-/* Icon wrapper */
-.icon-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: var(--transition);
-}
-
-.hover-card:hover .icon-wrapper {
-  transform: scale(1.1);
-}
-
-/* Hero section */
-.hero-section {
-  margin-top: -56px;
-  position: relative;
-}
-
-/* Media queries */
+/* Media queries responsive */
 @media (max-width: 768px) {
-  .hero-bg {
-    height: 60vh !important;
+  h1 {
+    font-size: 2rem;
+  }
+  
+  .container {
+    padding-left: 15px;
+    padding-right: 15px;
   }
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
+@media (max-width: 576px) {
+  h1 {
+    font-size: 1.75rem;
   }
 }
