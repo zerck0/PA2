@@ -5,6 +5,7 @@ import com.ecodeli.model.dto.InscriptionDTO;
 import com.ecodeli.backend.repository.*;
 import com.ecodeli.backend.security.JwtService;
 import com.ecodeli.backend.service.UtilisateurService;
+import com.ecodeli.backend.service.VerificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -37,6 +38,9 @@ public class InscriptionController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private VerificationService verificationService;
 
     public InscriptionController(
             LivreurRepository livreurRepo,
@@ -116,22 +120,15 @@ public class InscriptionController {
                 }
             }
             
-            // Génération du token JWT
-            String token = jwtService.generateToken(utilisateur);
+            // Envoyer le code de vérification par email
+            verificationService.generateAndSendCode(utilisateur.getId());
             
-            // Préparation de la réponse
+            // Préparation de la réponse (sans token ni connexion automatique)
             Map<String, Object> response = new HashMap<>();
-            response.put("token", token);
-            
-            // Informations de l'utilisateur (sans le mot de passe)
-            Map<String, Object> userInfo = new HashMap<>();
-            userInfo.put("id", utilisateur.getId());
-            userInfo.put("nom", utilisateur.getNom());
-            userInfo.put("prenom", utilisateur.getPrenom());
-            userInfo.put("email", utilisateur.getEmail());
-            userInfo.put("role", utilisateur.getRole().toString());
-            
-            response.put("user", userInfo);
+            response.put("message", "Inscription réussie ! Un code de vérification a été envoyé à votre adresse email.");
+            response.put("userId", utilisateur.getId());
+            response.put("email", utilisateur.getEmail());
+            response.put("requiresVerification", true);
             
             return ResponseEntity.ok(response);
         } catch (DataIntegrityViolationException e) {

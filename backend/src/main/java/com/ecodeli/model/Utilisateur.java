@@ -30,8 +30,15 @@ public abstract class Utilisateur {
     @Enumerated(EnumType.STRING)
     protected Role role;
 
+    @Enumerated(EnumType.STRING)
+    private StatutCompte statut = StatutCompte.NON_VERIFIE;
+
     public enum Role {
         LIVREUR, CLIENT, PRESTATAIRE, COMMERCANT
+    }
+
+    public enum StatutCompte {
+        NON_VERIFIE, EN_ATTENTE, VALIDE, SUSPENDU, REFUSE
     }
 
 }

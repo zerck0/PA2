@@ -1,0 +1,85 @@
+# ===========================================
+# FICHIERS SENSIBLES À EXCLURE (SÉCURITÉ)
+# ===========================================
+# Variables d'environnement (mots de passe, clés secrètes)
+.env
+.env.local
+.env.production
+.env.staging
+
+# ===========================================
+# DOSSIERS ET FICHIERS SYSTÈME
+# ===========================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+*.tmp
+*.temp
+Desktop.ini
+
+# ===========================================
+# LOGS ET FICHIERS TEMPORAIRES
+# ===========================================
+# Logs
+*.log
+logs/
+docker-volumes/*/logs/
+
+# Fichiers temporaires
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# ===========================================
+# DOCKER VOLUMES (DONNÉES PERSISTANTES)
+# ===========================================
+# Volumes Docker (données de développement local)
+docker-volumes/postgres/
+docker-volumes/backend-logs/
+docker-volumes/postgres-logs/
+
+# ===========================================
+# ÉDITEURS ET IDEs
+# ===========================================
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-*
+
+# Vim
+*.swp
+*.swo
+
+# ===========================================
+# AUTRES FICHIERS À EXCLURE
+# ===========================================
+# Node modules (si utilisé)
+node_modules/
+
+# Cache
+.cache/
+*.cache
+
+# Backup files
+*.bak
+*.backup
+
+# Database dumps
+*.sql
+*.dump
