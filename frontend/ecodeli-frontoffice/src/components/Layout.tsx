@@ -22,7 +22,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <nav className="navbar navbar-expand-lg navbar-light bg-light">
         <div className="container">
           <Link className="navbar-brand" to="/">
-            <img src="/src/assets/logoEco.png" alt="EcoDeli" height="40" />
+            <img src="/logoEco.png" alt="EcoDeli" height="40" />
           </Link>
           
           <div className="navbar-nav ms-auto">
