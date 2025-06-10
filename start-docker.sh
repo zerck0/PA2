@@ -15,24 +15,24 @@ NC='\033[0m' # No Color
 
 # Fonctions utilitaires
 print_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
+    echo -e "${BLUE}[INFO] $1${NC}"
 }
 
 print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${GREEN}[SUCCESS] $1${NC}"
 }
 
 print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}[WARNING] $1${NC}"
 }
 
 print_error() {
-    echo -e "${RED}❌ $1${NC}"
+    echo -e "${RED}[ERROR] $1${NC}"
 }
 
 print_header() {
     echo -e "${GREEN}"
-    echo "🐳 ======================================="
+    echo "======================================="
     echo "   EcoDeli - Conteneurisation Docker"
     echo "   Projet PA2 ESGI 2024-2025"
     echo "=======================================${NC}"
@@ -84,14 +84,14 @@ setup_environment() {
 show_menu() {
     echo ""
     print_info "Choisissez l'environnement à démarrer:"
-    echo "1) 🔧 Développement (avec hot reload)"
-    echo "2) 🚀 Production (optimisé)"
-    echo "3) 🛑 Arrêter tous les services"
-    echo "4) 🧹 Nettoyer (containers, images, volumes)"
-    echo "5) 📊 Voir le statut des services"
-    echo "6) 📋 Voir les logs"
-    echo "7) ❓ Aide"
-    echo "8) 🚪 Quitter"
+    echo "1) Développement (avec hot reload)"
+    echo "2) Production (optimisé)"
+    echo "3) Arrêter tous les services"
+    echo "4) Nettoyer (containers, images, volumes)"
+    echo "5) Voir le statut des services"
+    echo "6) Voir les logs"
+    echo "7) Aide"
+    echo "8) Quitter"
     echo ""
 }
 
@@ -108,11 +108,11 @@ start_development() {
     echo ""
     print_success "Services démarrés en mode développement!"
     echo ""
-    echo "🌐 URLs d'accès:"
-    echo "   • Frontend Frontoffice: http://localhost:3000"
-    echo "   • Frontend Backoffice:  http://localhost:3001"
-    echo "   • API Backend:          http://localhost:8080"
-    echo "   • Base de données:      localhost:5432"
+    echo "URLs d'accès:"
+    echo "   Frontend Frontoffice: http://localhost:3000"
+    echo "   Frontend Backoffice:  http://localhost:3001"
+    echo "   API Backend:          http://localhost:8080"
+    echo "   Base de données:      localhost:5432"
     echo ""
     print_info "Pour voir les logs: docker compose -f docker-compose.dev.yml logs -f"
 }
@@ -130,10 +130,10 @@ start_production() {
     echo ""
     print_success "Services démarrés en mode production!"
     echo ""
-    echo "🌐 URLs d'accès:"
-    echo "   • Frontend Frontoffice: http://localhost:3000"
-    echo "   • Frontend Backoffice:  http://localhost:3001"
-    echo "   • API Backend:          http://localhost:8080"
+    echo "URLs d'accès:"
+    echo "   Frontend Frontoffice: http://localhost:3000"
+    echo "   Frontend Backoffice:  http://localhost:3001"
+    echo "   API Backend:          http://localhost:8080"
     echo ""
     print_info "Pour voir les logs: docker compose -f docker-compose.prod.yml logs -f"
 }
@@ -150,7 +150,7 @@ stop_services() {
 
 # Nettoyage
 cleanup() {
-    print_warning "⚠️  ATTENTION: Cette action va supprimer tous les conteneurs, images et volumes Docker!"
+    print_warning "ATTENTION: Cette action va supprimer tous les conteneurs, images et volumes Docker!"
     echo "Cela inclut TOUTES les données de la base de données."
     echo ""
     read -p "Êtes-vous sûr de vouloir continuer? (y/N): " -n 1 -r
@@ -180,11 +180,11 @@ show_status() {
     print_info "Statut des services:"
     echo ""
     
-    echo "🔧 Développement:"
+    echo "Développement:"
     docker compose -f docker-compose.dev.yml ps 2>/dev/null || echo "   Aucun service en cours d'exécution"
     
     echo ""
-    echo "🚀 Production:"
+    echo "Production:"
     docker compose -f docker-compose.prod.yml ps 2>/dev/null || echo "   Aucun service en cours d'exécution"
 }
 
@@ -217,21 +217,21 @@ show_help() {
     echo ""
     print_info "Aide - Commandes Docker utiles:"
     echo ""
-    echo "📋 Commandes de base:"
+    echo "Commandes de base:"
     echo "   docker compose -f docker-compose.dev.yml up -d     # Démarrer en développement"
     echo "   docker compose -f docker-compose.prod.yml up -d    # Démarrer en production"
     echo "   docker compose -f docker-compose.dev.yml down      # Arrêter les services"
     echo ""
-    echo "🔍 Monitoring:"
+    echo "Monitoring:"
     echo "   docker compose ps                                  # Statut des conteneurs"
     echo "   docker compose logs -f [service]                   # Logs en temps réel"
     echo "   docker stats                                       # Statistiques des conteneurs"
     echo ""
-    echo "🛠️  Maintenance:"
+    echo "Maintenance:"
     echo "   docker compose up --build                          # Reconstruire les images"
     echo "   docker system prune -a                             # Nettoyer le système"
     echo ""
-    print_info "Pour plus d'informations, consultez DOCKER-README.md"
+    print_info "Pour plus d'informations, consultez GUIDE-DEPLOIEMENT-DOCKER.md"
 }
 
 # Programme principal
