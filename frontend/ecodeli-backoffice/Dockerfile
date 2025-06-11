@@ -25,12 +25,43 @@ COPY . .
 # Construction de l'application pour la production
 RUN npm run build
 
-# Étape 2: RUNTIME - Serveur web nginx
-FROM nginx:alpine AS runtime
+# Étape 2: DEVELOPMENT - Serveur de développement avec hot reload
+FROM node:20-alpine AS development
 
-# Métadonnées de l'image finale
+# Métadonnées de l'image de développement
 LABEL maintainer="Tom Georgin"
-LABEL description="EcoDeli Backoffice - Production"
+LABEL description="EcoDeli Backoffice - Development Server"
+
+# Définition du répertoire de travail
+WORKDIR /app
+
+# Copie des fichiers de dépendances
+COPY package*.json ./
+
+# Installation des dépendances de développement
+RUN npm ci
+
+# Variables d'environnement pour le développement
+ENV NODE_ENV=development
+ENV VITE_API_URL=http://localhost:8080
+
+# Exposition du port Vite
+EXPOSE 5173
+
+# Health check pour le développement
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:5173/ || exit 1
+
+# Commande par défaut pour le développement
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+
+# Étape 3: PRODUCTION - Serveur web nginx optimisé
+FROM nginx:alpine AS production
+
+# Métadonnées de l'image de production
+LABEL maintainer="Tom Georgin"
+LABEL description="EcoDeli Backoffice - Production Optimized"
+LABEL version="1.0.0"
 
 # Création d'un utilisateur non-root pour la sécurité
 RUN addgroup -g 1002 -S ecodeli && \
