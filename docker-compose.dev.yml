@@ -34,10 +34,7 @@ services:
   # BACKEND API SPRING BOOT
   # ===========================================
   ecodeli-backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-      target: runtime
+    image: zercko/ecodeli-backend:1.0
     container_name: ecodeli-backend-dev
     restart: unless-stopped
     depends_on:
@@ -74,7 +71,7 @@ services:
     build:
       context: ./frontend/ecodeli-frontoffice
       dockerfile: Dockerfile
-      target: build
+      target: development
     container_name: ecodeli-frontoffice-dev
     restart: unless-stopped
     depends_on:
@@ -91,7 +88,6 @@ services:
       - /app/node_modules
     networks:
       - ecodeli-network
-    command: npm run dev -- --host 0.0.0.0
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5173"]
       interval: 30s
@@ -106,7 +102,7 @@ services:
     build:
       context: ./frontend/ecodeli-backoffice
       dockerfile: Dockerfile
-      target: build
+      target: development
     container_name: ecodeli-backoffice-dev
     restart: unless-stopped
     depends_on:
@@ -123,7 +119,6 @@ services:
       - /app/node_modules
     networks:
       - ecodeli-network
-    command: npm run dev -- --host 0.0.0.0
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5173"]
       interval: 30s
