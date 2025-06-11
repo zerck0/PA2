@@ -104,62 +104,70 @@ docker compose -f docker-compose.prod.yml logs -f
 
 ## UTILISATION DU REGISTRE D'IMAGES
 
-### Configuration du registre
+### Configuration des identifiants Docker Hub
 
-Pour utiliser un registre d'images externe (Docker Hub, GitLab Registry, etc.) :
-
-1. **Connexion au registre :**
+1. **Connexion à Docker Hub :**
 ```bash
-docker login <registry-url>
+docker login
+# Entrer votre nom d'utilisateur Docker Hub : zercko
+# Entrer votre mot de passe Docker Hub
 ```
 
-2. **Construction et tag des images :**
+### Construction et tag des images
+
+2. **Construire et taguer les images avec le nom du registre :**
 ```bash
 # Backend
-docker build -t your-registry/ecodeli-backend:1.0.0 ./backend
-docker build -t your-registry/ecodeli-backend:latest ./backend
+docker build -t zercko/ecodeli-backend:1.0.0 ./backend
+docker build -t zercko/ecodeli-backend:latest ./backend
 
 # Frontend Frontoffice
-docker build -t your-registry/ecodeli-frontoffice:1.0.0 ./frontend/ecodeli-frontoffice
-docker build -t your-registry/ecodeli-frontoffice:latest ./frontend/ecodeli-frontoffice
+docker build -t zercko/ecodeli-frontoffice:1.0.0 ./frontend/ecodeli-frontoffice
+docker build -t zercko/ecodeli-frontoffice:latest ./frontend/ecodeli-frontoffice
 
 # Frontend Backoffice
-docker build -t your-registry/ecodeli-backoffice:1.0.0 ./frontend/ecodeli-backoffice
-docker build -t your-registry/ecodeli-backoffice:latest ./frontend/ecodeli-backoffice
+docker build -t zercko/ecodeli-backoffice:1.0.0 ./frontend/ecodeli-backoffice
+docker build -t zercko/ecodeli-backoffice:latest ./frontend/ecodeli-backoffice
 ```
 
-3. **Push vers le registre :**
+### Push vers le registre Docker Hub
+
+3. **Pousser les images vers Docker Hub :**
 ```bash
-docker push your-registry/ecodeli-backend:1.0.0
-docker push your-registry/ecodeli-backend:latest
-docker push your-registry/ecodeli-frontoffice:1.0.0
-docker push your-registry/ecodeli-frontoffice:latest
-docker push your-registry/ecodeli-backoffice:1.0.0
-docker push your-registry/ecodeli-backoffice:latest
+docker push zercko/ecodeli-backend:1.0.0
+docker push zercko/ecodeli-backend:latest
+docker push zercko/ecodeli-frontoffice:1.0.0
+docker push zercko/ecodeli-frontoffice:latest
+docker push zercko/ecodeli-backoffice:1.0.0
+docker push zercko/ecodeli-backoffice:latest
 ```
 
-4. **Modification des fichiers Docker Compose :**
+### Récupération et utilisation des images
+
+4. **Pull des images depuis Docker Hub :**
+```bash
+docker pull zercko/ecodeli-backend:1.0.0
+docker pull zercko/ecodeli-frontoffice:1.0.0
+docker pull zercko/ecodeli-backoffice:1.0.0
+```
+
+### Modification des fichiers Docker Compose
+
+5. **Pour utiliser les images du registre au lieu du build local :**
+
 Remplacez les sections `build` par des références aux images du registre :
 
 ```yaml
-# Exemple pour le backend
+# Exemple pour le backend dans docker-compose.dev.yml ou docker-compose.prod.yml
 ecodeli-backend:
-  image: your-registry/ecodeli-backend:1.0.0
-  # Supprimez la section build:
+  image: zercko/ecodeli-backend:1.0.0
+  # Commentez ou supprimez la section build:
   # build:
   #   context: ./backend
   #   dockerfile: Dockerfile
 ```
 
-### Pull des images
-
-Pour récupérer les images depuis le registre :
-
-```bash
-docker pull your-registry/ecodeli-backend:1.0.0
-docker pull your-registry/ecodeli-frontoffice:1.0.0
-docker pull your-registry/ecodeli-backoffice:1.0.0
-```
+Répétez cette modification pour les trois services dans vos fichiers Docker Compose.
 
 ---
 
