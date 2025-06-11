@@ -34,10 +34,7 @@ services:
   # BACKEND API SPRING BOOT
   # ===========================================
   ecodeli-backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-      target: production
+    image: zercko/ecodeli-backend:1.0
     container_name: ecodeli-backend-prod
     restart: always
     depends_on:
@@ -81,10 +78,7 @@ services:
   # FRONTEND FRONTOFFICE
   # ===========================================
   ecodeli-frontoffice:
-    build:
-      context: ./frontend/ecodeli-frontoffice
-      dockerfile: Dockerfile
-      target: production
+    image: zercko/ecodeli-frontoffice:1.0
     container_name: ecodeli-frontoffice-prod
     restart: always
     depends_on:
@@ -106,10 +100,7 @@ services:
   # FRONTEND BACKOFFICE
   # ===========================================
   ecodeli-backoffice:
-    build:
-      context: ./frontend/ecodeli-backoffice
-      dockerfile: Dockerfile
-      target: production
+    image: zercko/ecodeli-backoffice:1.0
     container_name: ecodeli-backoffice-prod
     restart: always
     depends_on:

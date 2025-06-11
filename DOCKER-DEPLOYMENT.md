@@ -53,6 +53,47 @@ docker-compose -f docker-compose.prod.yml ps
 - **Frontend Backoffice** : http://localhost:3001
 - **Backend API** : http://localhost:8080
 
+## 📦 Utilisation du Registre Docker Hub
+
+### Configuration des identifiants Docker Hub
+
+```bash
+# Se connecter à Docker Hub
+docker login
+# Entrer votre nom d'utilisateur : zercko
+# Entrer votre mot de passe Docker Hub
+```
+
+### Construction et envoi des images vers le registre
+
+```bash
+# Construire et taguer l'image backend
+docker build -t zercko/ecodeli-backend:1.0 --target production ./backend
+
+# Construire et taguer l'image frontoffice
+docker build -t zercko/ecodeli-frontoffice:1.0 --target production ./frontend/ecodeli-frontoffice
+
+# Construire et taguer l'image backoffice
+docker build -t zercko/ecodeli-backoffice:1.0 --target production ./frontend/ecodeli-backoffice
+
+# Envoyer les images vers Docker Hub
+docker push zercko/ecodeli-backend:1.0
+docker push zercko/ecodeli-frontoffice:1.0
+docker push zercko/ecodeli-backoffice:1.0
+```
+
+### Récupération des images depuis le registre
+
+```bash
+# Récupérer les images depuis Docker Hub
+docker pull zercko/ecodeli-backend:1.0
+docker pull zercko/ecodeli-frontoffice:1.0
+docker pull zercko/ecodeli-backoffice:1.0
+
+# Démarrer en production avec les images du registre
+docker-compose -f docker-compose.prod.yml up -d
+```
+
 ## 🔧 Commandes Utiles
 
 ### Gestion des Services
