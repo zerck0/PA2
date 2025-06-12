@@ -1,16 +1,9 @@
 #!/bin/bash
 
-# Script simplifié pour EcoDeli Docker
-# Auteur: Tom Georgin
-# Projet: EcoDeli PA2 ESGI 2024-2025
 
-echo "======================================="
-echo "   EcoDeli - Conteneurisation Docker"
-echo "   Projet PA2 ESGI 2024-2025"
-echo "======================================="
-echo ""
+echo "EcoDeli - Conteneurisation Docker"
 
-# Fonction pour afficher le menu
+
 show_menu() {
     echo ""
     echo "Choisissez une option:"
@@ -22,7 +15,6 @@ show_menu() {
     echo ""
 }
 
-# Démarrage en développement
 start_dev() {
     echo "[INFO] Démarrage de l'environnement de développement..."
     docker compose -f docker-compose.dev.yml up -d
@@ -35,7 +27,6 @@ start_dev() {
     echo ""
 }
 
-# Démarrage en production
 start_prod() {
     echo "[INFO] Démarrage de l'environnement de production..."
     docker compose -f docker-compose.prod.yml up -d
@@ -48,7 +39,6 @@ start_prod() {
     echo ""
 }
 
-# Arrêt des services
 stop_services() {
     echo "[INFO] Arrêt de tous les services..."
     docker compose -f docker-compose.dev.yml down 2>/dev/null
@@ -56,7 +46,6 @@ stop_services() {
     echo "Services arrêtés."
 }
 
-# Affichage des logs
 show_logs() {
     echo ""
     echo "Choisir l'environnement:"
@@ -80,7 +69,6 @@ show_logs() {
     esac
 }
 
-# Boucle principale
 while true; do
     show_menu
     read -p "Votre choix (1-5): " choice

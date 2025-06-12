@@ -1,38 +1,35 @@
-# Dockerfile multi-étapes pour le backend Spring Boot
-# Étape 1: BUILD - Construction de l'application
+# On commence par la construction de notre application
 FROM eclipse-temurin:21-jdk AS build
 
-# Métadonnées de l'image
-LABEL maintainer="Tom Georgin"
+# Un peu d'info sur notre image
 LABEL description="EcoDeli Backend API - Spring Boot"
 LABEL version="1.0.0"
 
-# Installation de Maven
+# On a besoin de Maven pour compiler notre projet
 RUN apt-get update && apt-get install -y maven && rm -rf /var/lib/apt/lists/*
 
-# Définition du répertoire de travail
+# On se place dans le bon dossier
 WORKDIR /app
 
-# Copie des fichiers de configuration Maven
+# On récupère d'abord juste les dépendances Maven
 COPY pom.xml .
 COPY mvnw .
 COPY mvnw.cmd .
 COPY .mvn .mvn
 
-# Téléchargement des dépendances (optimisation des layers Docker)
+# On télécharge les dépendances en avance pour gagner du temps plus tard
 RUN mvn dependency:go-offline -B
 
-# Copie du code source
+# Maintenant on peut ajouter notre code
 COPY src src
 
-# Construction de l'application
+# Et on compile le tout !
 RUN mvn clean package -DskipTests -B
 
-# Étape 2: RUNTIME - Exécution de l'application (développement)
+# Passons à l'image de développement
 FROM eclipse-temurin:21-jre AS runtime
 
-# Métadonnées de l'image finale
-LABEL maintainer="Tom Georgin"
+# Quelques infos sur cette image de dev
 LABEL description="EcoDeli Backend API - Runtime Development"
 
 # Création d'un utilisateur non-root pour la sécurité
@@ -48,7 +45,7 @@ RUN apt-get update && \
     netcat-traditional \
     && rm -rf /var/lib/apt/lists/*
 
-# Copie du JAR depuis l'étape de build
+# Copie du JAR 
 COPY --from=build /app/target/*.jar app.jar
 
 # Création du dossier de logs
@@ -79,7 +76,6 @@ ENTRYPOINT exec java $JAVA_OPTS -jar app.jar
 FROM eclipse-temurin:21-jre AS production
 
 # Métadonnées de l'image de production
-LABEL maintainer="Tom Georgin"
 LABEL description="EcoDeli Backend API - Production"
 LABEL version="1.0.0"
 
@@ -116,7 +112,7 @@ ENV SERVER_PORT=8080
 # Exposition du port
 EXPOSE 8080
 
-# Health check optimisé pour la production
+# Healthcheck pour la production
 HEALTHCHECK --interval=60s --timeout=15s --start-period=120s --retries=3 \
   CMD curl -f http://localhost:8080/actuator/health || exit 1
 

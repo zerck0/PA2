@@ -1,12 +1,9 @@
-# Docker Compose pour l'environnement de DÉVELOPPEMENT
-# Usage: docker compose -f docker-compose.dev.yml up
+# docker compose -f docker-compose.dev.yml up
 
 version: '3.8'
 
 services:
-  # ===========================================
   # BASE DE DONNÉES POSTGRESQL
-  # ===========================================
   ecodeli-db:
     image: postgres:15-alpine
     container_name: ecodeli-db-dev
@@ -30,9 +27,7 @@ services:
       retries: 5
       start_period: 30s
 
-  # ===========================================
   # BACKEND API SPRING BOOT
-  # ===========================================
   ecodeli-backend:
     image: zercko/ecodeli-backend:1.0
     container_name: ecodeli-backend-dev
@@ -49,10 +44,22 @@ services:
       SPRING_JPA_SHOW_SQL: ${SPRING_JPA_SHOW_SQL:-true}
       SERVER_PORT: ${SERVER_PORT:-8080}
       JAVA_OPTS: ${JAVA_OPTS:--Xmx512m -Xms256m}
+      # Variables email
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD}
+      SPRING_MAIL_SMTP_AUTH: ${SPRING_MAIL_SMTP_AUTH}
+      SPRING_MAIL_SMTP_STARTTLS_ENABLE: ${SPRING_MAIL_SMTP_STARTTLS_ENABLE}
+      SPRING_MAIL_SMTP_STARTTLS_REQUIRED: ${SPRING_MAIL_SMTP_STARTTLS_REQUIRED}
+      ECODELI_EMAIL_ENABLED: ${ECODELI_EMAIL_ENABLED}
+      # Variables JWT
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     volumes:
-      # Hot reload pour le développement (optionnel)
+      # Hot reload pour le développement
       - ./backend/src:/app/src:ro
       - backend_logs:/app/logs
     networks:
@@ -64,9 +71,7 @@ services:
       retries: 3
       start_period: 60s
 
-  # ===========================================
   # FRONTEND FRONTOFFICE
-  # ===========================================
   ecodeli-frontoffice:
     build:
       context: ./frontend/ecodeli-frontoffice
@@ -89,15 +94,13 @@ services:
     networks:
       - ecodeli-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
 
-  # ===========================================
   # FRONTEND BACKOFFICE
-  # ===========================================
   ecodeli-backoffice:
     build:
       context: ./frontend/ecodeli-backoffice
@@ -120,23 +123,19 @@ services:
     networks:
       - ecodeli-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
 
-# ===========================================
 # RÉSEAUX
-# ===========================================
 networks:
   ecodeli-network:
     driver: bridge
     name: ecodeli-network
 
-# ===========================================
 # VOLUMES
-# ===========================================
 volumes:
   postgres_data:
     driver: local

@@ -1,12 +1,9 @@
-# Docker Compose pour l'environnement de PRODUCTION
-# Usage: docker compose -f docker-compose.prod.yml up -d
+# docker compose -f docker-compose.prod.yml up -d
 
 version: '3.8'
 
 services:
-  # ===========================================
   # BASE DE DONNÉES POSTGRESQL
-  # ===========================================
   ecodeli-db:
     image: postgres:15-alpine
     container_name: ecodeli-db-prod
@@ -30,9 +27,7 @@ services:
       retries: 3
       start_period: 60s
 
-  # ===========================================
   # BACKEND API SPRING BOOT
-  # ===========================================
   ecodeli-backend:
     image: zercko/ecodeli-backend:1.0
     container_name: ecodeli-backend-prod
@@ -45,7 +40,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://ecodeli-db:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INIT_MODE: always
       SPRING_JPA_SHOW_SQL: false
       SERVER_PORT: 8080
       JAVA_OPTS: -Xmx1g -Xms512m -XX:+UseG1GC
@@ -74,9 +70,7 @@ services:
       retries: 3
       start_period: 120s
 
-  # ===========================================
   # FRONTEND FRONTOFFICE
-  # ===========================================
   ecodeli-frontoffice:
     image: zercko/ecodeli-frontoffice:1.0
     container_name: ecodeli-frontoffice-prod
@@ -96,9 +90,7 @@ services:
       retries: 3
       start_period: 30s
 
-  # ===========================================
   # FRONTEND BACKOFFICE
-  # ===========================================
   ecodeli-backoffice:
     image: zercko/ecodeli-backoffice:1.0
     container_name: ecodeli-backoffice-prod
@@ -118,17 +110,13 @@ services:
       retries: 3
       start_period: 30s
 
-# ===========================================
 # RÉSEAUX
-# ===========================================
 networks:
   ecodeli-network-prod:
     driver: bridge
     name: ecodeli-network-prod
 
-# ===========================================
 # VOLUMES
-# ===========================================
 volumes:
   postgres_data_prod:
     driver: local
