@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
-import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 
 const Home: React.FC = () => {
