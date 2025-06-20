@@ -5,6 +5,7 @@ export interface User {
   prenom: string;
   telephone?: string;
   role: 'CLIENT' | 'LIVREUR' | 'COMMERCANT' | 'PRESTATAIRE';
+  statut: 'NON_VERIFIE' | 'EN_ATTENTE' | 'VALIDE' | 'SUSPENDU' | 'REFUSE';
 }
 
 export interface AuthResponse {

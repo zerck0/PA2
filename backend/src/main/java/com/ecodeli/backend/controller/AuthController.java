@@ -67,6 +67,7 @@ public class AuthController {
         userInfo.put("prenom", utilisateur.getPrenom());
         userInfo.put("email", utilisateur.getEmail());
         userInfo.put("role", utilisateur.getRole().toString());
+        userInfo.put("statut", utilisateur.getStatut().toString());
         
         response.put("user", userInfo);
         
@@ -98,7 +99,8 @@ public class AuthController {
                         "nom", utilisateur.get().getNom(),
                         "prenom", utilisateur.get().getPrenom(),
                         "email", utilisateur.get().getEmail(),
-                        "role", utilisateur.get().getRole().toString()
+                        "role", utilisateur.get().getRole().toString(),
+                        "statut", utilisateur.get().getStatut().toString()
                     ));
                     return ResponseEntity.ok(response);
                 }

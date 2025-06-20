@@ -33,6 +33,21 @@ const ClientDashboard: React.FC = () => {
 
   const renderOverview = () => (
     <div>
+      {/* Alerte pour compte non vérifié */}
+      {currentUser?.user.statut === 'NON_VERIFIE' && (
+        <div className="alert alert-warning d-flex align-items-center mb-4" role="alert">
+          <i className="bi bi-exclamation-triangle me-3" style={{fontSize: '1.5rem'}}></i>
+          <div className="flex-grow-1">
+            <strong>Compte non vérifié</strong><br />
+            Votre adresse email n'est pas encore vérifiée. Vérifiez votre boîte mail ou cliquez sur le bouton ci-dessous pour renvoyer l'email de vérification.
+          </div>
+          <Button variant="secondary" size="sm" className="ms-3">
+            <i className="bi bi-envelope me-2"></i>
+            Renvoyer l'email
+          </Button>
+        </div>
+      )}
+
       {/* Stats Cards */}
       <div className="row g-4 mb-4">
         <div className="col-md-3 col-sm-6">

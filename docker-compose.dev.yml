@@ -91,7 +91,7 @@ services:
       NODE_ENV: development
       # Pas d'URL API externe, on utilise le proxy Vite
     ports:
-      - "3000:5173"
+      - "${FRONTOFFICE_PORT:-3000}:5173"
     volumes:
       # Hot reload pour le développement
       - ./frontend/ecodeli-frontoffice/src:/app/src
@@ -120,7 +120,7 @@ services:
       NODE_ENV: development
       # Pas d'URL API externe, on utilise le proxy Vite
     ports:
-      - "3001:5173"
+      - "${BACKOFFICE_PORT:-3001}:5173"
     volumes:
       # Hot reload pour le développement
       - ./frontend/ecodeli-backoffice/src:/app/src

@@ -221,23 +221,40 @@ a:hover {
    STYLES SPÉCIFIQUES DASHBOARD
    ========================================== */
 
-/* Dashboard Header */
-.dashboard-header {
-  background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
-  color: var(--white);
-  padding: 2rem 0;
-  margin-bottom: 2rem;
-  border-radius: 0 0 15px 15px;
+/* Dashboard Header Card */
+.dashboard-header-card {
+  background: var(--white);
+  border: 1px solid #dee2e6;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 1.5rem;
+  margin-top: 2rem;
+  transition: var(--transition);
 }
 
-.dashboard-header h2 {
-  color: var(--white);
-  margin-bottom: 0.5rem;
+.dashboard-header-card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
-.dashboard-header .lead {
-  opacity: 0.9;
-  margin-bottom: 0;
+.dashboard-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
+  border-radius: 50%;
+  color: var(--white);
+  font-size: 2rem;
+}
+
+.dashboard-header-card h5 {
+  color: var(--black);
+  font-weight: 600;
+}
+
+.dashboard-header-card h6 {
+  font-weight: 600;
 }
 
 /* Dashboard Navigation */
@@ -312,10 +329,51 @@ a:hover {
   border-color: #dee2e6;
 }
 
+/* Status Badges */
+.badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35em 0.65em;
+  border-radius: 0.375rem;
+}
+
+.badge.bg-success {
+  background-color: #198754 !important;
+}
+
+.badge.bg-warning {
+  background-color: #ffc107 !important;
+  color: #000 !important;
+}
+
+.badge.bg-info {
+  background-color: #0dcaf0 !important;
+  color: #000 !important;
+}
+
+.badge.bg-danger {
+  background-color: #dc3545 !important;
+}
+
+.badge.bg-secondary {
+  background-color: #6c757d !important;
+}
+
 /* Responsive Dashboard */
 @media (max-width: 768px) {
-  .dashboard-header {
-    padding: 1.5rem 0;
+  .dashboard-header-card {
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .dashboard-avatar {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+  
+  .dashboard-header-card h5 {
+    font-size: 1.1rem;
   }
   
   .dashboard-nav .nav-link {
@@ -325,5 +383,25 @@ a:hover {
   
   .stat-number {
     font-size: 1.5rem;
+  }
+  
+  .badge {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .dashboard-header-card .d-flex {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .dashboard-avatar {
+    margin: 0 auto 1rem auto;
+  }
+  
+  .dashboard-header-card .text-end {
+    text-align: center !important;
+    margin-top: 1rem;
   }
 }
