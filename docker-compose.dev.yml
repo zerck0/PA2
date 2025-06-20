@@ -29,7 +29,10 @@ services:
 
   # BACKEND API SPRING BOOT
   ecodeli-backend:
-    image: zercko/ecodeli-backend:1.0
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
     container_name: ecodeli-backend-dev
     restart: unless-stopped
     depends_on:
@@ -59,9 +62,12 @@ services:
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     volumes:
-      # Hot reload pour le développement
-      - ./backend/src:/app/src:ro
+      # Hot reload pour le développement - Code source
+      - ./backend/src:/app/src
+      - ./backend/pom.xml:/app/pom.xml
       - backend_logs:/app/logs
+      # Volume pour les uploads
+      - ./backend/uploads:/app/uploads
     networks:
       - ecodeli-network
     healthcheck:
@@ -83,9 +89,9 @@ services:
       - ecodeli-backend
     environment:
       NODE_ENV: development
-      VITE_API_URL: http://localhost:${BACKEND_PORT:-8080}
+      # Pas d'URL API externe, on utilise le proxy Vite
     ports:
-      - "${FRONTOFFICE_PORT:-3000}:5173"
+      - "3000:5173"
     volumes:
       # Hot reload pour le développement
       - ./frontend/ecodeli-frontoffice/src:/app/src
@@ -112,9 +118,9 @@ services:
       - ecodeli-backend
     environment:
       NODE_ENV: development
-      VITE_API_URL: http://localhost:${BACKEND_PORT:-8080}
+      # Pas d'URL API externe, on utilise le proxy Vite
     ports:
-      - "${BACKOFFICE_PORT:-3001}:5173"
+      - "3001:5173"
     volumes:
       # Hot reload pour le développement
       - ./frontend/ecodeli-backoffice/src:/app/src

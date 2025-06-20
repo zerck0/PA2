@@ -1,120 +1,99 @@
-# On commence par la construction de notre application
-FROM eclipse-temurin:21-jdk AS build
+# Dockerfile Backend EcoDeli - Multi-staging Simple
+# Version simplifiée pour développement et production
 
-# Un peu d'info sur notre image
-LABEL description="EcoDeli Backend API - Spring Boot"
-LABEL version="1.0.0"
+# ===========================================
+# STAGE 1: BASE - Dépendances partagées
+# ===========================================
+FROM eclipse-temurin:21-jdk AS base
 
-# On a besoin de Maven pour compiler notre projet
-RUN apt-get update && apt-get install -y maven && rm -rf /var/lib/apt/lists/*
+LABEL description="EcoDeli Backend - Base Stage"
 
-# On se place dans le bon dossier
 WORKDIR /app
 
-# On récupère d'abord juste les dépendances Maven
-COPY pom.xml .
-COPY mvnw .
-COPY mvnw.cmd .
+# Copie des fichiers de configuration Maven
+COPY pom.xml mvnw ./
 COPY .mvn .mvn
 
-# On télécharge les dépendances en avance pour gagner du temps plus tard
-RUN mvn dependency:go-offline -B
+# Téléchargement des dépendances (cache Docker)
+RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
 
-# Maintenant on peut ajouter notre code
-COPY src src
+# ===========================================
+# STAGE 2: DEVELOPMENT - Hot Reload
+# ===========================================
+FROM base AS development
 
-# Et on compile le tout !
-RUN mvn clean package -DskipTests -B
+LABEL description="EcoDeli Backend - Development with Hot Reload"
 
-# Passons à l'image de développement
-FROM eclipse-temurin:21-jre AS runtime
+# Installation de curl pour health checks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# Quelques infos sur cette image de dev
-LABEL description="EcoDeli Backend API - Runtime Development"
-
-# Création d'un utilisateur non-root pour la sécurité
-RUN groupadd -r ecodeli && useradd -r -g ecodeli ecodeli
-
-# Création du répertoire de l'application
-WORKDIR /app
-
-# Installation des dépendances système nécessaires (avec outils de dev)
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    curl \
-    netcat-traditional \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copie du JAR 
-COPY --from=build /app/target/*.jar app.jar
-
-# Création du dossier de logs
-RUN mkdir -p /app/logs
-
-# Attribution des permissions à l'utilisateur ecodeli
-RUN chown -R ecodeli:ecodeli /app
-
-# Basculement vers l'utilisateur non-root
-USER ecodeli
+# Copie du code source (sera overridé par volume en dev)
+COPY src ./src
 
 # Variables d'environnement pour le développement
 ENV SPRING_PROFILES_ACTIVE=docker
-ENV JAVA_OPTS="-Xmx512m -Xms256m"
-ENV SERVER_PORT=8080
+ENV MAVEN_OPTS="-Xmx512m"
 
-# Exposition du port
+# Port d'exposition
 EXPOSE 8080
 
-# Health check
+# Health check simple
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8080/actuator/health || exit 1
 
-# Point d'entrée
-ENTRYPOINT exec java $JAVA_OPTS -jar app.jar
+# Commande de développement avec hot reload
+CMD ["./mvnw", "spring-boot:run", "-Dspring-boot.run.jvmArguments=-Xmx512m"]
 
-# Étape 3: PRODUCTION - Image optimisée pour la production
+# ===========================================
+# STAGE 3: BUILD - Construction production
+# ===========================================
+FROM base AS build
+
+LABEL description="EcoDeli Backend - Build Stage"
+
+# Copie du code source complet
+COPY src ./src
+
+# Construction du JAR
+RUN ./mvnw clean package -DskipTests -B
+
+# ===========================================
+# STAGE 4: PRODUCTION - Runtime optimisé
+# ===========================================
 FROM eclipse-temurin:21-jre AS production
 
-# Métadonnées de l'image de production
-LABEL description="EcoDeli Backend API - Production"
+LABEL description="EcoDeli Backend - Production Runtime"
 LABEL version="1.0.0"
 
-# Création d'un utilisateur non-root pour la sécurité
+# Utilisateur non-root pour la sécurité
 RUN groupadd -r ecodeli && useradd -r -g ecodeli ecodeli
 
-# Création du répertoire de l'application
+# Installation des outils essentiels
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Installation minimale des dépendances (production seulement)
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
-
-# Copie du JAR depuis l'étape de build
+# Copie du JAR depuis le stage build
 COPY --from=build /app/target/*.jar app.jar
 
-# Création du dossier de logs
-RUN mkdir -p /app/logs
+# Création des dossiers nécessaires
+RUN mkdir -p logs uploads && chown -R ecodeli:ecodeli /app
 
-# Attribution des permissions à l'utilisateur ecodeli
-RUN chown -R ecodeli:ecodeli /app
-
-# Basculement vers l'utilisateur non-root
-USER ecodeli
-
-# Variables d'environnement optimisées pour la production
+# Variables d'environnement production
 ENV SPRING_PROFILES_ACTIVE=docker
-ENV JAVA_OPTS="-Xmx1g -Xms512m -XX:+UseG1GC -XX:+UseContainerSupport"
-ENV SERVER_PORT=8080
+ENV JAVA_OPTS="-Xmx1g -XX:+UseContainerSupport"
 
-# Exposition du port
+# Port d'exposition
 EXPOSE 8080
 
-# Healthcheck pour la production
+# Utilisateur non-root
+USER ecodeli
+
+# Health check optimisé
 HEALTHCHECK --interval=60s --timeout=15s --start-period=120s --retries=3 \
   CMD curl -f http://localhost:8080/actuator/health || exit 1
 
-# Point d'entrée
-ENTRYPOINT exec java $JAVA_OPTS -jar app.jar
+# Point d'entrée production
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

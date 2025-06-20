@@ -1,122 +1,118 @@
-# C'est parti pour construire notre application frontoffice
-FROM node:20-alpine AS build
+# Dockerfile Frontend Frontoffice EcoDeli - Multi-staging Simple
+# Version simplifiée pour développement et production
 
-# Pour savoir ce qu'est cette image
-LABEL description="EcoDeli Frontoffice - React/Vite"
-LABEL version="1.0.0"
+# ===========================================
+# STAGE 1: BASE - Dépendances partagées
+# ===========================================
+FROM node:20-alpine AS base
 
-# On travaille dans ce dossier
-WORKDIR /app
+LABEL description="EcoDeli Frontoffice - Base Stage"
 
-# D'abord les dépendances
-COPY package*.json ./
-
-# On installe tout ce qu'il faut pour la construction
-RUN npm ci
-
-# On a besoin de TypeScript aussi
-RUN npm install -g typescript
-
-# Maintenant on peut copier notre code
-COPY . .
-
-# Et construire notre application
-RUN npm run build
-
-# Passons à l'environnement de dev avec rechargement à chaud
-FROM node:20-alpine AS development
-
-# Info sur cette version
-LABEL description="EcoDeli Frontoffice - Development Server"
-
-# Pour faire des health checks
+# Installation des outils nécessaires
 RUN apk add --no-cache wget
 
-# On continue dans le même dossier
 WORKDIR /app
 
-# On copie juste les fichiers de dépendances
+# Copie des fichiers de dépendances
 COPY package*.json ./
 
-# Installation complète pour le développement
+# Installation des dépendances
 RUN npm ci
 
-# Variables pour notre environnement de dev
+# ===========================================
+# STAGE 2: DEVELOPMENT - Hot Reload
+# ===========================================
+FROM base AS development
+
+LABEL description="EcoDeli Frontoffice - Development with Hot Reload"
+
+# Copie des fichiers de configuration essentiels
+COPY index.html vite.config.ts tsconfig*.json ./
+COPY public ./public
+COPY src ./src
+
+# Variables d'environnement pour le développement
 ENV NODE_ENV=development
 ENV VITE_API_URL=http://localhost:8080
 
-# Le port de Vite
+# Port d'exposition
 EXPOSE 5173
 
-# Vérification que tout fonctionne
+# Health check simple
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:5173/ || exit 1
 
-# Comment démarrer en mode dev
+# Commande de développement avec hot reload
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
-# Et enfin la version de production avec nginx
+# ===========================================
+# STAGE 3: BUILD - Construction production
+# ===========================================
+FROM base AS build
+
+LABEL description="EcoDeli Frontoffice - Build Stage"
+
+# Copie du code source complet
+COPY . .
+
+# Construction de l'application
+RUN npm run build
+
+# ===========================================
+# STAGE 4: PRODUCTION - Nginx optimisé
+# ===========================================
 FROM nginx:alpine AS production
 
-# Infos sur cette version finale
-LABEL description="EcoDeli Frontoffice - Production Optimized"
+LABEL description="EcoDeli Frontoffice - Production"
 LABEL version="1.0.0"
 
-# On crée un utilisateur dédié pour plus de sécurité
+# Utilisateur non-root
 RUN addgroup -g 1001 -S ecodeli && \
     adduser -S ecodeli -u 1001
 
-# On récupère les fichiers construits précédemment
+# Copie des fichiers buildés
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# On configure nginx pour notre appli React
+# Configuration nginx pour React Router
 RUN echo 'server { \
     listen 80; \
-    listen [::]:80; \
     server_name localhost; \
     root /usr/share/nginx/html; \
-    index index.html index.htm; \
+    index index.html; \
     \
-    # Pour que React Router fonctionne correctement \
     location / { \
         try_files $uri $uri/ /index.html; \
     } \
     \
-    # On optimise le cache des fichiers statiques \
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ { \
         expires 1y; \
         add_header Cache-Control "public, immutable"; \
     } \
     \
-    # Un peu de sécurité supplémentaire \
     add_header X-Frame-Options "SAMEORIGIN" always; \
     add_header X-Content-Type-Options "nosniff" always; \
-    add_header Referrer-Policy "no-referrer-when-downgrade" always; \
-    add_header Content-Security-Policy "default-src '\''self'\'' http: https: data: blob: '\''unsafe-inline'\''" always; \
 }' > /etc/nginx/conf.d/default.conf
 
-# On ajuste les permissions pour notre utilisateur
+# Permissions
 RUN chown -R ecodeli:ecodeli /usr/share/nginx/html && \
     chown -R ecodeli:ecodeli /var/cache/nginx && \
     chown -R ecodeli:ecodeli /var/log/nginx && \
-    chown -R ecodeli:ecodeli /etc/nginx/conf.d
-
-# On prépare le fichier PID pour nginx
-RUN touch /var/run/nginx.pid && \
+    chown -R ecodeli:ecodeli /etc/nginx/conf.d && \
+    touch /var/run/nginx.pid && \
     chown -R ecodeli:ecodeli /var/run/nginx.pid
 
-# On est en prod
+# Variables d'environnement
 ENV NODE_ENV=production
 
-# Le port standard pour le web
+# Port d'exposition
 EXPOSE 80
 
-# On utilise notre utilisateur dédié
+# Utilisateur non-root
 USER ecodeli
 
-# Vérification régulière que tout va bien
+# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
 
-# Comment démarrer nginx
+# Commande de démarrage
 CMD ["nginx", "-g", "daemon off;"]

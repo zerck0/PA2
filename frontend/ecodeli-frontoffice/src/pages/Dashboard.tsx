@@ -3,6 +3,7 @@ import Layout from '../components/Layout';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Loading from '../components/ui/Loading';
+import DocumentSection from '../components/DocumentSection';
 import { useAuth } from '../hooks/useAuth';
 import { useApi } from '../hooks/useApi';
 import { annonceApi } from '../services/api';
@@ -111,6 +112,43 @@ const Dashboard: React.FC = () => {
     </Card>
   );
 
+  const renderDocuments = () => (
+    <div>
+      {currentUser.user.role === 'LIVREUR' && (
+        <div className="mb-4">
+          <DocumentSection
+            userId={currentUser.user.id}
+            documentType="PERMIS_CONDUIRE"
+            title="Permis de conduire"
+            required={true}
+          />
+        </div>
+      )}
+      
+      {/* Documents pour tous les utilisateurs */}
+      <div className="mb-4">
+        <DocumentSection
+          userId={currentUser.user.id}
+          documentType="CARTE_IDENTITE"
+          title="Carte d'identité"
+          required={true}
+        />
+      </div>
+
+      {/* Documents spécifiques selon le rôle */}
+      {currentUser.user.role === 'COMMERCANT' && (
+        <div className="mb-4">
+          <DocumentSection
+            userId={currentUser.user.id}
+            documentType="KBIS"
+            title="Extrait KBIS"
+            required={true}
+          />
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <Layout>
       <h2 className="mb-4">Dashboard - {getRoleLabel(currentUser.user.role)}</h2>
@@ -134,8 +172,15 @@ const Dashboard: React.FC = () => {
         <Button
           variant={activeTab === 'profile' ? 'primary' : 'secondary'}
           onClick={() => setActiveTab('profile')}
+          className="me-2"
         >
           Profil
+        </Button>
+        <Button
+          variant={activeTab === 'documents' ? 'primary' : 'secondary'}
+          onClick={() => setActiveTab('documents')}
+        >
+          Documents
         </Button>
       </div>
 
@@ -143,6 +188,7 @@ const Dashboard: React.FC = () => {
       {activeTab === 'overview' && renderOverview()}
       {activeTab === 'annonces' && renderAnnonces()}
       {activeTab === 'profile' && renderProfile()}
+      {activeTab === 'documents' && renderDocuments()}
     </Layout>
   );
 };

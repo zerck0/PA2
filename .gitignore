@@ -48,6 +48,12 @@ docker-volumes/backend-logs/
 docker-volumes/postgres-logs/
 
 # ===========================================
+# FICHIERS UPLOADÉS (À EXCLURE)
+# ===========================================
+# Dossier d'upload (fichiers utilisateurs)
+backend/uploads/
+
+# ===========================================
 # ÉDITEURS ET IDEs
 # ===========================================
 # IntelliJ IDEA
