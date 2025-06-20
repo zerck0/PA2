@@ -140,3 +140,190 @@ a:hover {
     font-size: 1.75rem;
   }
 }
+
+/* ===========================================
+   STYLES SPÉCIFIQUES PAGE D'ACCUEIL
+   ========================================== */
+
+/* Hero Section */
+.hero-section {
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
+  color: var(--white);
+  padding: 4rem 0;
+  margin-bottom: 3rem;
+  border-radius: 0 0 20px 20px;
+}
+
+.hero-section h1 {
+  color: var(--white);
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.hero-section .lead {
+  font-size: 1.25rem;
+  font-weight: 300;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+}
+
+/* Cards Section */
+.services-section {
+  padding: 2rem 0;
+}
+
+.service-card {
+  transition: var(--transition);
+  height: 100%;
+  border: none;
+  box-shadow: var(--box-shadow);
+}
+
+.service-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.service-icon {
+  font-size: 3rem;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.service-card .card-title {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 3rem 0;
+  }
+  
+  .hero-section h1 {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .hero-section h1 {
+    font-size: 2rem;
+  }
+  
+  .service-icon {
+    font-size: 2.5rem;
+  }
+}
+
+/* ===========================================
+   STYLES SPÉCIFIQUES DASHBOARD
+   ========================================== */
+
+/* Dashboard Header */
+.dashboard-header {
+  background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+  color: var(--white);
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  border-radius: 0 0 15px 15px;
+}
+
+.dashboard-header h2 {
+  color: var(--white);
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-header .lead {
+  opacity: 0.9;
+  margin-bottom: 0;
+}
+
+/* Dashboard Navigation */
+.dashboard-nav {
+  border-bottom: 2px solid #dee2e6;
+  margin-bottom: 2rem;
+}
+
+.dashboard-nav .nav-link {
+  color: var(--black);
+  font-weight: 500;
+  padding: 1rem 1.5rem;
+  border: none;
+  border-bottom: 3px solid transparent;
+  transition: var(--transition);
+}
+
+.dashboard-nav .nav-link:hover {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-light);
+}
+
+.dashboard-nav .nav-link.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+  background: none;
+}
+
+/* Dashboard Stats Cards */
+.stat-card {
+  background: var(--white);
+  border: none;
+  box-shadow: var(--box-shadow);
+  transition: var(--transition);
+  text-align: center;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.stat-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Annonce Card */
+.annonce-item {
+  border: 1px solid #dee2e6;
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  transition: var(--transition);
+  background: var(--white);
+}
+
+.annonce-item:hover {
+  border-color: var(--primary-light);
+  box-shadow: var(--box-shadow);
+}
+
+/* Profile Form */
+.profile-form .form-control:read-only {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+/* Responsive Dashboard */
+@media (max-width: 768px) {
+  .dashboard-header {
+    padding: 1.5rem 0;
+  }
+  
+  .dashboard-nav .nav-link {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .stat-number {
+    font-size: 1.5rem;
+  }
+}

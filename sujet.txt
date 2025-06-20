@@ -3,12 +3,17 @@ EcoDeli 2024-2025
  Projet annuel 2024-2025 page 1
 
 EcoDeli
-EcoDeli (ED) est une société proposant une solution de crowdshipping, un système de livraison qui fait intervenir les particuliers pour acheminer un colis à destination. Ceux-ci peuvent assurer aussi bien l’entièreté qu'une partie 
-de la livraison. Ce concept consiste à mettre en relation une personne ou une entreprise ayant un colis à expédier avec une personne qui accepte volontairement d’effectuer la livraison. Les objectifs sont de réduire l’impact de la 
+EcoDeli (ED) est une société proposant une solution de crowdshipping, un système de livraison qui fait intervenir les 
+particuliers pour acheminer un colis à destination. Ceux-ci peuvent assurer aussi bien l’entièreté qu'une partie 
+de la livraison. Ce concept consiste à mettre en relation une personne ou une entreprise ayant un colis à expédier avec
+ une personne qui accepte volontairement d’effectuer la livraison. Les objectifs sont de réduire l’impact de la 
 livraison, favoriser le pouvoir d’achat et de lutter contre l’isolement.
 
-Le fonctionnement d’EcoDeli est donc basé sur la mise en relation de voyageurs ou de conducteurs validés par la société, avec des expéditeurs qui cherchent à envoyer un colis ou à acheter un produit introuvable chez eux.
- Les expéditeurs peuvent être de simples particuliers ou des commerçants/entreprises partenaires. Évidemment, commerçants, livreurs et particuliers doivent avoir un compte pour pouvoir bénéficier des services offerts par l'entreprise.
+Le fonctionnement d’EcoDeli est donc basé sur la mise en relation de voyageurs ou de conducteurs validés par la société,
+ avec des expéditeurs qui cherchent à envoyer un colis ou à acheter un produit introuvable chez eux.
+ Les expéditeurs peuvent être de simples particuliers ou des commerçants/entreprises partenaires. 
+ Évidemment, commerçants, livreurs et particuliers doivent avoir un compte pour pouvoir bénéficier des services offerts par 
+ l'entreprise.
 
 EcoDeli offre un grand nombre de services autour du transport de colis :
 - gestion des annonces proposées par les particuliers ou les commerçants (un particulier peut

@@ -7,39 +7,116 @@ import Button from '../components/ui/Button';
 const Home: React.FC = () => {
   return (
     <Layout>
-      <div className="text-center mb-5">
-        <h1 className="display-4 mb-3">EcoDeli</h1>
-        <p className="lead">Livraisons écologiques et durables</p>
-      </div>
+      {/* Hero Section */}
+      <section className="hero-section text-center">
+        <div className="container">
+          <h1>EcoDeli</h1>
+          <p className="lead">
+            La plateforme qui révolutionne vos livraisons<br />
+            avec une approche écologique et solidaire
+          </p>
+          <Link to="/register">
+            <Button variant="secondary" size="lg">
+              <i className="bi bi-arrow-right me-2"></i>
+              Rejoindre EcoDeli
+            </Button>
+          </Link>
+        </div>
+      </section>
 
-      <div className="row">
-        <div className="col-md-4 mb-4">
-          <Card title="Clients">
-            <p>Faites livrer vos colis de manière écologique</p>
-            <Link to="/annonces">
-              <Button variant="primary">Voir les annonces</Button>
-            </Link>
-          </Card>
+      {/* Services Section */}
+      <section className="services-section">
+        <div className="container">
+          <div className="row g-4">
+            {/* Client */}
+            <div className="col-lg-3 col-md-6">
+              <div className="card service-card h-100 text-center p-4">
+                <div className="card-body">
+                  <i className="bi bi-box-seam service-icon"></i>
+                  <h5 className="card-title">Clients</h5>
+                  <p className="card-text">
+                    Expédiez vos colis de manière éco-responsable et économique
+                  </p>
+                  <Link to="/annonces" className="btn btn-outline-primary">
+                    Voir les annonces
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Livreur */}
+            <div className="col-lg-3 col-md-6">
+              <div className="card service-card h-100 text-center p-4">
+                <div className="card-body">
+                  <i className="bi bi-bicycle service-icon"></i>
+                  <h5 className="card-title">Livreurs</h5>
+                  <p className="card-text">
+                    Proposez vos services de livraison et gagnez de l'argent
+                  </p>
+                  <Link to="/register" className="btn btn-outline-primary">
+                    Devenir livreur
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Prestataire */}
+            <div className="col-lg-3 col-md-6">
+              <div className="card service-card h-100 text-center p-4">
+                <div className="card-body">
+                  <i className="bi bi-tools service-icon"></i>
+                  <h5 className="card-title">Prestataires</h5>
+                  <p className="card-text">
+                    Offrez vos services spécialisés dans l'écosystème EcoDeli
+                  </p>
+                  <Link to="/register" className="btn btn-outline-primary">
+                    Proposer mes services
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Commerçant */}
+            <div className="col-lg-3 col-md-6">
+              <div className="card service-card h-100 text-center p-4">
+                <div className="card-body">
+                  <i className="bi bi-shop service-icon"></i>
+                  <h5 className="card-title">Commerçants</h5>
+                  <p className="card-text">
+                    Optimisez vos livraisons avec notre réseau de partenaires
+                  </p>
+                  <Link to="/register" className="btn btn-outline-primary">
+                    Rejoindre le réseau
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        
-        <div className="col-md-4 mb-4">
-          <Card title="Livreurs">
-            <p>Proposez vos services de livraison</p>
-            <Link to="/register">
-              <Button variant="success">Devenir livreur</Button>
-            </Link>
-          </Card>
+      </section>
+
+      {/* Section Avantages */}
+      <section className="py-5 bg-light">
+        <div className="container">
+          <div className="row text-center">
+            <div className="col-md-4">
+              <i className="bi bi-leaf text-success" style={{fontSize: '2.5rem'}}></i>
+              <h5 className="mt-3">Écologique</h5>
+              <p className="text-muted">Réduisez votre empreinte carbone avec nos solutions durables</p>
+            </div>
+            <div className="col-md-4">
+              <i className="bi bi-people text-primary" style={{fontSize: '2.5rem'}}></i>
+              <h5 className="mt-3">Solidaire</h5>
+              <p className="text-muted">Soutenez l'économie locale et l'emploi de proximité</p>
+            </div>
+            <div className="col-md-4">
+              <i className="bi bi-lightning text-warning" style={{fontSize: '2.5rem'}}></i>
+              <h5 className="mt-3">Efficace</h5>
+              <p className="text-muted">Livraisons rapides et fiables grâce à notre réseau optimisé</p>
+            </div>
+          </div>
         </div>
-        
-        <div className="col-md-4 mb-4">
-          <Card title="Commerçants">
-            <p>Optimisez vos livraisons</p>
-            <Link to="/register">
-              <Button variant="secondary">S'inscrire</Button>
-            </Link>
-          </Card>
-        </div>
-      </div>
+      </section>
     </Layout>
   );
 };
