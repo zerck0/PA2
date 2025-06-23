@@ -35,8 +35,8 @@ public class AnnonceDTO {
     
     private BigDecimal prixNegociable;
     
-    private LocalDateTime dateLimite;
-    private LocalDateTime datePreferee;
+    private String dateLimite;
+    private String datePreferee;
     
     // Champs spécifiques aux colis
     private String typeColis;
@@ -46,4 +46,7 @@ public class AnnonceDTO {
     
     private String dimensions;
     private Boolean fragile = false;
+    
+    // Photo de l'annonce
+    private String photoUrl;
 }

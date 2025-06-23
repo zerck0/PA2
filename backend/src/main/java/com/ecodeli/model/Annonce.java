@@ -60,6 +60,9 @@ public class Annonce {
     private String dimensions; // "L x l x h cm"
     private Boolean fragile = false;
     
+    // Photo de l'annonce
+    private String photoUrl;
+    
     // Relations
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "auteur_id", nullable = false)

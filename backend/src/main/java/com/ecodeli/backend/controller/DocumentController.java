@@ -3,11 +3,17 @@ package com.ecodeli.backend.controller;
 import com.ecodeli.model.Document;
 import com.ecodeli.backend.service.DocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -118,6 +124,39 @@ public class DocumentController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", "Erreur lors du refus: " + e.getMessage()));
+        }
+    }
+    
+    @GetMapping("/{documentId}/file")
+    public ResponseEntity<Resource> getDocumentFile(@PathVariable Long documentId) {
+        try {
+            Optional<Document> documentOpt = documentService.getDocumentById(documentId);
+            if (documentOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            Document document = documentOpt.get();
+            Path filePath = Paths.get(document.getCheminFichier());
+            Resource resource = new UrlResource(filePath.toUri());
+            
+            if (resource.exists() && resource.isReadable()) {
+                String contentType = "application/octet-stream";
+                if (document.getNom().toLowerCase().endsWith(".pdf")) {
+                    contentType = "application/pdf";
+                } else if (document.getNom().toLowerCase().matches(".*\\.(jpg|jpeg|png|gif)$")) {
+                    contentType = "image/" + document.getNom().substring(document.getNom().lastIndexOf(".") + 1);
+                }
+                
+                return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + document.getNom() + "\"")
+                    .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

@@ -10,6 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -64,6 +67,10 @@ public class AnnonceController {
     public ResponseEntity<?> createAnnonce(@Valid @RequestBody AnnonceDTO annonceDTO, 
                                           @RequestParam Long auteurId) {
         try {
+            System.out.println("=== DEBUG CREATION ANNONCE ===");
+            System.out.println("AnnonceDTO reçu: " + annonceDTO);
+            System.out.println("PhotoUrl dans DTO: " + annonceDTO.getPhotoUrl());
+            
             // Vérifier que l'auteur existe
             Optional<Utilisateur> auteur = utilisateurService.getUtilisateurById(auteurId);
             if (auteur.isEmpty()) {
@@ -75,10 +82,18 @@ public class AnnonceController {
             Annonce annonce = convertDtoToEntity(annonceDTO);
             annonce.setAuteur(auteur.get());
             
+            System.out.println("Annonce avant sauvegarde: " + annonce);
+            System.out.println("PhotoUrl dans Entity: " + annonce.getPhotoUrl());
+            
             Annonce nouvelleAnnonce = annonceService.createAnnonce(annonce);
+            
+            System.out.println("Annonce après sauvegarde: " + nouvelleAnnonce);
+            System.out.println("PhotoUrl après sauvegarde: " + nouvelleAnnonce.getPhotoUrl());
+            
             return ResponseEntity.status(HttpStatus.CREATED).body(nouvelleAnnonce);
             
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", "Erreur lors de la création: " + e.getMessage()));
         }
@@ -100,14 +115,29 @@ public class AnnonceController {
         annonce.setAdresseArrivee(dto.getAdresseArrivee());
         annonce.setVilleDepart(dto.getVilleDepart());
         annonce.setVilleArrivee(dto.getVilleArrivee());
+        
+        // Conversion des prix
         annonce.setPrixPropose(dto.getPrixPropose());
         annonce.setPrixNegociable(dto.getPrixNegociable());
-        annonce.setDateLimite(dto.getDateLimite());
-        annonce.setDatePreferee(dto.getDatePreferee());
+        
+        // Conversion des dates
+        try {
+            if (dto.getDateLimite() != null && !dto.getDateLimite().isEmpty()) {
+                annonce.setDateLimite(LocalDateTime.parse(dto.getDateLimite() + "T00:00:00"));
+            }
+            if (dto.getDatePreferee() != null && !dto.getDatePreferee().isEmpty()) {
+                annonce.setDatePreferee(LocalDateTime.parse(dto.getDatePreferee() + "T00:00:00"));
+            }
+        } catch (Exception e) {
+            // Log l'erreur mais continue sans les dates
+            System.err.println("Erreur de parsing des dates: " + e.getMessage());
+        }
+        
         annonce.setTypeColis(dto.getTypeColis());
         annonce.setPoids(dto.getPoids());
         annonce.setDimensions(dto.getDimensions());
-        annonce.setFragile(dto.getFragile());
+        annonce.setFragile(dto.getFragile() != null ? dto.getFragile() : false);
+        annonce.setPhotoUrl(dto.getPhotoUrl());
         return annonce;
     }
 }

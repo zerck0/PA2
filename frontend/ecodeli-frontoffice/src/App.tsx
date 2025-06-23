@@ -10,9 +10,11 @@ import Annonces from './pages/Annonces';
 import Profile from './pages/Profile';
 import './App.css';
 
-// Composant de route protégée simplifié
+import Loading from './components/ui/Loading';
+// Composant de route protégée amélioré
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, loading } = useAuth();
+  if (loading) return <Loading />;
   return currentUser ? <>{children}</> : <Navigate to="/login" />;
 };
 

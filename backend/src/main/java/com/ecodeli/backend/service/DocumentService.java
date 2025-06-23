@@ -31,6 +31,10 @@ public class DocumentService {
         return documentRepository.findByUtilisateurIdAndType(utilisateurId, type);
     }
     
+    public Optional<Document> getDocumentById(Long documentId) {
+        return documentRepository.findById(documentId);
+    }
+    
     public Document uploadDocument(MultipartFile file, Long utilisateurId, Document.TypeDocument type) throws IOException {
         // Créer le dossier s'il n'existe pas
         Path uploadPath = Paths.get(uploadDir);
@@ -49,17 +53,19 @@ public class DocumentService {
         Path filePath = uploadPath.resolve(uniqueFileName);
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
         
-        // Supprimer l'ancien document s'il existe
-        Optional<Document> existingDoc = getDocumentByUtilisateurAndType(utilisateurId, type);
-        existingDoc.ifPresent(doc -> {
-            try {
-                Files.deleteIfExists(Paths.get(doc.getCheminFichier()));
-                documentRepository.delete(doc);
-            } catch (IOException e) {
-                // Log l'erreur mais continue
-                System.err.println("Erreur lors de la suppression de l'ancien fichier: " + e.getMessage());
-            }
-        });
+        // Supprimer l'ancien document s'il existe (sauf pour les photos d'annonces)
+        if (type != Document.TypeDocument.PHOTO_ANNONCE) {
+            Optional<Document> existingDoc = getDocumentByUtilisateurAndType(utilisateurId, type);
+            existingDoc.ifPresent(doc -> {
+                try {
+                    Files.deleteIfExists(Paths.get(doc.getCheminFichier()));
+                    documentRepository.delete(doc);
+                } catch (IOException e) {
+                    // Log l'erreur mais continue
+                    System.err.println("Erreur lors de la suppression de l'ancien fichier: " + e.getMessage());
+                }
+            });
+        }
         
         // Créer l'entité Document
         Document document = new Document();

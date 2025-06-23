@@ -54,13 +54,18 @@ export const annonceApi = {
     return response.data;
   },
   
-  create: async (annonceData: any) => {
-    const response = await api.post('/annonces', annonceData);
+  create: async (annonceData: any, auteurId: number) => {
+    const response = await api.post(`/annonces?auteurId=${auteurId}`, annonceData);
     return response.data;
   },
   
   getById: async (id: number) => {
     const response = await api.get(`/annonces/${id}`);
+    return response.data;
+  },
+
+  getMesAnnonces: async (userId: number) => {
+    const response = await api.get(`/annonces/mes-annonces/${userId}`);
     return response.data;
   },
 };
@@ -74,6 +79,22 @@ export const userApi = {
   
   updateProfile: async (userData: any) => {
     const response = await api.put('/utilisateurs/profile', userData);
+    return response.data;
+  },
+};
+
+// Services des photos
+export const photoApi = {
+  uploadAnnoncePhoto: async (file: File, userId: number) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('userId', userId.toString());
+    
+    const response = await api.post('/photos/annonce/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   },
 };

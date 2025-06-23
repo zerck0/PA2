@@ -43,7 +43,8 @@ public class Document {
         CARTE_IDENTITE,
         ASSURANCE,
         KBIS,
-        CERTIFICAT
+        CERTIFICAT,
+        PHOTO_ANNONCE
     }
     
     public enum StatutDocument {

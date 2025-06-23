@@ -4,14 +4,19 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import DocumentSection from '../../components/DocumentSection';
+import CreateAnnonceModal from '../../components/CreateAnnonceModal';
+import AnnonceCard from '../../components/AnnonceCard';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi } from '../../hooks/useApi';
 import { annonceApi } from '../../services/api';
 import { Annonce } from '../../types';
+import { useNavigate } from 'react-router-dom';
 
 const ClientDashboard: React.FC = () => {
   const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const navigate = useNavigate();
   
   const { 
     data: annonces, 
@@ -96,7 +101,7 @@ const ClientDashboard: React.FC = () => {
         <div className="row">
           <div className="col-md-6">
             <div className="d-grid gap-2">
-              <Button variant="primary">
+              <Button variant="primary" onClick={() => setShowCreateModal(true)}>
                 <i className="bi bi-plus-lg me-2"></i>
                 Déposer une annonce
               </Button>
@@ -124,61 +129,52 @@ const ClientDashboard: React.FC = () => {
   );
 
   const renderAnnonces = () => (
-    <Card title="Mes annonces">
+    <div>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h4 className="mb-0">Mes annonces</h4>
+        <Button variant="primary" onClick={() => setShowCreateModal(true)}>
+          <i className="bi bi-plus-lg me-2"></i>
+          Nouvelle annonce
+        </Button>
+      </div>
+      
       {annoncesLoading ? (
-        <Loading />
-      ) : (
-        <div>
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h6 className="mb-0">Toutes mes annonces</h6>
-            <Button variant="primary">
-              <i className="bi bi-plus-lg me-2"></i>
-              Nouvelle annonce
-            </Button>
-          </div>
-          
-          {annonces && annonces.length > 0 ? (
-            annonces.map((annonce) => (
-              <div key={annonce.id} className="annonce-item">
-                <div className="d-flex justify-content-between align-items-start">
-                  <div className="flex-grow-1">
-                    <h6 className="mb-2">{annonce.titre}</h6>
-                    <p className="mb-2 text-muted">{annonce.description}</p>
-                    <div className="d-flex align-items-center">
-                      <i className="bi bi-geo-alt me-1 text-primary"></i>
-                      <small className="text-muted">
-                        {annonce.villeDepart} → {annonce.villeArrivee}
-                      </small>
-                      {annonce.prix && (
-                        <>
-                          <i className="bi bi-currency-euro ms-3 me-1 text-success"></i>
-                          <small className="text-success fw-bold">{annonce.prix}€</small>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="ms-3">
-                    <Button variant="secondary" size="sm">
-                      <i className="bi bi-pencil me-1"></i>
-                      Modifier
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-4">
-              <i className="bi bi-inbox" style={{fontSize: '3rem', color: '#6c757d'}}></i>
-              <p className="mt-3 text-muted">Aucune annonce trouvée.</p>
-              <Button variant="primary">
-                <i className="bi bi-plus-lg me-2"></i>
-                Créer ma première annonce
-              </Button>
-            </div>
-          )}
+        <div className="text-center py-5">
+          <Loading />
         </div>
+      ) : (
+        <>
+          {annonces && annonces.length > 0 ? (
+            <div className="row g-4">
+              {annonces.map((annonce) => (
+                <div key={annonce.id} className="col-lg-6">
+                  <AnnonceCard
+                    annonce={annonce}
+                    onEdit={(id) => {
+                      // TODO: Implémenter l'édition
+                      console.log('Éditer annonce', id);
+                    }}
+                    showActions={true}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <div className="text-center py-5">
+                <i className="bi bi-inbox" style={{fontSize: '4rem', color: '#6c757d'}}></i>
+                <h5 className="mt-3 text-muted">Aucune annonce trouvée</h5>
+                <p className="text-muted mb-4">Vous n'avez pas encore créé d'annonce. Commencez dès maintenant !</p>
+                <Button variant="primary" onClick={() => setShowCreateModal(true)}>
+                  <i className="bi bi-plus-lg me-2"></i>
+                  Créer ma première annonce
+                </Button>
+              </div>
+            </Card>
+          )}
+        </>
       )}
-    </Card>
+    </div>
   );
 
   const renderReservations = () => (
@@ -247,13 +243,23 @@ const ClientDashboard: React.FC = () => {
   };
 
   return (
-    <DashboardLayout
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      tabs={tabs}
-    >
-      {renderContent()}
-    </DashboardLayout>
+    <>
+      <DashboardLayout
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        tabs={tabs}
+      >
+        {renderContent()}
+      </DashboardLayout>
+      
+      <CreateAnnonceModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={() => {
+          loadAnnonces(); // Rafraîchir la liste des annonces
+        }}
+      />
+    </>
   );
 };
 
