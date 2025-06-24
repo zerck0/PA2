@@ -1,13 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from './shared/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
+import Loading from '../../components/ui/Loading';
 import DocumentSection from '../../components/DocumentSection';
+import AnnonceCard from '../../components/AnnonceCard';
 import { useAuth } from '../../hooks/useAuth';
+import { Annonce } from '../../types';
 
 const LivreurDashboard: React.FC = () => {
   const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const [livraisons, setLivraisons] = useState<Annonce[]>([]);
+  const [livraisonsLoading, setLivraisonsLoading] = useState(false);
+
+  // Gérer le paramètre tab depuis l'URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam === 'livraisons') {
+      setActiveTab('livraisons');
+    }
+  }, []);
+
+  // Charger les livraisons du livreur
+  useEffect(() => {
+    if (currentUser?.user.id && activeTab === 'livraisons') {
+      loadLivraisons();
+    }
+  }, [currentUser, activeTab]);
+
+  const loadLivraisons = async () => {
+    if (!currentUser?.user.id) return;
+    
+    setLivraisonsLoading(true);
+    try {
+      const response = await fetch(`http://localhost:8080/api/annonces/livreur/${currentUser.user.id}`);
+      if (response.ok) {
+        const mesLivraisons = await response.json();
+        setLivraisons(mesLivraisons);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des livraisons:', error);
+    } finally {
+      setLivraisonsLoading(false);
+    }
+  };
 
   const tabs = [
     { id: 'overview', label: 'Vue d\'ensemble', icon: 'bi-house-door' },
@@ -136,16 +174,51 @@ const LivreurDashboard: React.FC = () => {
   );
 
   const renderLivraisons = () => (
-    <Card title="Mes livraisons">
-      <div className="text-center py-4">
-        <i className="bi bi-truck" style={{fontSize: '3rem', color: '#6c757d'}}></i>
-        <p className="mt-3 text-muted">Aucune livraison en cours.</p>
-        <Button variant="primary">
+    <div>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h4 className="mb-0">Mes livraisons</h4>
+        <Button variant="primary" onClick={() => window.location.href = '/annonces'}>
           <i className="bi bi-search me-2"></i>
           Rechercher des missions
         </Button>
       </div>
-    </Card>
+
+      {livraisonsLoading ? (
+        <div className="text-center py-5">
+          <Loading />
+        </div>
+      ) : (
+        <>
+          {livraisons && livraisons.length > 0 ? (
+            <div className="row g-4">
+              {livraisons.map((livraison) => (
+                <div key={livraison.id} className="col-lg-6">
+                  <AnnonceCard
+                    annonce={livraison}
+                    showActions={true}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <div className="text-center py-5">
+                <i className="bi bi-truck" style={{fontSize: '4rem', color: '#6c757d'}}></i>
+                <h5 className="mt-3 text-muted">Aucune livraison en cours</h5>
+                <p className="text-muted mb-4">
+                  Vous n'avez pas encore de mission assignée. 
+                  Recherchez des annonces disponibles pour commencer.
+                </p>
+                <Button variant="primary" onClick={() => window.location.href = '/annonces'}>
+                  <i className="bi bi-search me-2"></i>
+                  Voir les annonces disponibles
+                </Button>
+              </div>
+            </Card>
+          )}
+        </>
+      )}
+    </div>
   );
 
   const renderPlanning = () => (

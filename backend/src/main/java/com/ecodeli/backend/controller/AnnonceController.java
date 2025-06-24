@@ -106,6 +106,35 @@ public class AnnonceController {
                      .orElse(ResponseEntity.notFound().build());
     }
     
+    @PostMapping("/{id}/prendre-en-charge")
+    public ResponseEntity<?> prendreEnCharge(@PathVariable Long id, @RequestParam Long livreurId) {
+        try {
+            Optional<Annonce> annonceOpt = annonceService.assignerLivreur(id, livreurId);
+            if (annonceOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Annonce non trouvée"));
+            }
+            
+            return ResponseEntity.ok(Map.of(
+                "message", "Annonce prise en charge avec succès ! Vous la retrouverez dans l'onglet 'Mes livraisons' de votre dashboard.",
+                "annonce", annonceOpt.get()
+            ));
+                
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "Erreur lors de la prise en charge"));
+        }
+    }
+    
+    @GetMapping("/livreur/{livreurId}")
+    public ResponseEntity<List<Annonce>> getAnnoncesByLivreur(@PathVariable Long livreurId) {
+        List<Annonce> annonces = annonceService.getAnnoncesByLivreur(livreurId);
+        return ResponseEntity.ok(annonces);
+    }
+    
     private Annonce convertDtoToEntity(AnnonceDTO dto) {
         Annonce annonce = new Annonce();
         annonce.setTitre(dto.getTitre());

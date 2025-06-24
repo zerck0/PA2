@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import VerifyEmail from './pages/VerifyEmail';
 import Dashboard from './pages/Dashboard';
 import Annonces from './pages/Annonces';
+import AnnonceDetail from './pages/AnnonceDetail';
 import Profile from './pages/Profile';
 import './App.css';
 
@@ -29,6 +30,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/annonces" element={<Annonces />} />
+          <Route path="/annonces/:id" element={<AnnonceDetail />} />
           
           {/* Routes protégées */}
           <Route 

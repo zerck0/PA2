@@ -1,7 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import { Annonce } from '../types';
+import { useAuth } from '../hooks/useAuth';
 
 interface AnnonceCardProps {
   annonce: Annonce;
@@ -16,10 +18,53 @@ const AnnonceCard: React.FC<AnnonceCardProps> = ({
   onContact, 
   showActions = true 
 }) => {
+  const navigate = useNavigate();
+  const { currentUser } = useAuth();
+
+  // Naviguer vers les détails de l'annonce
+  const handleVoirDetails = () => {
+    navigate(`/annonces/${annonce.id}`);
+  };
+
+  // Prendre en charge rapidement (pour les livreurs)
+  const handlePrendreEnCharge = async () => {
+    if (!currentUser?.user.id) return;
+    
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/annonces/${annonce.id}/prendre-en-charge?livreurId=${currentUser.user.id}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Afficher le message de succès
+        alert(data.message);
+        // Rediriger vers le dashboard avec l'onglet livraisons
+        navigate('/dashboard?tab=livraisons');
+      } else {
+        // Afficher l'erreur
+        alert(data.message || 'Erreur lors de la prise en charge');
+      }
+    } catch (err) {
+      alert('Erreur de connexion');
+    }
+  };
+
   // Troncature de la description
   const truncateText = (text: string, maxLength: number = 100) => {
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
+
+  // Déterminer les actions disponibles
+  const isLivreur = currentUser?.user.role === 'LIVREUR';
+  const canTakeCharge = isLivreur && annonce.statut === 'ACTIVE';
 
   // Badge pour le type d'annonce
   const getTypeBadge = (type: string) => {
@@ -131,7 +176,30 @@ const AnnonceCard: React.FC<AnnonceCardProps> = ({
             {/* Actions */}
             {showActions && (
               <div className="mt-auto">
-                <div className="d-flex gap-2">
+                <div className="d-flex gap-2 flex-wrap">
+                  {/* Bouton Voir détails - toujours disponible */}
+                  <Button 
+                    variant="outline-primary" 
+                    size="sm"
+                    onClick={handleVoirDetails}
+                  >
+                    <i className="bi bi-eye me-1"></i>
+                    Voir détails
+                  </Button>
+
+                  {/* Bouton Prendre en charge - pour les livreurs sur annonces actives */}
+                  {canTakeCharge && (
+                    <Button 
+                      variant="success" 
+                      size="sm"
+                      onClick={handlePrendreEnCharge}
+                    >
+                      <i className="bi bi-truck me-1"></i>
+                      Prendre en charge
+                    </Button>
+                  )}
+
+                  {/* Boutons existants */}
                   {onEdit && (
                     <Button 
                       variant="secondary" 

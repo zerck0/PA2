@@ -128,54 +128,132 @@ const ClientDashboard: React.FC = () => {
     </div>
   );
 
-  const renderAnnonces = () => (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0">Mes annonces</h4>
-        <Button variant="primary" onClick={() => setShowCreateModal(true)}>
-          <i className="bi bi-plus-lg me-2"></i>
-          Nouvelle annonce
-        </Button>
-      </div>
-      
-      {annoncesLoading ? (
-        <div className="text-center py-5">
-          <Loading />
+  const renderAnnonces = () => {
+    // Grouper les annonces par statut pour une meilleure présentation
+    const annoncesActives = annonces?.filter(a => a.statut === 'ACTIVE') || [];
+    const annoncesAssignees = annonces?.filter(a => a.statut === 'ASSIGNEE') || [];
+    const annoncesEnCours = annonces?.filter(a => a.statut === 'EN_COURS') || [];
+    const annoncesTerminees = annonces?.filter(a => a.statut === 'TERMINEE') || [];
+
+    return (
+      <div>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h4 className="mb-0">Mes annonces</h4>
+          <Button variant="primary" onClick={() => setShowCreateModal(true)}>
+            <i className="bi bi-plus-lg me-2"></i>
+            Nouvelle annonce
+          </Button>
         </div>
-      ) : (
-        <>
-          {annonces && annonces.length > 0 ? (
-            <div className="row g-4">
-              {annonces.map((annonce) => (
-                <div key={annonce.id} className="col-lg-6">
-                  <AnnonceCard
-                    annonce={annonce}
-                    onEdit={(id) => {
-                      // TODO: Implémenter l'édition
-                      console.log('Éditer annonce', id);
-                    }}
-                    showActions={true}
-                  />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <div className="text-center py-5">
-                <i className="bi bi-inbox" style={{fontSize: '4rem', color: '#6c757d'}}></i>
-                <h5 className="mt-3 text-muted">Aucune annonce trouvée</h5>
-                <p className="text-muted mb-4">Vous n'avez pas encore créé d'annonce. Commencez dès maintenant !</p>
-                <Button variant="primary" onClick={() => setShowCreateModal(true)}>
-                  <i className="bi bi-plus-lg me-2"></i>
-                  Créer ma première annonce
-                </Button>
+        
+        {annoncesLoading ? (
+          <div className="text-center py-5">
+            <Loading />
+          </div>
+        ) : (
+          <>
+            {annonces && annonces.length > 0 ? (
+              <div>
+                {/* Annonces actives */}
+                {annoncesActives.length > 0 && (
+                  <div className="mb-5">
+                    <h5 className="text-success mb-3">
+                      <i className="bi bi-circle-fill me-2"></i>
+                      Annonces disponibles ({annoncesActives.length})
+                    </h5>
+                    <div className="row g-4">
+                      {annoncesActives.map((annonce) => (
+                        <div key={annonce.id} className="col-lg-6">
+                          <AnnonceCard
+                            annonce={annonce}
+                            onEdit={(id) => {
+                              console.log('Éditer annonce', id);
+                            }}
+                            showActions={true}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Annonces assignées */}
+                {annoncesAssignees.length > 0 && (
+                  <div className="mb-5">
+                    <h5 className="text-warning mb-3">
+                      <i className="bi bi-person-check-fill me-2"></i>
+                      Annonces assignées ({annoncesAssignees.length})
+                    </h5>
+                    <div className="row g-4">
+                      {annoncesAssignees.map((annonce) => (
+                        <div key={annonce.id} className="col-lg-6">
+                          <AnnonceCard
+                            annonce={annonce}
+                            showActions={true}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Annonces en cours */}
+                {annoncesEnCours.length > 0 && (
+                  <div className="mb-5">
+                    <h5 className="text-info mb-3">
+                      <i className="bi bi-truck me-2"></i>
+                      Livraisons en cours ({annoncesEnCours.length})
+                    </h5>
+                    <div className="row g-4">
+                      {annoncesEnCours.map((annonce) => (
+                        <div key={annonce.id} className="col-lg-6">
+                          <AnnonceCard
+                            annonce={annonce}
+                            showActions={true}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Annonces terminées */}
+                {annoncesTerminees.length > 0 && (
+                  <div className="mb-5">
+                    <h5 className="text-secondary mb-3">
+                      <i className="bi bi-check-circle-fill me-2"></i>
+                      Livraisons terminées ({annoncesTerminees.length})
+                    </h5>
+                    <div className="row g-4">
+                      {annoncesTerminees.map((annonce) => (
+                        <div key={annonce.id} className="col-lg-6">
+                          <AnnonceCard
+                            annonce={annonce}
+                            showActions={true}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            </Card>
-          )}
-        </>
-      )}
-    </div>
-  );
+            ) : (
+              <Card>
+                <div className="text-center py-5">
+                  <i className="bi bi-inbox" style={{fontSize: '4rem', color: '#6c757d'}}></i>
+                  <h5 className="mt-3 text-muted">Aucune annonce trouvée</h5>
+                  <p className="text-muted mb-4">Vous n'avez pas encore créé d'annonce. Commencez dès maintenant !</p>
+                  <Button variant="primary" onClick={() => setShowCreateModal(true)}>
+                    <i className="bi bi-plus-lg me-2"></i>
+                    Créer ma première annonce
+                  </Button>
+                </div>
+              </Card>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
 
   const renderReservations = () => (
     <Card title="Mes réservations">

@@ -189,19 +189,19 @@ const Register: React.FC = () => {
               <div className="row">
                 <div className="col-md-6">
                   <Input
-                    label="Nom"
+                    label="Prénom"
                     type="text"
-                    value={formData.nom}
-                    onChange={(value) => setFormData(prev => ({ ...prev, nom: value }))}
+                    value={formData.prenom}
+                    onChange={(value) => setFormData(prev => ({ ...prev, prenom: value }))}
                     required
                   />
                 </div>
                 <div className="col-md-6">
                   <Input
-                    label="Prénom"
+                    label="Nom"
                     type="text"
-                    value={formData.prenom}
-                    onChange={(value) => setFormData(prev => ({ ...prev, prenom: value }))}
+                    value={formData.nom}
+                    onChange={(value) => setFormData(prev => ({ ...prev, nom: value }))}
                     required
                   />
                 </div>

@@ -21,4 +21,6 @@ public interface AnnonceRepository extends JpaRepository<Annonce, Long> {
 
     @Query("SELECT a FROM Annonce a WHERE a.statut = :statut AND a.type = :type")
     List<Annonce> findActiveAnnoncesByType(@Param("type") Annonce.TypeAnnonce type, @Param("statut") Annonce.StatutAnnonce statut);
+    
+    List<Annonce> findByLivreurAssigneIdOrderByDateCreationDesc(Long livreurId);
 }
