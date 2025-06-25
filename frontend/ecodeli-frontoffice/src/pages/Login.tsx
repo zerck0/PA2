@@ -6,6 +6,7 @@ import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import Alert from '../components/ui/Alert';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
 import { validateEmail, validateRequired } from '../utils/helpers';
 
 const Login: React.FC = () => {
@@ -15,6 +16,7 @@ const Login: React.FC = () => {
   const [alert, setAlert] = useState<{ type: 'success' | 'danger', message: string } | null>(null);
   
   const { login, loading } = useAuth();
+  const { showSuccess, showError } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,10 +33,10 @@ const Login: React.FC = () => {
 
     try {
       await login(email, password);
-      setAlert({ type: 'success', message: 'Connexion réussie !' });
+      showSuccess('Connexion réussie ! Redirection en cours...');
       setTimeout(() => navigate('/dashboard'), 1500);
     } catch (error: any) {
-      setAlert({ type: 'danger', message: error.message || 'Erreur de connexion' });
+      showError(error.message || 'Erreur de connexion');
     }
   };
 

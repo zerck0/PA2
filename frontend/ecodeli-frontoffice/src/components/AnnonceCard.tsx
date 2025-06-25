@@ -4,6 +4,7 @@ import Card from './ui/Card';
 import Button from './ui/Button';
 import { Annonce } from '../types';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
 
 interface AnnonceCardProps {
   annonce: Annonce;
@@ -20,6 +21,7 @@ const AnnonceCard: React.FC<AnnonceCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const { showSuccess, showError } = useToast();
 
   // Naviguer vers les détails de l'annonce
   const handleVoirDetails = () => {
@@ -44,16 +46,16 @@ const AnnonceCard: React.FC<AnnonceCardProps> = ({
       const data = await response.json();
 
       if (response.ok) {
-        // Afficher le message de succès
-        alert(data.message);
+        // Afficher le toast de succès
+        showSuccess(data.message);
         // Rediriger vers le dashboard avec l'onglet livraisons
         navigate('/dashboard?tab=livraisons');
       } else {
-        // Afficher l'erreur
-        alert(data.message || 'Erreur lors de la prise en charge');
+        // Afficher le toast d'erreur
+        showError(data.message || 'Erreur lors de la prise en charge');
       }
     } catch (err) {
-      alert('Erreur de connexion');
+      showError('Erreur de connexion');
     }
   };
 
@@ -179,7 +181,7 @@ const AnnonceCard: React.FC<AnnonceCardProps> = ({
                 <div className="d-flex gap-2 flex-wrap">
                   {/* Bouton Voir détails - toujours disponible */}
                   <Button 
-                    variant="outline-primary" 
+                    variant="secondary" 
                     size="sm"
                     onClick={handleVoirDetails}
                   >

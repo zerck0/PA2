@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 import { useAuth } from './hooks/useAuth';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -9,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import Annonces from './pages/Annonces';
 import AnnonceDetail from './pages/AnnonceDetail';
 import Profile from './pages/Profile';
+import ToastContainer from './components/ui/ToastContainer';
 import './App.css';
 
 import Loading from './components/ui/Loading';
@@ -22,38 +24,43 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Routes publiques */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/annonces" element={<Annonces />} />
-          <Route path="/annonces/:id" element={<AnnonceDetail />} />
+      <ToastProvider>
+        <Router>
+          <Routes>
+            {/* Routes publiques */}
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/annonces" element={<Annonces />} />
+            <Route path="/annonces/:id" element={<AnnonceDetail />} />
+            
+            {/* Routes protégées */}
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Redirection pour les routes non trouvées */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
           
-          {/* Routes protégées */}
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/profile" 
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Redirection pour les routes non trouvées */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </Router>
+          {/* Container global des toasts */}
+          <ToastContainer />
+        </Router>
+      </ToastProvider>
     </AuthProvider>
   );
 }

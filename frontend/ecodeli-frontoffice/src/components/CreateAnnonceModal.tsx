@@ -8,6 +8,7 @@ import PhotoUpload from './ui/PhotoUpload';
 import { CreateAnnonceData } from '../types';
 import { annonceApi, photoApi } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
 
 const typeOptions = [
   { value: 'LIVRAISON_COLIS', label: 'Livraison de colis' },
@@ -61,6 +62,7 @@ const CreateAnnonceModal: React.FC<CreateAnnonceModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { currentUser } = useAuth();
+  const { showSuccess, showError } = useToast();
 
   // Validation par étape
   const validateStep = (stepIndex: number): boolean => {
@@ -143,6 +145,10 @@ const CreateAnnonceModal: React.FC<CreateAnnonceModalProps> = ({
       console.log('PhotoUrl dans les données:', formData.photoUrl);
 
       await annonceApi.create(formData, currentUser?.user.id || 0);
+      
+      // Afficher le toast de succès
+      showSuccess('Annonce créée avec succès ! Elle est maintenant visible par les livreurs.');
+      
       // Réinitialiser le formulaire
       setForm(initialState);
       setCurrentStep(0);
@@ -151,7 +157,7 @@ const CreateAnnonceModal: React.FC<CreateAnnonceModalProps> = ({
       onClose();
     } catch (err: any) {
       console.error('Erreur création annonce:', err);
-      setError('Erreur lors de la création de l\'annonce: ' + (err.response?.data?.message || err.message));
+      showError('Erreur lors de la création de l\'annonce: ' + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }
