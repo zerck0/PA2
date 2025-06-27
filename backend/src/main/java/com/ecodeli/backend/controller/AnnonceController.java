@@ -2,9 +2,11 @@ package com.ecodeli.backend.controller;
 
 import com.ecodeli.model.Annonce;
 import com.ecodeli.model.Utilisateur;
+import com.ecodeli.model.Livraison;
 import com.ecodeli.model.dto.AnnonceDTO;
 import com.ecodeli.backend.service.AnnonceService;
 import com.ecodeli.backend.service.UtilisateurService;
+import com.ecodeli.backend.service.LivraisonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +29,9 @@ public class AnnonceController {
     
     @Autowired
     private UtilisateurService utilisateurService;
+    
+    @Autowired
+    private LivraisonService livraisonService;
     
     @GetMapping
     public ResponseEntity<List<Annonce>> getAllAnnonces() {
@@ -104,6 +109,36 @@ public class AnnonceController {
         Optional<Annonce> annonce = annonceService.getAnnonceById(id);
         return annonce.map(ResponseEntity::ok)
                      .orElse(ResponseEntity.notFound().build());
+    }
+    
+    @GetMapping("/{id}/livraisons")
+    public ResponseEntity<List<Livraison>> getLivraisonsByAnnonce(@PathVariable Long id) {
+        List<Livraison> livraisons = livraisonService.getLivraisonsByAnnonce(id);
+        return ResponseEntity.ok(livraisons);
+    }
+    
+    @GetMapping("/{id}/has-livraisons")
+    public ResponseEntity<Map<String, Boolean>> annonceHasLivraisons(@PathVariable Long id) {
+        boolean hasLivraisons = livraisonService.annonceHasLivraisons(id);
+        return ResponseEntity.ok(Map.of("hasLivraisons", hasLivraisons));
+    }
+    
+    @GetMapping("/{id}/statut-livraison")
+    public ResponseEntity<Map<String, Object>> getStatutLivraisonAnnonce(@PathVariable Long id) {
+        List<Livraison> livraisons = livraisonService.getLivraisonsByAnnonce(id);
+        
+        Map<String, Object> statut = Map.of(
+            "hasLivraisons", !livraisons.isEmpty(),
+            "nombreLivraisons", livraisons.size(),
+            "livraisonsEnCours", livraisons.stream()
+                .anyMatch(l -> l.getStatut() == Livraison.StatutLivraison.EN_COURS ||
+                              l.getStatut() == Livraison.StatutLivraison.ACCEPTEE),
+            "livraisonsTerminees", livraisons.stream()
+                .anyMatch(l -> l.getStatut() == Livraison.StatutLivraison.LIVREE ||
+                              l.getStatut() == Livraison.StatutLivraison.STOCKEE)
+        );
+        
+        return ResponseEntity.ok(statut);
     }
     
     @PostMapping("/{id}/prendre-en-charge")

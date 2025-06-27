@@ -68,3 +68,29 @@ export interface RegisterData {
   telephone?: string;
   role: 'CLIENT' | 'LIVREUR' | 'COMMERCANT' | 'PRESTATAIRE';
 }
+
+export interface Entrepot {
+  id: number;
+  nom: string;
+  ville: string;
+  adresse: string;
+  codePostal: string;
+  statut: 'ACTIF' | 'INACTIF' | 'MAINTENANCE';
+}
+
+export interface Livraison {
+  id: number;
+  typeLivraison: 'COMPLETE' | 'PARTIELLE_DEPOT' | 'PARTIELLE_RETRAIT';
+  statut: 'EN_ATTENTE' | 'ACCEPTEE' | 'EN_COURS' | 'LIVREE' | 'STOCKEE' | 'ANNULEE' | 'ECHEC';
+  adresseDepart: string;
+  adresseArrivee: string;
+  entrepot?: Entrepot;
+  codeValidation: string;
+  dateCreation: string;
+  dateDebut?: string;
+  dateFin?: string;
+  ordre: number;
+  prixConvenu?: number;
+  commentaires?: string;
+  annonce: Annonce;
+}

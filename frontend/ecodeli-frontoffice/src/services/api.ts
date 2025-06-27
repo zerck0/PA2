@@ -99,4 +99,61 @@ export const photoApi = {
   },
 };
 
+// Services des entrepôts
+export const entrepotApi = {
+  getAll: async () => {
+    const response = await api.get('/entrepots');
+    return response.data;
+  },
+};
+
+// Services des livraisons
+export const livraisonApi = {
+  creerComplete: async (annonceId: number, livreurId: number, prixConvenu?: number) => {
+    const params = new URLSearchParams({
+      annonceId: annonceId.toString(),
+      livreurId: livreurId.toString(),
+    });
+    if (prixConvenu) {
+      params.append('prixConvenu', prixConvenu.toString());
+    }
+    
+    const response = await api.post(`/livraisons/complete?${params}`);
+    return response.data;
+  },
+
+  creerPartielleDepot: async (annonceId: number, livreurId: number, entrepotId: number, prixConvenu?: number) => {
+    const params = new URLSearchParams({
+      annonceId: annonceId.toString(),
+      livreurId: livreurId.toString(),
+      entrepotId: entrepotId.toString(),
+    });
+    if (prixConvenu) {
+      params.append('prixConvenu', prixConvenu.toString());
+    }
+    
+    const response = await api.post(`/livraisons/partielle-depot?${params}`);
+    return response.data;
+  },
+
+  creerPartielleRetrait: async (annonceId: number, livreurId: number, entrepotId: number, prixConvenu?: number) => {
+    const params = new URLSearchParams({
+      annonceId: annonceId.toString(),
+      livreurId: livreurId.toString(),
+      entrepotId: entrepotId.toString(),
+    });
+    if (prixConvenu) {
+      params.append('prixConvenu', prixConvenu.toString());
+    }
+    
+    const response = await api.post(`/livraisons/partielle-retrait?${params}`);
+    return response.data;
+  },
+
+  getLivraisonsByLivreur: async (livreurId: number) => {
+    const response = await api.get(`/livraisons/livreur/${livreurId}`);
+    return response.data;
+  },
+};
+
 export default api;

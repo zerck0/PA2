@@ -11,13 +11,15 @@ interface AnnonceCardProps {
   onEdit?: (annonceId: number) => void;
   onContact?: (annonceId: number) => void;
   showActions?: boolean;
+  extraInfo?: React.ReactNode;
 }
 
 const AnnonceCard: React.FC<AnnonceCardProps> = ({ 
   annonce, 
   onEdit, 
   onContact, 
-  showActions = true 
+  showActions = true,
+  extraInfo
 }) => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
@@ -225,6 +227,9 @@ const AnnonceCard: React.FC<AnnonceCardProps> = ({
                 </div>
               </div>
             )}
+            
+            {/* Informations supplémentaires (pour les livraisons) */}
+            {extraInfo && extraInfo}
           </div>
         </div>
       </div>

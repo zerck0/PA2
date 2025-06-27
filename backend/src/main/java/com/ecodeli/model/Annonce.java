@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 @Entity
 @Data
 @Table(name = "annonces")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Annonce {
     
     @Id

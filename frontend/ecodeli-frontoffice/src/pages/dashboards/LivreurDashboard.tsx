@@ -6,12 +6,13 @@ import Loading from '../../components/ui/Loading';
 import DocumentSection from '../../components/DocumentSection';
 import AnnonceCard from '../../components/AnnonceCard';
 import { useAuth } from '../../hooks/useAuth';
-import { Annonce } from '../../types';
+import { Annonce, Livraison } from '../../types';
+import { livraisonApi } from '../../services/api';
 
 const LivreurDashboard: React.FC = () => {
   const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
-  const [livraisons, setLivraisons] = useState<Annonce[]>([]);
+  const [livraisons, setLivraisons] = useState<Livraison[]>([]);
   const [livraisonsLoading, setLivraisonsLoading] = useState(false);
 
   // Gérer le paramètre tab depuis l'URL
@@ -35,13 +36,11 @@ const LivreurDashboard: React.FC = () => {
     
     setLivraisonsLoading(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/annonces/livreur/${currentUser.user.id}`);
-      if (response.ok) {
-        const mesLivraisons = await response.json();
-        setLivraisons(mesLivraisons);
-      }
-    } catch (error) {
+      const mesLivraisons = await livraisonApi.getLivraisonsByLivreur(currentUser.user.id);
+      setLivraisons(mesLivraisons);
+    } catch (error: any) {
       console.error('Erreur lors du chargement des livraisons:', error);
+      setLivraisons([]);
     } finally {
       setLivraisonsLoading(false);
     }
@@ -173,6 +172,32 @@ const LivreurDashboard: React.FC = () => {
     </Card>
   );
 
+  // Fonction pour obtenir le badge du statut de livraison
+  const getStatutLivraisonBadge = (statut: string) => {
+    const badges = {
+      'EN_ATTENTE': { color: 'secondary', label: 'En attente' },
+      'ACCEPTEE': { color: 'info', label: 'Acceptée' },
+      'EN_COURS': { color: 'warning', label: 'En cours' },
+      'LIVREE': { color: 'success', label: 'Livrée' },
+      'STOCKEE': { color: 'primary', label: 'Stockée' },
+      'ANNULEE': { color: 'danger', label: 'Annulée' },
+      'ECHEC': { color: 'danger', label: 'Échec' }
+    };
+    const badge = badges[statut as keyof typeof badges] || { color: 'secondary', label: statut };
+    return <span className={`badge bg-${badge.color}`}>{badge.label}</span>;
+  };
+
+  // Fonction pour obtenir le badge du type de livraison
+  const getTypeLivraisonBadge = (type: string) => {
+    const badges = {
+      'COMPLETE': { color: 'success', label: 'Complète' },
+      'PARTIELLE_DEPOT': { color: 'warning', label: 'Partielle - Dépôt' },
+      'PARTIELLE_RETRAIT': { color: 'info', label: 'Partielle - Retrait' }
+    };
+    const badge = badges[type as keyof typeof badges] || { color: 'secondary', label: type };
+    return <span className={`badge bg-${badge.color} me-2`}>{badge.label}</span>;
+  };
+
   const renderLivraisons = () => (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -194,8 +219,43 @@ const LivreurDashboard: React.FC = () => {
               {livraisons.map((livraison) => (
                 <div key={livraison.id} className="col-lg-6">
                   <AnnonceCard
-                    annonce={livraison}
-                    showActions={true}
+                    annonce={livraison.annonce}
+                    showActions={false}
+                    extraInfo={
+                      <div className="mt-3 pt-3 border-top">
+                        <div className="d-flex gap-2 mb-2">
+                          {getTypeLivraisonBadge(livraison.typeLivraison)}
+                          {getStatutLivraisonBadge(livraison.statut)}
+                        </div>
+                        {livraison.entrepot && (
+                          <div className="mb-2">
+                            <small className="text-muted d-block">
+                              <i className="bi bi-building me-1"></i>
+                              Entrepôt
+                            </small>
+                            <strong>{livraison.entrepot.nom} - {livraison.entrepot.ville}</strong>
+                          </div>
+                        )}
+                        <div className="mb-2">
+                          <small className="text-muted d-block">Code de validation</small>
+                          <code className="bg-light p-1 rounded">{livraison.codeValidation}</code>
+                        </div>
+                        <div className="d-flex gap-2">
+                          {livraison.statut === 'ACCEPTEE' && (
+                            <Button variant="success" size="sm">
+                              <i className="bi bi-play-fill me-1"></i>
+                              Commencer
+                            </Button>
+                          )}
+                          {livraison.statut === 'EN_COURS' && (
+                            <Button variant="primary" size="sm">
+                              <i className="bi bi-check-circle me-1"></i>
+                              Terminer
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    }
                   />
                 </div>
               ))}

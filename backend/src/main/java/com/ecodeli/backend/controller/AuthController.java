@@ -67,7 +67,7 @@ public class AuthController {
         userInfo.put("prenom", utilisateur.getPrenom());
         userInfo.put("email", utilisateur.getEmail());
         userInfo.put("role", utilisateur.getRole().toString());
-        userInfo.put("statut", utilisateur.getStatut().toString());
+        userInfo.put("statut", utilisateur.getStatut() != null ? utilisateur.getStatut().toString() : "NON_VERIFIE");
         
         response.put("user", userInfo);
         
@@ -100,7 +100,7 @@ public class AuthController {
                         "prenom", utilisateur.get().getPrenom(),
                         "email", utilisateur.get().getEmail(),
                         "role", utilisateur.get().getRole().toString(),
-                        "statut", utilisateur.get().getStatut().toString()
+                        "statut", utilisateur.get().getStatut() != null ? utilisateur.get().getStatut().toString() : "NON_VERIFIE"
                     ));
                     return ResponseEntity.ok(response);
                 }

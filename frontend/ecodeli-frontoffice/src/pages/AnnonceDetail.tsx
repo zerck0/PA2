@@ -5,16 +5,27 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Loading from '../components/ui/Loading';
 import Alert from '../components/ui/Alert';
+import Modal from '../components/ui/Modal';
 import { useAuth } from '../hooks/useAuth';
-import { Annonce } from '../types';
+import { useToast } from '../hooks/useToast';
+import { Annonce, Entrepot } from '../types';
+import { entrepotApi, livraisonApi } from '../services/api';
 
 const AnnonceDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const { showSuccess, showError } = useToast();
   const [annonce, setAnnonce] = useState<Annonce | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+
+  // États pour la modal de prise en charge
+  const [showModal, setShowModal] = useState(false);
+  const [entrepots, setEntrepots] = useState<Entrepot[]>([]);
+  const [selectedTypeLivraison, setSelectedTypeLivraison] = useState<'complete' | 'partielle'>('complete');
+  const [selectedEntrepot, setSelectedEntrepot] = useState<number | null>(null);
+  const [loadingLivraison, setLoadingLivraison] = useState(false);
 
   // Charger l'annonce
   useEffect(() => {
@@ -63,6 +74,50 @@ const AnnonceDetail: React.FC = () => {
     };
     const badge = badges[type as keyof typeof badges] || { color: 'secondary', label: type };
     return <span className={`badge bg-${badge.color}`}>{badge.label}</span>;
+  };
+
+  // Ouvrir la modal de prise en charge
+  const handlePrendreEnCharge = async () => {
+    if (!currentUser || currentUser.user.role !== 'LIVREUR') {
+      showError('Seuls les livreurs peuvent prendre en charge des annonces');
+      return;
+    }
+
+    try {
+      const entrepotsData = await entrepotApi.getAll();
+      setEntrepots(entrepotsData);
+      setShowModal(true);
+    } catch (error) {
+      showError('Erreur lors du chargement des entrepôts');
+    }
+  };
+
+  // Confirmer la prise en charge
+  const handleConfirmerPriseEnCharge = async () => {
+    if (!currentUser || !annonce) return;
+
+    setLoadingLivraison(true);
+    try {
+      if (selectedTypeLivraison === 'complete') {
+        await livraisonApi.creerComplete(annonce.id, currentUser.user.id, annonce.prixPropose);
+        showSuccess('Livraison complète créée avec succès !');
+      } else {
+        if (!selectedEntrepot) {
+          showError('Veuillez sélectionner un entrepôt');
+          return;
+        }
+        await livraisonApi.creerPartielleDepot(annonce.id, currentUser.user.id, selectedEntrepot, annonce.prixPropose);
+        showSuccess('Livraison partielle créée avec succès !');
+      }
+      
+      setShowModal(false);
+      // Recharger l'annonce pour voir le nouveau statut
+      window.location.reload();
+    } catch (error) {
+      showError('Erreur lors de la création de la livraison');
+    } finally {
+      setLoadingLivraison(false);
+    }
   };
 
   if (loading) {
@@ -210,6 +265,12 @@ const AnnonceDetail: React.FC = () => {
 
               {/* Actions */}
               <div className="d-grid gap-2">
+                {currentUser && currentUser.user.role === 'LIVREUR' && annonce.statut === 'ACTIVE' && (
+                  <Button variant="primary" onClick={handlePrendreEnCharge}>
+                    <i className="bi bi-truck me-2"></i>
+                    Prendre en charge
+                  </Button>
+                )}
                 <Button variant="secondary">
                   <i className="bi bi-chat-dots me-2"></i>
                   Contacter
@@ -218,6 +279,99 @@ const AnnonceDetail: React.FC = () => {
             </Card>
           </div>
         </div>
+
+        {/* Modal de prise en charge */}
+        <Modal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          title="Prendre en charge cette annonce"
+        >
+          <div className="mb-4">
+            <h6>Choisissez le type de livraison :</h6>
+            
+            {/* Option livraison complète */}
+            <div className="form-check mb-3">
+              <input
+                className="form-check-input"
+                type="radio"
+                name="typeLivraison"
+                id="complete"
+                checked={selectedTypeLivraison === 'complete'}
+                onChange={() => setSelectedTypeLivraison('complete')}
+              />
+              <label className="form-check-label" htmlFor="complete">
+                <strong>Livraison complète</strong>
+                <br />
+                <small className="text-muted">
+                  Je prends en charge la livraison de {annonce?.villeDepart} à {annonce?.villeArrivee} directement
+                </small>
+              </label>
+            </div>
+
+            {/* Option livraison partielle */}
+            <div className="form-check mb-3">
+              <input
+                className="form-check-input"
+                type="radio"
+                name="typeLivraison"
+                id="partielle"
+                checked={selectedTypeLivraison === 'partielle'}
+                onChange={() => setSelectedTypeLivraison('partielle')}
+              />
+              <label className="form-check-label" htmlFor="partielle">
+                <strong>Livraison partielle</strong>
+                <br />
+                <small className="text-muted">
+                  Je prends en charge la livraison de {annonce?.villeDepart} vers un entrepôt EcoDeli
+                </small>
+              </label>
+            </div>
+
+            {/* Sélection d'entrepôt pour livraison partielle */}
+            {selectedTypeLivraison === 'partielle' && (
+              <div className="mb-3">
+                <label htmlFor="entrepot" className="form-label">
+                  <strong>Sélectionnez l'entrepôt de destination :</strong>
+                </label>
+                <select
+                  className="form-select"
+                  id="entrepot"
+                  value={selectedEntrepot || ''}
+                  onChange={(e) => setSelectedEntrepot(Number(e.target.value) || null)}
+                >
+                  <option value="">-- Choisir un entrepôt --</option>
+                  {entrepots.map((entrepot) => (
+                    <option key={entrepot.id} value={entrepot.id}>
+                      {entrepot.nom} - {entrepot.ville}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Prix proposé */}
+            {annonce?.prixPropose && (
+              <div className="alert alert-info">
+                <i className="bi bi-info-circle me-2"></i>
+                Prix proposé : <strong>{annonce.prixPropose}€</strong>
+              </div>
+            )}
+          </div>
+
+          {/* Boutons */}
+          <div className="d-flex gap-2 justify-content-end">
+            <Button variant="secondary" onClick={() => setShowModal(false)}>
+              Annuler
+            </Button>
+            <Button 
+              variant="primary" 
+              onClick={handleConfirmerPriseEnCharge}
+              disabled={loadingLivraison || (selectedTypeLivraison === 'partielle' && !selectedEntrepot)}
+            >
+              {loadingLivraison ? 'Création...' : 'Confirmer la prise en charge'}
+            </Button>
+          </div>
+        </Modal>
       </div>
     </Layout>
   );
