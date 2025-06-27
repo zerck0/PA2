@@ -131,8 +131,7 @@ public class AnnonceController {
             "hasLivraisons", !livraisons.isEmpty(),
             "nombreLivraisons", livraisons.size(),
             "livraisonsEnCours", livraisons.stream()
-                .anyMatch(l -> l.getStatut() == Livraison.StatutLivraison.EN_COURS ||
-                              l.getStatut() == Livraison.StatutLivraison.ACCEPTEE),
+                .anyMatch(l -> l.getStatut() == Livraison.StatutLivraison.EN_COURS),
             "livraisonsTerminees", livraisons.stream()
                 .anyMatch(l -> l.getStatut() == Livraison.StatutLivraison.LIVREE ||
                               l.getStatut() == Livraison.StatutLivraison.STOCKEE)

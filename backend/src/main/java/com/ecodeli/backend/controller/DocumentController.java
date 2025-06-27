@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.Normalizer;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,6 +26,27 @@ public class DocumentController {
     
     @Autowired
     private DocumentService documentService;
+    
+    /**
+     * Nettoie le nom de fichier pour les en-têtes HTTP en supprimant les caractères spéciaux
+     */
+    private String cleanFilename(String filename) {
+        if (filename == null) return "file";
+        
+        // Normaliser et supprimer les accents
+        String normalized = Normalizer.normalize(filename, Normalizer.Form.NFD);
+        String withoutAccents = normalized.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+        
+        // Remplacer les caractères spéciaux par des underscores
+        String cleaned = withoutAccents.replaceAll("[^a-zA-Z0-9._-]", "_");
+        
+        // Éviter les noms vides ou ne contenant que des caractères spéciaux
+        if (cleaned.trim().isEmpty() || cleaned.equals("_")) {
+            cleaned = "file";
+        }
+        
+        return cleaned;
+    }
     
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Document>> getDocumentsByUser(@PathVariable Long userId) {
@@ -147,9 +169,12 @@ public class DocumentController {
                     contentType = "image/" + document.getNom().substring(document.getNom().lastIndexOf(".") + 1);
                 }
                 
+                // Nettoyer le nom de fichier pour éviter les erreurs d'encodage
+                String cleanedFilename = cleanFilename(document.getNom());
+                
                 return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + document.getNom() + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + cleanedFilename + "\"")
                     .body(resource);
             } else {
                 return ResponseEntity.notFound().build();

@@ -5,6 +5,7 @@ import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import DocumentSection from '../../components/DocumentSection';
 import AnnonceCard from '../../components/AnnonceCard';
+import LivraisonDetailModal from '../../components/LivraisonDetailModal';
 import { useAuth } from '../../hooks/useAuth';
 import { Annonce, Livraison } from '../../types';
 import { livraisonApi } from '../../services/api';
@@ -14,6 +15,8 @@ const LivreurDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [livraisons, setLivraisons] = useState<Livraison[]>([]);
   const [livraisonsLoading, setLivraisonsLoading] = useState(false);
+  const [selectedLivraison, setSelectedLivraison] = useState<Livraison | null>(null);
+  const [showLivraisonModal, setShowLivraisonModal] = useState(false);
 
   // Gérer le paramètre tab depuis l'URL
   useEffect(() => {
@@ -44,6 +47,23 @@ const LivreurDashboard: React.FC = () => {
     } finally {
       setLivraisonsLoading(false);
     }
+  };
+
+  // Handler pour ouvrir le modal de détails de livraison
+  const handleConsulterLivraison = (livraison: Livraison) => {
+    setSelectedLivraison(livraison);
+    setShowLivraisonModal(true);
+  };
+
+  // Handler pour fermer le modal
+  const handleCloseLivraisonModal = () => {
+    setSelectedLivraison(null);
+    setShowLivraisonModal(false);
+  };
+
+  // Handler appelé quand une livraison est mise à jour
+  const handleLivraisonUpdated = () => {
+    loadLivraisons(); // Recharger la liste des livraisons
   };
 
   const tabs = [
@@ -175,13 +195,10 @@ const LivreurDashboard: React.FC = () => {
   // Fonction pour obtenir le badge du statut de livraison
   const getStatutLivraisonBadge = (statut: string) => {
     const badges = {
-      'EN_ATTENTE': { color: 'secondary', label: 'En attente' },
-      'ACCEPTEE': { color: 'info', label: 'Acceptée' },
       'EN_COURS': { color: 'warning', label: 'En cours' },
       'LIVREE': { color: 'success', label: 'Livrée' },
       'STOCKEE': { color: 'primary', label: 'Stockée' },
-      'ANNULEE': { color: 'danger', label: 'Annulée' },
-      'ECHEC': { color: 'danger', label: 'Échec' }
+      'ANNULEE': { color: 'danger', label: 'Annulée' }
     };
     const badge = badges[statut as keyof typeof badges] || { color: 'secondary', label: statut };
     return <span className={`badge bg-${badge.color}`}>{badge.label}</span>;
@@ -241,14 +258,20 @@ const LivreurDashboard: React.FC = () => {
                           <code className="bg-light p-1 rounded">{livraison.codeValidation}</code>
                         </div>
                         <div className="d-flex gap-2">
-                          {livraison.statut === 'ACCEPTEE' && (
-                            <Button variant="success" size="sm">
-                              <i className="bi bi-play-fill me-1"></i>
-                              Commencer
-                            </Button>
-                          )}
+                          <Button 
+                            variant="secondary" 
+                            size="sm"
+                            onClick={() => handleConsulterLivraison(livraison)}
+                          >
+                            <i className="bi bi-eye me-1"></i>
+                            Consulter
+                          </Button>
                           {livraison.statut === 'EN_COURS' && (
-                            <Button variant="primary" size="sm">
+                            <Button 
+                              variant="primary" 
+                              size="sm"
+                              onClick={() => handleConsulterLivraison(livraison)}
+                            >
                               <i className="bi bi-check-circle me-1"></i>
                               Terminer
                             </Button>
@@ -378,13 +401,23 @@ const LivreurDashboard: React.FC = () => {
   };
 
   return (
-    <DashboardLayout
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      tabs={tabs}
-    >
-      {renderContent()}
-    </DashboardLayout>
+    <>
+      <DashboardLayout
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        tabs={tabs}
+      >
+        {renderContent()}
+      </DashboardLayout>
+
+      {/* Modal de détails de livraison */}
+      <LivraisonDetailModal
+        isOpen={showLivraisonModal}
+        onClose={handleCloseLivraisonModal}
+        livraison={selectedLivraison}
+        onLivraisonUpdated={handleLivraisonUpdated}
+      />
+    </>
   );
 };
 

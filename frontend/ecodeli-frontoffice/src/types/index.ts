@@ -81,7 +81,7 @@ export interface Entrepot {
 export interface Livraison {
   id: number;
   typeLivraison: 'COMPLETE' | 'PARTIELLE_DEPOT' | 'PARTIELLE_RETRAIT';
-  statut: 'EN_ATTENTE' | 'ACCEPTEE' | 'EN_COURS' | 'LIVREE' | 'STOCKEE' | 'ANNULEE' | 'ECHEC';
+  statut: 'EN_COURS' | 'LIVREE' | 'STOCKEE' | 'ANNULEE';
   adresseDepart: string;
   adresseArrivee: string;
   entrepot?: Entrepot;

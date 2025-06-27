@@ -96,28 +96,6 @@ public class LivraisonController {
 
     // === GESTION DES STATUTS ===
 
-    @PutMapping("/{id}/accepter")
-    public ResponseEntity<?> accepterLivraison(@PathVariable Long id) {
-        try {
-            Livraison livraison = livraisonService.accepterLivraison(id);
-            return ResponseEntity.ok(livraison);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                .body(Map.of("message", e.getMessage()));
-        }
-    }
-
-    @PutMapping("/{id}/commencer")
-    public ResponseEntity<?> commencerLivraison(@PathVariable Long id) {
-        try {
-            Livraison livraison = livraisonService.commencerLivraison(id);
-            return ResponseEntity.ok(livraison);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                .body(Map.of("message", e.getMessage()));
-        }
-    }
-
     @PutMapping("/{id}/terminer")
     public ResponseEntity<?> terminerLivraison(
             @PathVariable Long id,
@@ -193,9 +171,10 @@ public class LivraisonController {
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getStats() {
         Map<String, Object> stats = Map.of(
-            "livraisonsEnAttente", livraisonService.getCountLivraisonsByStatut(Livraison.StatutLivraison.EN_ATTENTE),
             "livraisonsEnCours", livraisonService.getCountLivraisonsByStatut(Livraison.StatutLivraison.EN_COURS),
-            "livraisonsTerminees", livraisonService.getCountLivraisonsByStatut(Livraison.StatutLivraison.LIVREE),
+            "livraisonsLivrees", livraisonService.getCountLivraisonsByStatut(Livraison.StatutLivraison.LIVREE),
+            "livraisonsStockees", livraisonService.getCountLivraisonsByStatut(Livraison.StatutLivraison.STOCKEE),
+            "livraisonsAnnulees", livraisonService.getCountLivraisonsByStatut(Livraison.StatutLivraison.ANNULEE),
             "livraisonsCompletes", livraisonService.getCountLivraisonsByType(Livraison.TypeLivraison.COMPLETE),
             "livraisonsPartielles", 
                 livraisonService.getCountLivraisonsByType(Livraison.TypeLivraison.PARTIELLE_DEPOT) +

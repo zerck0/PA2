@@ -24,11 +24,11 @@ const Stepper: React.FC<StepperProps> = ({
       <div className="d-flex justify-content-between position-relative">
         {/* Ligne de connexion */}
         <div 
-          className="position-absolute top-50 start-0 bg-secondary"
+          className="position-absolute start-0 bg-secondary"
           style={{
             height: '2px',
             width: '100%',
-            transform: 'translateY(-50%)',
+            top: '20px', // Position au centre du cercle (40px de hauteur / 2 = 20px)
             zIndex: 1
           }}
         />

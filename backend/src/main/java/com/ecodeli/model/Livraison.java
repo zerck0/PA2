@@ -43,7 +43,7 @@ public class Livraison {
     private Entrepot entrepot;
 
     @Enumerated(EnumType.STRING)
-    private StatutLivraison statut = StatutLivraison.EN_ATTENTE;
+    private StatutLivraison statut = StatutLivraison.EN_COURS;
 
     @Column(name = "ordre_livraison")
     private Integer ordre = 1;
@@ -73,13 +73,10 @@ public class Livraison {
     }
 
     public enum StatutLivraison {
-        EN_ATTENTE,     // Livraison proposée mais pas encore acceptée
-        ACCEPTEE,       // Livreur a accepté la livraison
         EN_COURS,       // Livraison en cours de transport
         LIVREE,         // Livraison terminée avec succès
         STOCKEE,        // Colis stocké à l'entrepôt (pour livraisons partielles)
-        ANNULEE,        // Livraison annulée
-        ECHEC           // Livraison échouée
+        ANNULEE         // Livraison annulée
     }
 
     @PrePersist

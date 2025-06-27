@@ -118,6 +118,34 @@ public class EmailService {
     }
 
     /**
+     * Envoie un email générique
+     */
+    public void envoyerEmail(String toEmail, String subject, String content) {
+        if (!emailEnabled || mailSender == null) {
+            logger.info("=== SIMULATION EMAIL ===");
+            logger.info("To: {}", toEmail);
+            logger.info("Subject: {}", subject);
+            logger.info("Content: {}", content);
+            logger.info("========================");
+            return;
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(subject);
+            message.setText(content);
+
+            mailSender.send(message);
+            logger.info("Email envoyé à: {}", toEmail);
+        } catch (Exception e) {
+            logger.error("Erreur lors de l'envoi de l'email à {}: {}", toEmail, e.getMessage());
+            // Ne pas faire échouer le processus principal pour l'email
+        }
+    }
+
+    /**
      * Vérifie si le service email est configuré
      */
     public boolean isEmailConfigured() {

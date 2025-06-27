@@ -33,6 +33,9 @@ public class LivraisonService {
     @Autowired
     private EntrepotRepository entrepotRepository;
 
+    @Autowired
+    private EmailService emailService;
+
     // === CRÉATION DE LIVRAISONS ===
 
     public Livraison creerLivraisonComplete(Long annonceId, Long livreurId) {
@@ -43,7 +46,7 @@ public class LivraisonService {
             .orElseThrow(() -> new RuntimeException("Livreur non trouvé"));
 
         // Modifier le statut de l'annonce pour qu'elle disparaisse de la liste globale
-        annonce.setStatut(Annonce.StatutAnnonce.ASSIGNEE);
+        annonce.setStatut(Annonce.StatutAnnonce.EN_COURS);
         annonceRepository.save(annonce);
 
         Livraison livraison = new Livraison();
@@ -52,11 +55,17 @@ public class LivraisonService {
         livraison.setTypeLivraison(Livraison.TypeLivraison.COMPLETE);
         livraison.setAdresseDepart(annonce.getAdresseDepart());
         livraison.setAdresseArrivee(annonce.getAdresseArrivee());
-        livraison.setStatut(Livraison.StatutLivraison.EN_ATTENTE);
+        livraison.setStatut(Livraison.StatutLivraison.EN_COURS); // Passage direct en EN_COURS
         livraison.setOrdre(1);
+        livraison.setDateDebut(LocalDateTime.now()); // Date de début immédiate
         livraison.setCodeValidation(genererCodeValidation());
 
-        return livraisonRepository.save(livraison);
+        Livraison livraisonSauvee = livraisonRepository.save(livraison);
+        
+        // Envoyer email avec code de validation au client
+        envoyerEmailCodeValidation(livraisonSauvee);
+
+        return livraisonSauvee;
     }
 
     public Livraison creerLivraisonPartielleDepot(Long annonceId, Long livreurId, Long entrepotId) {
@@ -81,7 +90,8 @@ public class LivraisonService {
         livraison.setTypeLivraison(Livraison.TypeLivraison.PARTIELLE_DEPOT);
         livraison.setAdresseDepart(annonce.getAdresseDepart()); // Adresse originale
         livraison.setAdresseArrivee(entrepot.getAdresse());
-        livraison.setStatut(Livraison.StatutLivraison.EN_ATTENTE);
+        livraison.setStatut(Livraison.StatutLivraison.EN_COURS);
+        livraison.setDateDebut(LocalDateTime.now());
         livraison.setOrdre(1);
         livraison.setCodeValidation(genererCodeValidation());
 
@@ -105,7 +115,8 @@ public class LivraisonService {
         livraison.setTypeLivraison(Livraison.TypeLivraison.PARTIELLE_RETRAIT);
         livraison.setAdresseDepart(entrepot.getAdresse());
         livraison.setAdresseArrivee(annonce.getAdresseArrivee());
-        livraison.setStatut(Livraison.StatutLivraison.EN_ATTENTE);
+        livraison.setStatut(Livraison.StatutLivraison.EN_COURS);
+        livraison.setDateDebut(LocalDateTime.now());
         livraison.setOrdre(2);
         livraison.setCodeValidation(genererCodeValidation());
 
@@ -113,16 +124,6 @@ public class LivraisonService {
     }
 
     // === GESTION DES STATUTS ===
-
-    public Livraison accepterLivraison(Long livraisonId) {
-        return changerStatutLivraison(livraisonId, Livraison.StatutLivraison.ACCEPTEE);
-    }
-
-    public Livraison commencerLivraison(Long livraisonId) {
-        Livraison livraison = changerStatutLivraison(livraisonId, Livraison.StatutLivraison.EN_COURS);
-        livraison.setDateDebut(LocalDateTime.now());
-        return livraisonRepository.save(livraison);
-    }
 
     public Livraison terminerLivraison(Long livraisonId, String codeValidation) {
         Livraison livraison = livraisonRepository.findById(livraisonId)
@@ -164,7 +165,8 @@ public class LivraisonService {
             deuxiemePartie.setTypeLivraison(Livraison.TypeLivraison.PARTIELLE_RETRAIT);
             deuxiemePartie.setAdresseDepart(premierePartie.getEntrepot().getAdresse());
             deuxiemePartie.setAdresseArrivee(premierePartie.getAnnonce().getAdresseArrivee());
-            deuxiemePartie.setStatut(Livraison.StatutLivraison.EN_ATTENTE);
+            deuxiemePartie.setStatut(Livraison.StatutLivraison.EN_COURS);
+            deuxiemePartie.setDateDebut(LocalDateTime.now());
             deuxiemePartie.setOrdre(2);
             deuxiemePartie.setCodeValidation(genererCodeValidation());
             deuxiemePartie.setPrixConvenu(premierePartie.getPrixConvenu()); // Même prix ou répartition
@@ -253,5 +255,64 @@ public class LivraisonService {
 
     public Long getCountLivraisonsByType(Livraison.TypeLivraison type) {
         return livraisonRepository.countByType(type);
+    }
+
+    // === ENVOI D'EMAILS ===
+
+    /**
+     * Envoie un email avec le code de validation au client
+     */
+    private void envoyerEmailCodeValidation(Livraison livraison) {
+        try {
+            String emailClient = livraison.getAnnonce().getAuteur().getEmail();
+            String nomClient = livraison.getAnnonce().getAuteur().getPrenom() + " " + livraison.getAnnonce().getAuteur().getNom();
+            String nomLivreur = livraison.getLivreur().getPrenom() + " " + livraison.getLivreur().getNom();
+            
+            String sujet = "EcoDeli - Votre livraison a été prise en charge";
+            
+            String contenu = String.format(
+                "Bonjour %s,\n\n" +
+                "Bonne nouvelle ! Votre annonce \"%s\" a été prise en charge par %s.\n\n" +
+                "Détails de la livraison :\n" +
+                "- De : %s\n" +
+                "- Vers : %s\n" +
+                "- Type : %s\n\n" +
+                "CODE DE VALIDATION : %s\n\n" +
+                "Vous devrez communiquer ce code au livreur lors de la remise du colis pour confirmer la livraison.\n\n" +
+                "Gardez ce code précieusement !\n\n" +
+                "Cordialement,\n" +
+                "L'équipe EcoDeli",
+                nomClient,
+                livraison.getAnnonce().getTitre(),
+                nomLivreur,
+                livraison.getAdresseDepart(),
+                livraison.getAdresseArrivee(),
+                getTypeLivraisonLibelle(livraison.getTypeLivraison()),
+                livraison.getCodeValidation()
+            );
+
+            emailService.envoyerEmail(emailClient, sujet, contenu);
+            
+            System.out.println("Email de code de validation envoyé à : " + emailClient);
+        } catch (Exception e) {
+            System.err.println("Erreur lors de l'envoi de l'email de validation : " + e.getMessage());
+            // On ne fait pas échouer la transaction si l'email ne peut pas être envoyé
+        }
+    }
+
+    /**
+     * Retourne le libellé du type de livraison
+     */
+    private String getTypeLivraisonLibelle(Livraison.TypeLivraison type) {
+        switch (type) {
+            case COMPLETE:
+                return "Livraison complète";
+            case PARTIELLE_DEPOT:
+                return "Livraison partielle - Dépôt en entrepôt";
+            case PARTIELLE_RETRAIT:
+                return "Livraison partielle - Retrait d'entrepôt";
+            default:
+                return type.toString();
+        }
     }
 }

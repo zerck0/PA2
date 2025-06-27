@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import { Annonce } from '../types';
-import { useAuth } from '../hooks/useAuth';
-import { useToast } from '../hooks/useToast';
 
 interface AnnonceCardProps {
   annonce: Annonce;
@@ -22,53 +20,16 @@ const AnnonceCard: React.FC<AnnonceCardProps> = ({
   extraInfo
 }) => {
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
-  const { showSuccess, showError } = useToast();
 
   // Naviguer vers les détails de l'annonce
   const handleVoirDetails = () => {
     navigate(`/annonces/${annonce.id}`);
   };
 
-  // Prendre en charge rapidement (pour les livreurs)
-  const handlePrendreEnCharge = async () => {
-    if (!currentUser?.user.id) return;
-    
-    try {
-      const response = await fetch(
-        `http://localhost:8080/api/annonces/${annonce.id}/prendre-en-charge?livreurId=${currentUser.user.id}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Afficher le toast de succès
-        showSuccess(data.message);
-        // Rediriger vers le dashboard avec l'onglet livraisons
-        navigate('/dashboard?tab=livraisons');
-      } else {
-        // Afficher le toast d'erreur
-        showError(data.message || 'Erreur lors de la prise en charge');
-      }
-    } catch (err) {
-      showError('Erreur de connexion');
-    }
-  };
-
   // Troncature de la description
   const truncateText = (text: string, maxLength: number = 100) => {
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
-
-  // Déterminer les actions disponibles
-  const isLivreur = currentUser?.user.role === 'LIVREUR';
-  const canTakeCharge = isLivreur && annonce.statut === 'ACTIVE';
 
   // Badge pour le type d'annonce
   const getTypeBadge = (type: string) => {
@@ -190,18 +151,6 @@ const AnnonceCard: React.FC<AnnonceCardProps> = ({
                     <i className="bi bi-eye me-1"></i>
                     Voir détails
                   </Button>
-
-                  {/* Bouton Prendre en charge - pour les livreurs sur annonces actives */}
-                  {canTakeCharge && (
-                    <Button 
-                      variant="success" 
-                      size="sm"
-                      onClick={handlePrendreEnCharge}
-                    >
-                      <i className="bi bi-truck me-1"></i>
-                      Prendre en charge
-                    </Button>
-                  )}
 
                   {/* Boutons existants */}
                   {onEdit && (

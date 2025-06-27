@@ -154,6 +154,25 @@ export const livraisonApi = {
     const response = await api.get(`/livraisons/livreur/${livreurId}`);
     return response.data;
   },
+
+  getLivraisonById: async (id: number) => {
+    const response = await api.get(`/livraisons/${id}`);
+    return response.data;
+  },
+
+
+  terminerLivraison: async (id: number, codeValidation: string) => {
+    const params = new URLSearchParams({
+      codeValidation: codeValidation
+    });
+    const response = await api.put(`/livraisons/${id}/terminer?${params}`);
+    return response.data;
+  },
+
+  annulerLivraison: async (id: number) => {
+    const response = await api.put(`/livraisons/${id}/annuler`);
+    return response.data;
+  },
 };
 
 export default api;
