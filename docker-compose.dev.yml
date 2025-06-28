@@ -90,6 +90,10 @@ services:
     environment:
       NODE_ENV: development
       # Pas d'URL API externe, on utilise le proxy Vite
+      # Variables Google Maps API
+      VITE_GOOGLE_PLACES_API_KEY: ${VITE_GOOGLE_PLACES_API_KEY}
+      VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY}
+      VITE_API_URL: http://ecodeli-backend:8080
     ports:
       - "${FRONTOFFICE_PORT:-3000}:5173"
     volumes:

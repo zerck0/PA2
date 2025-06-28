@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 
 interface InputProps {
   type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url';
@@ -10,9 +10,13 @@ interface InputProps {
   disabled?: boolean;
   error?: string;
   className?: string;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  onFocus?: (e: React.FocusEvent) => void;
+  onBlur?: (e: React.FocusEvent) => void;
+  autoComplete?: string;
 }
 
-const Input: React.FC<InputProps> = ({
+const Input = forwardRef<HTMLInputElement, InputProps>(({
   type = 'text',
   label,
   value,
@@ -21,8 +25,12 @@ const Input: React.FC<InputProps> = ({
   required = false,
   disabled = false,
   error,
-  className = ''
-}) => {
+  className = '',
+  onKeyDown,
+  onFocus,
+  onBlur,
+  autoComplete
+}, ref) => {
   return (
     <div className={`mb-3 ${className}`}>
       {label && (
@@ -31,17 +39,24 @@ const Input: React.FC<InputProps> = ({
         </label>
       )}
       <input
+        ref={ref}
         type={type}
         className={`form-control ${error ? 'is-invalid' : ''}`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
+        onFocus={onFocus}
+        onBlur={onBlur}
         placeholder={placeholder}
         required={required}
         disabled={disabled}
+        autoComplete={autoComplete}
       />
       {error && <div className="invalid-feedback">{error}</div>}
     </div>
   );
-};
+});
+
+Input.displayName = 'Input';
 
 export default Input;

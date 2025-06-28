@@ -20,7 +20,7 @@ export default defineConfig({
     // Configuration proxy pour les appels API en développement
     proxy: {
       '/api': {
-        target: 'http://ecodeli-backend:8080',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false
       }

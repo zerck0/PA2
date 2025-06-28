@@ -1,0 +1,108 @@
+/**
+ * Styles pour Google Places Autocomplete
+ * Fix pour les suggestions qui passent derrière les modales
+ */
+
+/* Container principal des suggestions Google Places */
+.pac-container {
+  z-index: 10000 !important;
+  border-radius: 8px !important;
+  border: 1px solid #dee2e6 !important;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+  margin-top: 2px !important;
+}
+
+/* Items individuels des suggestions */
+.pac-item {
+  padding: 8px 12px !important;
+  border-bottom: 1px solid #f8f9fa !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+}
+
+/* Hover sur les suggestions */
+.pac-item:hover {
+  background-color: #f8f9fa !important;
+}
+
+/* Item sélectionné */
+.pac-item-selected {
+  background-color: #e9ecef !important;
+}
+
+/* Texte principal de la suggestion */
+.pac-item-query {
+  font-weight: 500 !important;
+  color: #212529 !important;
+}
+
+/* Texte secondaire (ville, pays, etc.) */
+.pac-matched {
+  font-weight: 600 !important;
+  color: #0d6efd !important;
+}
+
+/* Logo Google "Powered by Google" */
+.pac-logo:after {
+  background-size: contain !important;
+  margin: 8px !important;
+}
+
+/* Style pour l'input avec autocomplétion active */
+.google-places-input {
+  position: relative;
+}
+
+/* Animation de chargement pour l'autocomplétion */
+.google-places-loading {
+  position: relative;
+}
+
+.google-places-loading::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid #dee2e6;
+  border-top: 2px solid #0d6efd;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Assurer que les suggestions s'affichent correctement dans les modales */
+.modal .pac-container {
+  z-index: 10055 !important; /* Au-dessus des modales Bootstrap (1050) */
+}
+
+/* Style pour les suggestions en mode sombre (si nécessaire) */
+@media (prefers-color-scheme: dark) {
+  .pac-container {
+    background-color: #2d3748 !important;
+    border-color: #4a5568 !important;
+  }
+  
+  .pac-item {
+    color: #e2e8f0 !important;
+    border-bottom-color: #4a5568 !important;
+  }
+  
+  .pac-item:hover {
+    background-color: #4a5568 !important;
+  }
+  
+  .pac-item-selected {
+    background-color: #2d3748 !important;
+  }
+  
+  .pac-item-query {
+    color: #e2e8f0 !important;
+  }
+}

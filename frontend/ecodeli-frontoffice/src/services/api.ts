@@ -1,9 +1,16 @@
 import axios from 'axios';
 
 // Configuration dynamique de l'URL API selon l'environnement
-const API_BASE_URL = import.meta.env.VITE_API_URL 
-  ? `${import.meta.env.VITE_API_URL}/api`
+const API_BASE_URL = import.meta.env.PROD
+  ? `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api`
   : '/api'; // Utilise le proxy Vite en développement
+
+console.log('🔗 Configuration API:', {
+  mode: import.meta.env.MODE,
+  prod: import.meta.env.PROD,
+  viteApiUrl: import.meta.env.VITE_API_URL,
+  finalApiUrl: API_BASE_URL
+});
 
 const api = axios.create({
   baseURL: API_BASE_URL,
