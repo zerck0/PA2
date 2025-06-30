@@ -54,7 +54,17 @@ const AnnonceCard: React.FC<AnnonceCardProps> = ({
     }
     
     // Si c'est une URL relative, construire l'URL complète
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    // En développement, utiliser le proxy Vite qui redirige vers le backend
+    if (photoUrl.startsWith('/api')) {
+      // URL déjà correcte pour le proxy Vite
+      return photoUrl;
+    }
+    
+    // Sinon, construire l'URL complète
+    const baseUrl = import.meta.env.PROD 
+      ? (import.meta.env.VITE_API_URL || 'http://localhost:8080')
+      : ''; // En dev, pas de baseURL car on utilise le proxy
+      
     return baseUrl + photoUrl;
   };
 

@@ -111,4 +111,44 @@ public class EntrepotService {
             .map(entrepot -> entrepot.getStatut() == Entrepot.StatutEntrepot.ACTIF)
             .orElse(false);
     }
+
+    /**
+     * Trouve l'entrepôt le plus proche d'une ville donnée
+     * Pour l'instant, logique simple basée sur les villes principales
+     */
+    public Optional<Entrepot> getEntrepotPlusProche(String villeDestination) {
+        String ville = villeDestination.toLowerCase().trim();
+        
+        // Mapping simple des villes vers les entrepôts les plus proches
+        String entrepotCible;
+        
+        if (ville.contains("paris") || ville.contains("versailles") || ville.contains("boulogne")) {
+            entrepotCible = "paris";
+        } else if (ville.contains("marseille") || ville.contains("aix") || ville.contains("toulon")) {
+            entrepotCible = "marseille";
+        } else if (ville.contains("lyon") || ville.contains("villeurbanne") || ville.contains("saint-étienne")) {
+            entrepotCible = "lyon";
+        } else if (ville.contains("lille") || ville.contains("roubaix") || ville.contains("tourcoing") || ville.contains("valenciennes")) {
+            entrepotCible = "lille";
+        } else if (ville.contains("montpellier") || ville.contains("nîmes") || ville.contains("béziers")) {
+            entrepotCible = "montpellier";
+        } else if (ville.contains("rennes") || ville.contains("brest") || ville.contains("quimper") || ville.contains("saint-brieuc")) {
+            entrepotCible = "rennes";
+        } else {
+            // Par défaut, retourner Paris
+            entrepotCible = "paris";
+        }
+        
+        return entrepotRepository.findByVilleContainingIgnoreCase(entrepotCible)
+            .stream()
+            .filter(e -> e.getStatut() == Entrepot.StatutEntrepot.ACTIF)
+            .findFirst();
+    }
+
+    /**
+     * Retourne la liste des entrepôts avec leurs informations pour le choix de livraison partielle
+     */
+    public List<Entrepot> getEntrepotsDisponiblesPourLivraison() {
+        return entrepotRepository.findAllActiveOrderByVille();
+    }
 }

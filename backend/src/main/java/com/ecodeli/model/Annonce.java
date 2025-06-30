@@ -64,6 +64,10 @@ public class Annonce {
     // Photo de l'annonce
     private String photoUrl;
     
+    // Livraison partielle
+    @Column(name = "livraison_partielle_possible")
+    private Boolean livraisonPartiellePossible = false;
+    
     // Relations
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "auteur_id", nullable = false)

@@ -46,7 +46,7 @@ public class LivraisonService {
             .orElseThrow(() -> new RuntimeException("Livreur non trouvé"));
 
         // Modifier le statut de l'annonce pour qu'elle disparaisse de la liste globale
-        annonce.setStatut(Annonce.StatutAnnonce.EN_COURS);
+        annonce.setStatut(Annonce.StatutAnnonce.ASSIGNEE);
         annonceRepository.save(annonce);
 
         Livraison livraison = new Livraison();
@@ -55,9 +55,8 @@ public class LivraisonService {
         livraison.setTypeLivraison(Livraison.TypeLivraison.COMPLETE);
         livraison.setAdresseDepart(annonce.getAdresseDepart());
         livraison.setAdresseArrivee(annonce.getAdresseArrivee());
-        livraison.setStatut(Livraison.StatutLivraison.EN_COURS); // Passage direct en EN_COURS
+        livraison.setStatut(Livraison.StatutLivraison.ASSIGNEE); // Statut ASSIGNEE d'abord
         livraison.setOrdre(1);
-        livraison.setDateDebut(LocalDateTime.now()); // Date de début immédiate
         livraison.setCodeValidation(genererCodeValidation());
 
         Livraison livraisonSauvee = livraisonRepository.save(livraison);
@@ -121,6 +120,165 @@ public class LivraisonService {
         livraison.setCodeValidation(genererCodeValidation());
 
         return livraisonRepository.save(livraison);
+    }
+
+    // === NOUVELLES MÉTHODES POUR LE WORKFLOW ===
+
+    /**
+     * Démarrer une livraison (passer de ASSIGNEE à EN_COURS)
+     */
+    public Livraison commencerLivraison(Long livraisonId) {
+        Livraison livraison = livraisonRepository.findById(livraisonId)
+            .orElseThrow(() -> new RuntimeException("Livraison non trouvée"));
+
+        if (livraison.getStatut() != Livraison.StatutLivraison.ASSIGNEE) {
+            throw new RuntimeException("Cette livraison ne peut pas être démarrée (statut: " + livraison.getStatut() + ")");
+        }
+
+        livraison.setStatut(Livraison.StatutLivraison.EN_COURS);
+        livraison.setDateDebut(LocalDateTime.now());
+
+        // Mettre à jour le statut de l'annonce
+        Annonce annonce = livraison.getAnnonce();
+        annonce.setStatut(Annonce.StatutAnnonce.EN_COURS);
+        annonceRepository.save(annonce);
+
+        return livraisonRepository.save(livraison);
+    }
+
+    /**
+     * Prendre en charge une annonce avec choix du type de livraison
+     */
+    public Livraison prendreEnChargeAnnonce(Long annonceId, Long livreurId, String typeLivraison, Long entrepotId) {
+        Annonce annonce = annonceRepository.findById(annonceId)
+            .orElseThrow(() -> new RuntimeException("Annonce non trouvée"));
+
+        if (annonce.getStatut() != Annonce.StatutAnnonce.ACTIVE) {
+            throw new RuntimeException("Cette annonce n'est plus disponible");
+        }
+
+        switch (typeLivraison.toUpperCase()) {
+            case "COMPLETE":
+                return creerLivraisonComplete(annonceId, livreurId);
+            case "PARTIELLE_DEPOT":
+                if (entrepotId == null) {
+                    throw new RuntimeException("Entrepôt requis pour une livraison partielle");
+                }
+                return creerLivraisonPartielleDepotNouveau(annonceId, livreurId, entrepotId);
+            case "PARTIELLE_RETRAIT":
+                if (entrepotId == null) {
+                    throw new RuntimeException("Entrepôt requis pour une livraison partielle");
+                }
+                return creerLivraisonPartielleRetraitNouveau(annonceId, livreurId, entrepotId);
+            default:
+                throw new RuntimeException("Type de livraison non reconnu: " + typeLivraison);
+        }
+    }
+
+    /**
+     * Créer une livraison partielle dépôt selon le nouveau workflow
+     */
+    private Livraison creerLivraisonPartielleDepotNouveau(Long annonceId, Long livreurId, Long entrepotId) {
+        Annonce annonce = annonceRepository.findById(annonceId)
+            .orElseThrow(() -> new RuntimeException("Annonce non trouvée"));
+        
+        Livreur livreur = livreurRepository.findById(livreurId)
+            .orElseThrow(() -> new RuntimeException("Livreur non trouvé"));
+
+        Entrepot entrepot = entrepotRepository.findById(entrepotId)
+            .orElseThrow(() -> new RuntimeException("Entrepôt non trouvé"));
+
+        // Vérifier si il n'y a pas déjà une livraison partielle dépôt pour cette annonce
+        List<Livraison> livraisonsExistantes = livraisonRepository.findByAnnonceId(annonceId);
+        boolean depotExiste = livraisonsExistantes.stream()
+            .anyMatch(l -> l.getTypeLivraison() == Livraison.TypeLivraison.PARTIELLE_DEPOT);
+
+        if (depotExiste) {
+            throw new RuntimeException("Une livraison partielle dépôt existe déjà pour cette annonce");
+        }
+
+        Livraison livraison = new Livraison();
+        livraison.setAnnonce(annonce);
+        livraison.setLivreur(livreur);
+        livraison.setEntrepot(entrepot);
+        livraison.setTypeLivraison(Livraison.TypeLivraison.PARTIELLE_DEPOT);
+        livraison.setAdresseDepart(annonce.getAdresseDepart());
+        livraison.setAdresseArrivee(entrepot.getAdresse());
+        livraison.setStatut(Livraison.StatutLivraison.ASSIGNEE);
+        livraison.setOrdre(1);
+        livraison.setCodeValidation(genererCodeValidation());
+
+        Livraison livraisonSauvee = livraisonRepository.save(livraison);
+
+        // Vérifier si les deux parties sont maintenant disponibles
+        verifierEtActiverLivraisonPartielle(annonceId);
+
+        return livraisonSauvee;
+    }
+
+    /**
+     * Créer une livraison partielle retrait selon le nouveau workflow
+     */
+    private Livraison creerLivraisonPartielleRetraitNouveau(Long annonceId, Long livreurId, Long entrepotId) {
+        Annonce annonce = annonceRepository.findById(annonceId)
+            .orElseThrow(() -> new RuntimeException("Annonce non trouvée"));
+        
+        Livreur livreur = livreurRepository.findById(livreurId)
+            .orElseThrow(() -> new RuntimeException("Livreur non trouvé"));
+
+        Entrepot entrepot = entrepotRepository.findById(entrepotId)
+            .orElseThrow(() -> new RuntimeException("Entrepôt non trouvé"));
+
+        // Vérifier si il n'y a pas déjà une livraison partielle retrait pour cette annonce
+        List<Livraison> livraisonsExistantes = livraisonRepository.findByAnnonceId(annonceId);
+        boolean retraitExiste = livraisonsExistantes.stream()
+            .anyMatch(l -> l.getTypeLivraison() == Livraison.TypeLivraison.PARTIELLE_RETRAIT);
+
+        if (retraitExiste) {
+            throw new RuntimeException("Une livraison partielle retrait existe déjà pour cette annonce");
+        }
+
+        Livraison livraison = new Livraison();
+        livraison.setAnnonce(annonce);
+        livraison.setLivreur(livreur);
+        livraison.setEntrepot(entrepot);
+        livraison.setTypeLivraison(Livraison.TypeLivraison.PARTIELLE_RETRAIT);
+        livraison.setAdresseDepart(entrepot.getAdresse());
+        livraison.setAdresseArrivee(annonce.getAdresseArrivee());
+        livraison.setStatut(Livraison.StatutLivraison.ASSIGNEE);
+        livraison.setOrdre(2);
+        livraison.setCodeValidation(genererCodeValidation());
+
+        Livraison livraisonSauvee = livraisonRepository.save(livraison);
+
+        // Vérifier si les deux parties sont maintenant disponibles
+        verifierEtActiverLivraisonPartielle(annonceId);
+
+        return livraisonSauvee;
+    }
+
+    /**
+     * Vérifier si les deux segments d'une livraison partielle sont pris et activer si c'est le cas
+     */
+    private void verifierEtActiverLivraisonPartielle(Long annonceId) {
+        List<Livraison> livraisons = livraisonRepository.findByAnnonceId(annonceId);
+        
+        boolean depotAssigne = livraisons.stream()
+            .anyMatch(l -> l.getTypeLivraison() == Livraison.TypeLivraison.PARTIELLE_DEPOT && l.getLivreur() != null);
+        
+        boolean retraitAssigne = livraisons.stream()
+            .anyMatch(l -> l.getTypeLivraison() == Livraison.TypeLivraison.PARTIELLE_RETRAIT && l.getLivreur() != null);
+
+        if (depotAssigne && retraitAssigne) {
+            // Les deux segments sont pris, mettre l'annonce en ASSIGNEE
+            Annonce annonce = annonceRepository.findById(annonceId)
+                .orElseThrow(() -> new RuntimeException("Annonce non trouvée"));
+            
+            annonce.setStatut(Annonce.StatutAnnonce.ASSIGNEE);
+            annonceRepository.save(annonce);
+
+            System.out.println("Livraison partielle complètement assignée pour l'annonce " + annonceId);
+        }
     }
 
     // === GESTION DES STATUTS ===

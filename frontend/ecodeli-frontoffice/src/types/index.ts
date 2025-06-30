@@ -31,6 +31,7 @@ export interface Annonce {
   dimensions?: string;
   fragile?: boolean;
   photoUrl?: string;
+  livraisonPartiellePossible?: boolean;
   dateCreation: string;
   statut: 'ACTIVE' | 'ASSIGNEE' | 'EN_COURS' | 'TERMINEE' | 'ANNULEE';
   auteur: User;
@@ -53,6 +54,7 @@ export interface CreateAnnonceData {
   dimensions?: string;
   fragile?: boolean;
   photoUrl?: string;
+  livraisonPartiellePossible?: boolean;
 }
 
 export interface LoginData {
@@ -81,7 +83,7 @@ export interface Entrepot {
 export interface Livraison {
   id: number;
   typeLivraison: 'COMPLETE' | 'PARTIELLE_DEPOT' | 'PARTIELLE_RETRAIT';
-  statut: 'EN_COURS' | 'LIVREE' | 'STOCKEE' | 'ANNULEE';
+  statut: 'ASSIGNEE' | 'EN_COURS' | 'LIVREE' | 'STOCKEE' | 'ANNULEE';
   adresseDepart: string;
   adresseArrivee: string;
   entrepot?: Entrepot;
@@ -93,4 +95,5 @@ export interface Livraison {
   prixConvenu?: number;
   commentaires?: string;
   annonce: Annonce;
+  livreur?: User;
 }

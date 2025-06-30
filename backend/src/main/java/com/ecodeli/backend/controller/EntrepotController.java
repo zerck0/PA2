@@ -35,6 +35,13 @@ public class EntrepotController {
         return ResponseEntity.ok(entrepots);
     }
 
+    @GetMapping("/plus-proche")
+    public ResponseEntity<Entrepot> getEntrepotPlusProche(@RequestParam String ville) {
+        return entrepotService.getEntrepotPlusProche(ville)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Entrepot> getEntrepotById(@PathVariable Long id) {
         return entrepotService.getEntrepotById(id)

@@ -94,6 +94,34 @@ public class LivraisonController {
         }
     }
 
+    // === NOUVEAUX ENDPOINTS POUR LE WORKFLOW ===
+
+    @PostMapping("/prendre-en-charge/{annonceId}")
+    public ResponseEntity<?> prendreEnChargeAnnonce(
+            @PathVariable Long annonceId,
+            @RequestParam Long livreurId,
+            @RequestParam String typeLivraison,
+            @RequestParam(required = false) Long entrepotId) {
+        try {
+            Livraison livraison = livraisonService.prendreEnChargeAnnonce(annonceId, livreurId, typeLivraison, entrepotId);
+            return ResponseEntity.status(HttpStatus.CREATED).body(livraison);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}/commencer")
+    public ResponseEntity<?> commencerLivraison(@PathVariable Long id) {
+        try {
+            Livraison livraison = livraisonService.commencerLivraison(id);
+            return ResponseEntity.ok(livraison);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("message", e.getMessage()));
+        }
+    }
+
     // === GESTION DES STATUTS ===
 
     @PutMapping("/{id}/terminer")

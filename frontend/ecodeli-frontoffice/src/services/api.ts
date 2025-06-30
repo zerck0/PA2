@@ -180,6 +180,11 @@ export const livraisonApi = {
     const response = await api.put(`/livraisons/${id}/annuler`);
     return response.data;
   },
+
+  commencerLivraison: async (id: number) => {
+    const response = await api.put(`/livraisons/${id}/commencer`);
+    return response.data;
+  },
 };
 
 export default api;

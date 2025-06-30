@@ -7,11 +7,13 @@ import DocumentSection from '../../components/DocumentSection';
 import AnnonceCard from '../../components/AnnonceCard';
 import LivraisonDetailModal from '../../components/LivraisonDetailModal';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../hooks/useToast';
 import { Annonce, Livraison } from '../../types';
 import { livraisonApi } from '../../services/api';
 
 const LivreurDashboard: React.FC = () => {
   const { currentUser } = useAuth();
+  const { showSuccess, showError } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [livraisons, setLivraisons] = useState<Livraison[]>([]);
   const [livraisonsLoading, setLivraisonsLoading] = useState(false);
@@ -64,6 +66,18 @@ const LivreurDashboard: React.FC = () => {
   // Handler appelé quand une livraison est mise à jour
   const handleLivraisonUpdated = () => {
     loadLivraisons(); // Recharger la liste des livraisons
+  };
+
+  // Handler pour commencer une livraison (ASSIGNEE -> EN_COURS)
+  const handleCommencerLivraison = async (livraison: Livraison) => {
+    try {
+      await livraisonApi.commencerLivraison(livraison.id);
+      showSuccess('🚀 Livraison démarrée avec succès ! Vous pouvez maintenant commencer la livraison.');
+      loadLivraisons(); // Recharger la liste
+    } catch (error: any) {
+      console.error('Erreur lors du démarrage de la livraison:', error);
+      showError('❌ Erreur lors du démarrage de la livraison : ' + (error.response?.data?.message || error.message));
+    }
   };
 
   const tabs = [
@@ -195,6 +209,7 @@ const LivreurDashboard: React.FC = () => {
   // Fonction pour obtenir le badge du statut de livraison
   const getStatutLivraisonBadge = (statut: string) => {
     const badges = {
+      'ASSIGNEE': { color: 'info', label: 'Assignée' },
       'EN_COURS': { color: 'warning', label: 'En cours' },
       'LIVREE': { color: 'success', label: 'Livrée' },
       'STOCKEE': { color: 'primary', label: 'Stockée' },
@@ -266,6 +281,16 @@ const LivreurDashboard: React.FC = () => {
                             <i className="bi bi-eye me-1"></i>
                             Consulter
                           </Button>
+                          {livraison.statut === 'ASSIGNEE' && (
+                            <Button 
+                              variant="success" 
+                              size="sm"
+                              onClick={() => handleCommencerLivraison(livraison)}
+                            >
+                              <i className="bi bi-play-circle me-1"></i>
+                              Commencer
+                            </Button>
+                          )}
                           {livraison.statut === 'EN_COURS' && (
                             <Button 
                               variant="primary" 

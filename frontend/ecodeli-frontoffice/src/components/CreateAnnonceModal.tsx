@@ -36,7 +36,8 @@ const initialState: CreateAnnonceData = {
   poids: undefined,
   dimensions: '',
   fragile: false,
-  photoUrl: ''
+  photoUrl: '',
+  livraisonPartiellePossible: false
 };
 
 const steps = [
@@ -538,6 +539,23 @@ const CreateAnnonceModal: React.FC<CreateAnnonceModalProps> = ({
                   />
                   <label className="form-check-label" htmlFor="fragile">
                     Colis fragile
+                  </label>
+                </div>
+                <div className="form-check mb-3">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="livraisonPartiellePossible"
+                    name="livraisonPartiellePossible"
+                    checked={form.livraisonPartiellePossible || false}
+                    onChange={e => setForm(f => ({ ...f, livraisonPartiellePossible: e.target.checked }))}
+                  />
+                  <label className="form-check-label" htmlFor="livraisonPartiellePossible">
+                    <strong>Livraison partielle autorisée</strong>
+                    <br />
+                    <small className="text-muted">
+                      Permet aux livreurs de proposer une livraison en 2 étapes via un entrepôt intermédiaire
+                    </small>
                   </label>
                 </div>
               </>
