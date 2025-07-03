@@ -26,6 +26,28 @@ const AnnonceCard: React.FC<AnnonceCardProps> = ({
     navigate(`/annonces/${annonce.id}`);
   };
 
+  // Détecter si l'annonce a un segment dépôt assigné
+  const detecterSegmentDepotAssigne = () => {
+    if (annonce.description && annonce.description.includes('##SEGMENT_DEPOT_ASSIGNE##')) {
+      const parts = annonce.description.split('##SEGMENT_DEPOT_ASSIGNE##');
+      const infosParts = parts[1]?.split('##');
+      return {
+        aSegmentDepotAssigne: true,
+        descriptionOriginale: parts[0],
+        entrepotNom: infosParts[0] || '',
+        livreurNom: infosParts[1] || ''
+      };
+    }
+    return {
+      aSegmentDepotAssigne: false,
+      descriptionOriginale: annonce.description,
+      entrepotNom: '',
+      livreurNom: ''
+    };
+  };
+
+  const segmentInfo = detecterSegmentDepotAssigne();
+
   // Troncature de la description
   const truncateText = (text: string, maxLength: number = 100) => {
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
@@ -115,14 +137,30 @@ const AnnonceCard: React.FC<AnnonceCardProps> = ({
             <div className="d-flex align-items-center mb-2">
               {getTypeBadge(annonce.type)}
               <span className="badge bg-light text-dark">{annonce.statut}</span>
+              {segmentInfo.aSegmentDepotAssigne && (
+                <span className="badge bg-warning text-dark ms-2">
+                  <i className="bi bi-truck me-1"></i>
+                  En transit
+                </span>
+              )}
             </div>
             
             {/* Titre */}
             <h5 className="card-title mb-2">{annonce.titre}</h5>
             
+            {/* Alerte pour segment dépôt assigné */}
+            {segmentInfo.aSegmentDepotAssigne && (
+              <div className="alert alert-info py-2 mb-2">
+                <i className="bi bi-info-circle me-2"></i>
+                <small>
+                  <strong>Segment dépôt assigné</strong> - Colis en cours de dépôt par {segmentInfo.livreurNom} vers {segmentInfo.entrepotNom}
+                </small>
+              </div>
+            )}
+            
             {/* Description */}
             <p className="card-text text-muted mb-3">
-              {truncateText(annonce.description)}
+              {truncateText(segmentInfo.descriptionOriginale)}
             </p>
             
             {/* Localisation */}

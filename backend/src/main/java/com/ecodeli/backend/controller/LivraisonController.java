@@ -48,7 +48,8 @@ public class LivraisonController {
             @RequestParam Long entrepotId,
             @RequestParam(required = false) BigDecimal prixConvenu) {
         try {
-            Livraison livraison = livraisonService.creerLivraisonPartielleDepot(annonceId, livreurId, entrepotId);
+            // Utiliser la nouvelle méthode qui gère correctement le workflow
+            Livraison livraison = livraisonService.prendreEnChargeAnnonce(annonceId, livreurId, "PARTIELLE_DEPOT", entrepotId);
             
             if (prixConvenu != null) {
                 livraison.setPrixConvenu(prixConvenu);
@@ -68,7 +69,8 @@ public class LivraisonController {
             @RequestParam Long entrepotId,
             @RequestParam(required = false) BigDecimal prixConvenu) {
         try {
-            Livraison livraison = livraisonService.creerLivraisonPartielleRetrait(annonceId, livreurId, entrepotId);
+            // Utiliser la nouvelle méthode qui gère correctement le workflow
+            Livraison livraison = livraisonService.prendreEnChargeAnnonce(annonceId, livreurId, "PARTIELLE_RETRAIT", entrepotId);
             
             if (prixConvenu != null) {
                 livraison.setPrixConvenu(prixConvenu);

@@ -36,8 +36,11 @@ public class LivraisonService {
     @Autowired
     private EmailService emailService;
 
-    // === CRÉATION DE LIVRAISONS ===
+    // === NOUVEAU WORKFLOW SIMPLIFIÉ ===
 
+    /**
+     * Créer une livraison complète
+     */
     public Livraison creerLivraisonComplete(Long annonceId, Long livreurId) {
         Annonce annonce = annonceRepository.findById(annonceId)
             .orElseThrow(() -> new RuntimeException("Annonce non trouvée"));
@@ -45,29 +48,52 @@ public class LivraisonService {
         Livreur livreur = livreurRepository.findById(livreurId)
             .orElseThrow(() -> new RuntimeException("Livreur non trouvé"));
 
-        // Modifier le statut de l'annonce pour qu'elle disparaisse de la liste globale
+        // Vérifier qu'il n'y a pas déjà des segments partiels
+        List<Livraison> livraisonsExistantes = livraisonRepository.findByAnnonceId(annonceId);
+        boolean aDesSegmentsPartiels = livraisonsExistantes.stream()
+            .anyMatch(l -> l.isPartielle());
+        
+        if (aDesSegmentsPartiels) {
+            throw new RuntimeException("Impossible de créer une livraison complète : des segments de livraison partielle existent déjà pour cette annonce");
+        }
+
+        // Marquer l'annonce comme assignée
         annonce.setStatut(Annonce.StatutAnnonce.ASSIGNEE);
         annonceRepository.save(annonce);
 
+        // Créer la livraison complète
         Livraison livraison = new Livraison();
         livraison.setAnnonce(annonce);
         livraison.setLivreur(livreur);
-        livraison.setTypeLivraison(Livraison.TypeLivraison.COMPLETE);
+        livraison.setEstPartielle(false);  // NOUVEAU : livraison complète
+        livraison.setSegmentOrdre(null);   // NOUVEAU : pas de segment
         livraison.setAdresseDepart(annonce.getAdresseDepart());
         livraison.setAdresseArrivee(annonce.getAdresseArrivee());
-        livraison.setStatut(Livraison.StatutLivraison.ASSIGNEE); // Statut ASSIGNEE d'abord
-        livraison.setOrdre(1);
+        livraison.setStatut(Livraison.StatutLivraison.ASSIGNEE);
         livraison.setCodeValidation(genererCodeValidation());
 
+        // Compatibilité avec l'ancien système
+        livraison.setTypeLivraison(Livraison.TypeLivraison.COMPLETE);
+        livraison.setOrdre(1);
+
         Livraison livraisonSauvee = livraisonRepository.save(livraison);
-        
-        // Envoyer email avec code de validation au client
         envoyerEmailCodeValidation(livraisonSauvee);
 
         return livraisonSauvee;
     }
 
-    public Livraison creerLivraisonPartielleDepot(Long annonceId, Long livreurId, Long entrepotId) {
+    /**
+     * Créer un segment de livraison partielle (dépôt ou retrait)
+     */
+    public Livraison creerLivraisonPartielle(Long annonceId, Long livreurId, Integer segmentOrdre, Long entrepotId) {
+        System.out.println("=== CRÉATION SEGMENT PARTIEL ===");
+        System.out.println("Annonce: " + annonceId + " | Livreur: " + livreurId + " | Segment: " + segmentOrdre);
+
+        // Validation des paramètres
+        if (segmentOrdre == null || (segmentOrdre != 1 && segmentOrdre != 2)) {
+            throw new RuntimeException("Segment ordre doit être 1 (dépôt) ou 2 (retrait)");
+        }
+
         Annonce annonce = annonceRepository.findById(annonceId)
             .orElseThrow(() -> new RuntimeException("Annonce non trouvée"));
         
@@ -77,64 +103,103 @@ public class LivraisonService {
         Entrepot entrepot = entrepotRepository.findById(entrepotId)
             .orElseThrow(() -> new RuntimeException("Entrepôt non trouvé"));
 
-        // Modifier l'annonce : statut EN_COURS et nouveau point de départ = entrepôt
-        annonce.setStatut(Annonce.StatutAnnonce.EN_COURS);
-        annonce.setAdresseDepart(entrepot.getAdresse());
-        annonceRepository.save(annonce);
-
-        Livraison livraison = new Livraison();
-        livraison.setAnnonce(annonce);
-        livraison.setLivreur(livreur);
-        livraison.setEntrepot(entrepot);
-        livraison.setTypeLivraison(Livraison.TypeLivraison.PARTIELLE_DEPOT);
-        livraison.setAdresseDepart(annonce.getAdresseDepart()); // Adresse originale
-        livraison.setAdresseArrivee(entrepot.getAdresse());
-        livraison.setStatut(Livraison.StatutLivraison.EN_COURS);
-        livraison.setDateDebut(LocalDateTime.now());
-        livraison.setOrdre(1);
-        livraison.setCodeValidation(genererCodeValidation());
-
-        return livraisonRepository.save(livraison);
-    }
-
-    public Livraison creerLivraisonPartielleRetrait(Long annonceId, Long livreurId, Long entrepotId) {
-        Annonce annonce = annonceRepository.findById(annonceId)
-            .orElseThrow(() -> new RuntimeException("Annonce non trouvée"));
+        // Vérifications de conflit
+        List<Livraison> livraisonsExistantes = livraisonRepository.findByAnnonceId(annonceId);
         
-        Livreur livreur = livreurRepository.findById(livreurId)
-            .orElseThrow(() -> new RuntimeException("Livreur non trouvé"));
+        // Vérifier qu'il n'y a pas de livraison complète
+        boolean aLivraisonComplete = livraisonsExistantes.stream()
+            .anyMatch(l -> l.isComplete());
+        
+        if (aLivraisonComplete) {
+            throw new RuntimeException("Impossible de créer un segment partiel : une livraison complète existe déjà");
+        }
 
-        Entrepot entrepot = entrepotRepository.findById(entrepotId)
-            .orElseThrow(() -> new RuntimeException("Entrepôt non trouvé"));
+        // Vérifier qu'il n'y a pas déjà ce segment
+        boolean segmentExiste = livraisonsExistantes.stream()
+            .anyMatch(l -> l.isPartielle() && segmentOrdre.equals(l.getSegmentOrdre()));
+        
+        if (segmentExiste) {
+            throw new RuntimeException("Le segment " + (segmentOrdre == 1 ? "dépôt" : "retrait") + " existe déjà pour cette annonce");
+        }
 
+        // Créer la livraison partielle
         Livraison livraison = new Livraison();
         livraison.setAnnonce(annonce);
         livraison.setLivreur(livreur);
         livraison.setEntrepot(entrepot);
-        livraison.setTypeLivraison(Livraison.TypeLivraison.PARTIELLE_RETRAIT);
-        livraison.setAdresseDepart(entrepot.getAdresse());
-        livraison.setAdresseArrivee(annonce.getAdresseArrivee());
-        livraison.setStatut(Livraison.StatutLivraison.EN_COURS);
-        livraison.setDateDebut(LocalDateTime.now());
-        livraison.setOrdre(2);
+        livraison.setEstPartielle(true);    // NOUVEAU : livraison partielle
+        livraison.setSegmentOrdre(segmentOrdre); // NOUVEAU : ordre du segment
+        livraison.setStatut(Livraison.StatutLivraison.ASSIGNEE);
         livraison.setCodeValidation(genererCodeValidation());
 
-        return livraisonRepository.save(livraison);
+        // Adresses selon le segment
+        if (segmentOrdre == 1) { // Dépôt
+            livraison.setAdresseDepart(annonce.getAdresseDepart());
+            livraison.setAdresseArrivee(entrepot.getAdresse());
+            // Compatibilité
+            livraison.setTypeLivraison(Livraison.TypeLivraison.PARTIELLE_DEPOT);
+            livraison.setOrdre(1);
+        } else { // Retrait
+            livraison.setAdresseDepart(entrepot.getAdresse());
+            livraison.setAdresseArrivee(annonce.getAdresseArrivee());
+            // Compatibilité
+            livraison.setTypeLivraison(Livraison.TypeLivraison.PARTIELLE_RETRAIT);
+            livraison.setOrdre(2);
+        }
+
+        Livraison livraisonSauvee = livraisonRepository.save(livraison);
+
+        // Vérifier si les deux segments sont maintenant assignés
+        verifierEtActiverLivraisonPartielle(annonceId);
+        
+        envoyerEmailCodeValidation(livraisonSauvee);
+
+        System.out.println("Segment " + segmentOrdre + " créé avec succès pour l'annonce " + annonceId);
+        return livraisonSauvee;
     }
+
+    // Anciennes méthodes supprimées - remplacées par prendreEnChargeAnnonce()
+    // qui utilise creerLivraisonPartielleDepotNouveau() et creerLivraisonPartielleRetraitNouveau()
 
     // === NOUVELLES MÉTHODES POUR LE WORKFLOW ===
 
     /**
      * Démarrer une livraison (passer de ASSIGNEE à EN_COURS)
+     * NOUVELLE VERSION SIMPLIFIÉE
      */
     public Livraison commencerLivraison(Long livraisonId) {
+        System.out.println("=== COMMENCER LIVRAISON (NOUVEAU WORKFLOW) ===");
+        
         Livraison livraison = livraisonRepository.findById(livraisonId)
             .orElseThrow(() -> new RuntimeException("Livraison non trouvée"));
+
+        System.out.println("Livraison - ID: " + livraison.getId() + 
+                          ", Partielle: " + livraison.isPartielle() + 
+                          ", Segment: " + livraison.getSegmentOrdre() + 
+                          ", Statut: " + livraison.getStatut());
 
         if (livraison.getStatut() != Livraison.StatutLivraison.ASSIGNEE) {
             throw new RuntimeException("Cette livraison ne peut pas être démarrée (statut: " + livraison.getStatut() + ")");
         }
 
+        // Pour les livraisons partielles, vérifications de coordination
+        if (livraison.isPartielle()) {
+            System.out.println("Livraison partielle - Vérifications de coordination...");
+            
+            // Vérifier que tous les segments sont assignés
+            if (!tousLesSegmentsSontAssignes(livraison.getAnnonce().getId())) {
+                throw new RuntimeException("Impossible de commencer : tous les segments ne sont pas encore assignés");
+            }
+            
+            // Pour le segment 2 (retrait), vérifier que le segment 1 (dépôt) est terminé
+            if (livraison.isSegmentRetrait()) {
+                if (!segment1EstTermine(livraison.getAnnonce().getId())) {
+                    throw new RuntimeException("Impossible de commencer le retrait : le dépôt n'est pas encore terminé");
+                }
+            }
+        }
+
+        // Démarrer la livraison
         livraison.setStatut(Livraison.StatutLivraison.EN_COURS);
         livraison.setDateDebut(LocalDateTime.now());
 
@@ -143,6 +208,7 @@ public class LivraisonService {
         annonce.setStatut(Annonce.StatutAnnonce.EN_COURS);
         annonceRepository.save(annonce);
 
+        System.out.println("Livraison démarrée avec succès !");
         return livraisonRepository.save(livraison);
     }
 
@@ -188,8 +254,18 @@ public class LivraisonService {
         Entrepot entrepot = entrepotRepository.findById(entrepotId)
             .orElseThrow(() -> new RuntimeException("Entrepôt non trouvé"));
 
-        // Vérifier si il n'y a pas déjà une livraison partielle dépôt pour cette annonce
+        // Vérifications de conflit de types de livraison
         List<Livraison> livraisonsExistantes = livraisonRepository.findByAnnonceId(annonceId);
+        
+        // VALIDATION CRUCIALE : Vérifier qu'il n'y a pas déjà une livraison complète
+        boolean aUnelivraisonComplete = livraisonsExistantes.stream()
+            .anyMatch(l -> l.getTypeLivraison() == Livraison.TypeLivraison.COMPLETE);
+        
+        if (aUnelivraisonComplete) {
+            throw new RuntimeException("Impossible de créer un segment partiel : une livraison complète existe déjà pour cette annonce");
+        }
+        
+        // Vérifier si il n'y a pas déjà une livraison partielle dépôt pour cette annonce
         boolean depotExiste = livraisonsExistantes.stream()
             .anyMatch(l -> l.getTypeLivraison() == Livraison.TypeLivraison.PARTIELLE_DEPOT);
 
@@ -229,8 +305,18 @@ public class LivraisonService {
         Entrepot entrepot = entrepotRepository.findById(entrepotId)
             .orElseThrow(() -> new RuntimeException("Entrepôt non trouvé"));
 
-        // Vérifier si il n'y a pas déjà une livraison partielle retrait pour cette annonce
+        // Vérifications de conflit de types de livraison
         List<Livraison> livraisonsExistantes = livraisonRepository.findByAnnonceId(annonceId);
+        
+        // VALIDATION CRUCIALE : Vérifier qu'il n'y a pas déjà une livraison complète
+        boolean aUnelivraisonComplete = livraisonsExistantes.stream()
+            .anyMatch(l -> l.getTypeLivraison() == Livraison.TypeLivraison.COMPLETE);
+        
+        if (aUnelivraisonComplete) {
+            throw new RuntimeException("Impossible de créer un segment partiel : une livraison complète existe déjà pour cette annonce");
+        }
+        
+        // Vérifier si il n'y a pas déjà une livraison partielle retrait pour cette annonce
         boolean retraitExiste = livraisonsExistantes.stream()
             .anyMatch(l -> l.getTypeLivraison() == Livraison.TypeLivraison.PARTIELLE_RETRAIT);
 
@@ -301,11 +387,12 @@ public class LivraisonService {
 
         Livraison livraisonTerminee = livraisonRepository.save(livraison);
 
-        // Si c'est une livraison partielle dépôt terminée, créer automatiquement la 2ème partie
-        if (livraison.getTypeLivraison() == Livraison.TypeLivraison.PARTIELLE_DEPOT && 
-            nouveauStatut == Livraison.StatutLivraison.STOCKEE) {
-            creerDeuxiemePartiePartielle(livraison);
-        }
+        // NOTE: Création automatique désactivée - dans le nouveau workflow,
+        // les deux segments sont créés manuellement par des livreurs distincts
+        // if (livraison.getTypeLivraison() == Livraison.TypeLivraison.PARTIELLE_DEPOT && 
+        //     nouveauStatut == Livraison.StatutLivraison.STOCKEE) {
+        //     creerDeuxiemePartiePartielle(livraison);
+        // }
 
         return livraisonTerminee;
     }
@@ -403,6 +490,67 @@ public class LivraisonService {
 
     public boolean annonceHasLivraisons(Long annonceId) {
         return livraisonRepository.hasLivraisonsByAnnonce(annonceId);
+    }
+
+    // === NOUVELLES MÉTHODES UTILITAIRES SIMPLIFIÉES ===
+
+    /**
+     * Vérifie si tous les segments (1 et 2) d'une livraison partielle sont assignés
+     */
+    private boolean tousLesSegmentsSontAssignes(Long annonceId) {
+        List<Livraison> livraisons = livraisonRepository.findByAnnonceId(annonceId);
+        
+        System.out.println("  >> Vérification segments pour annonce " + annonceId + ":");
+        for (Livraison l : livraisons) {
+            System.out.println("    - Livraison " + l.getId() + 
+                             " | Partielle: " + l.isPartielle() + 
+                             " | Segment: " + l.getSegmentOrdre() + 
+                             " | Livreur: " + (l.getLivreur() != null ? l.getLivreur().getId() : "null"));
+        }
+        
+        boolean segment1Assigne = livraisons.stream()
+            .anyMatch(l -> l.isPartielle() && Integer.valueOf(1).equals(l.getSegmentOrdre()) && l.getLivreur() != null);
+        
+        boolean segment2Assigne = livraisons.stream()
+            .anyMatch(l -> l.isPartielle() && Integer.valueOf(2).equals(l.getSegmentOrdre()) && l.getLivreur() != null);
+
+        System.out.println("  >> Résultat: Segment 1=" + segment1Assigne + ", Segment 2=" + segment2Assigne);
+        return segment1Assigne && segment2Assigne;
+    }
+    
+    /**
+     * Vérifie si le segment 1 (dépôt) est terminé (statut STOCKEE)
+     */
+    private boolean segment1EstTermine(Long annonceId) {
+        List<Livraison> livraisons = livraisonRepository.findByAnnonceId(annonceId);
+        
+        System.out.println("  >> Vérification segment 1 terminé pour annonce " + annonceId + ":");
+        
+        boolean termine = livraisons.stream()
+            .anyMatch(l -> l.isPartielle() && 
+                          Integer.valueOf(1).equals(l.getSegmentOrdre()) && 
+                          l.getStatut() == Livraison.StatutLivraison.STOCKEE);
+        
+        System.out.println("  >> Segment 1 terminé (STOCKEE): " + termine);
+        return termine;
+    }
+
+    // === MÉTHODES DE COMPATIBILITÉ (ANCIEN WORKFLOW) ===
+
+    /**
+     * Vérifie si tous les segments d'une livraison partielle sont assignés (ANCIEN)
+     */
+    private boolean sontTousLesSegmentsAssignes(Long annonceId) {
+        // Rediriger vers la nouvelle méthode
+        return tousLesSegmentsSontAssignes(annonceId);
+    }
+    
+    /**
+     * Vérifie si le segment dépôt est terminé (ANCIEN)
+     */
+    private boolean segmentDepotEstTermine(Long annonceId) {
+        // Rediriger vers la nouvelle méthode
+        return segment1EstTermine(annonceId);
     }
 
     // === STATISTIQUES ===

@@ -4,7 +4,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import DocumentSection from '../../components/DocumentSection';
-import AnnonceCard from '../../components/AnnonceCard';
+import LivraisonCard from '../../components/LivraisonCard';
 import LivraisonDetailModal from '../../components/LivraisonDetailModal';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
@@ -78,6 +78,60 @@ const LivreurDashboard: React.FC = () => {
       console.error('Erreur lors du démarrage de la livraison:', error);
       showError('❌ Erreur lors du démarrage de la livraison : ' + (error.response?.data?.message || error.message));
     }
+  };
+
+  // Vérifier si une livraison partielle peut être commencée
+  const peutCommencerLivraisonPartielle = (livraison: Livraison): boolean => {
+    // Pour les livraisons complètes, toujours autorisé
+    if (livraison.typeLivraison === 'COMPLETE') {
+      return true;
+    }
+
+    // Pour les livraisons partielles, vérifier que l'annonce a le statut ASSIGNEE
+    // (ce qui signifie que les 2 segments sont pris)
+    if (livraison.annonce.statut !== 'ASSIGNEE') {
+      return false;
+    }
+
+    // Pour le segment DÉPÔT, peut commencer dès que les 2 segments sont assignés
+    if (livraison.typeLivraison === 'PARTIELLE_DEPOT') {
+      return true;
+    }
+
+    // Pour le segment RETRAIT, on délègue au backend la vérification
+    // que le segment dépôt est terminé (STOCKEE)
+    if (livraison.typeLivraison === 'PARTIELLE_RETRAIT') {
+      // Le bouton sera activé, mais le backend vérifiera les prérequis
+      // Si le dépôt n'est pas terminé, l'utilisateur aura un message d'erreur explicite
+      return true;
+    }
+
+    return false;
+  };
+
+  // Message d'aide pour les livraisons partielles en attente
+  const getMessageAttenteLivraisonPartielle = (livraison: Livraison): string => {
+    if (livraison.typeLivraison === 'COMPLETE') {
+      return '';
+    }
+
+    if (livraison.annonce.statut === 'ACTIVE') {
+      return livraison.typeLivraison === 'PARTIELLE_DEPOT' 
+        ? 'En attente qu\'un livreur prenne en charge le segment retrait'
+        : 'En attente qu\'un livreur prenne en charge le segment dépôt';
+    }
+
+    // Pour le segment retrait, message spécifique selon le statut
+    if (livraison.typeLivraison === 'PARTIELLE_RETRAIT') {
+      if (livraison.annonce.statut === 'ASSIGNEE') {
+        return 'En attente que le livreur du segment 1 termine le dépôt à l\'entrepôt (statut STOCKEE)';
+      }
+      if (livraison.annonce.statut === 'EN_COURS') {
+        return 'Le livreur du segment 1 est en cours de dépôt à l\'entrepôt';
+      }
+    }
+
+    return '';
   };
 
   const tabs = [
@@ -206,29 +260,6 @@ const LivreurDashboard: React.FC = () => {
     </Card>
   );
 
-  // Fonction pour obtenir le badge du statut de livraison
-  const getStatutLivraisonBadge = (statut: string) => {
-    const badges = {
-      'ASSIGNEE': { color: 'info', label: 'Assignée' },
-      'EN_COURS': { color: 'warning', label: 'En cours' },
-      'LIVREE': { color: 'success', label: 'Livrée' },
-      'STOCKEE': { color: 'primary', label: 'Stockée' },
-      'ANNULEE': { color: 'danger', label: 'Annulée' }
-    };
-    const badge = badges[statut as keyof typeof badges] || { color: 'secondary', label: statut };
-    return <span className={`badge bg-${badge.color}`}>{badge.label}</span>;
-  };
-
-  // Fonction pour obtenir le badge du type de livraison
-  const getTypeLivraisonBadge = (type: string) => {
-    const badges = {
-      'COMPLETE': { color: 'success', label: 'Complète' },
-      'PARTIELLE_DEPOT': { color: 'warning', label: 'Partielle - Dépôt' },
-      'PARTIELLE_RETRAIT': { color: 'info', label: 'Partielle - Retrait' }
-    };
-    const badge = badges[type as keyof typeof badges] || { color: 'secondary', label: type };
-    return <span className={`badge bg-${badge.color} me-2`}>{badge.label}</span>;
-  };
 
   const renderLivraisons = () => (
     <div>
@@ -250,60 +281,12 @@ const LivreurDashboard: React.FC = () => {
             <div className="row g-4">
               {livraisons.map((livraison) => (
                 <div key={livraison.id} className="col-lg-6">
-                  <AnnonceCard
-                    annonce={livraison.annonce}
-                    showActions={false}
-                    extraInfo={
-                      <div className="mt-3 pt-3 border-top">
-                        <div className="d-flex gap-2 mb-2">
-                          {getTypeLivraisonBadge(livraison.typeLivraison)}
-                          {getStatutLivraisonBadge(livraison.statut)}
-                        </div>
-                        {livraison.entrepot && (
-                          <div className="mb-2">
-                            <small className="text-muted d-block">
-                              <i className="bi bi-building me-1"></i>
-                              Entrepôt
-                            </small>
-                            <strong>{livraison.entrepot.nom} - {livraison.entrepot.ville}</strong>
-                          </div>
-                        )}
-                        <div className="mb-2">
-                          <small className="text-muted d-block">Code de validation</small>
-                          <code className="bg-light p-1 rounded">{livraison.codeValidation}</code>
-                        </div>
-                        <div className="d-flex gap-2">
-                          <Button 
-                            variant="secondary" 
-                            size="sm"
-                            onClick={() => handleConsulterLivraison(livraison)}
-                          >
-                            <i className="bi bi-eye me-1"></i>
-                            Consulter
-                          </Button>
-                          {livraison.statut === 'ASSIGNEE' && (
-                            <Button 
-                              variant="success" 
-                              size="sm"
-                              onClick={() => handleCommencerLivraison(livraison)}
-                            >
-                              <i className="bi bi-play-circle me-1"></i>
-                              Commencer
-                            </Button>
-                          )}
-                          {livraison.statut === 'EN_COURS' && (
-                            <Button 
-                              variant="primary" 
-                              size="sm"
-                              onClick={() => handleConsulterLivraison(livraison)}
-                            >
-                              <i className="bi bi-check-circle me-1"></i>
-                              Terminer
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    }
+                  <LivraisonCard
+                    livraison={livraison}
+                    onConsulter={handleConsulterLivraison}
+                    onCommencer={handleCommencerLivraison}
+                    peutCommencer={peutCommencerLivraisonPartielle(livraison)}
+                    messageAttente={getMessageAttenteLivraisonPartielle(livraison)}
                   />
                 </div>
               ))}

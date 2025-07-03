@@ -106,9 +106,20 @@ public class AnnonceController {
     
     @GetMapping("/{id}")
     public ResponseEntity<Annonce> getAnnonceById(@PathVariable Long id) {
-        Optional<Annonce> annonce = annonceService.getAnnonceById(id);
-        return annonce.map(ResponseEntity::ok)
-                     .orElse(ResponseEntity.notFound().build());
+        return annonceService.getAnnonceById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/segments")
+    public ResponseEntity<Map<String, Object>> getAnnonceSegments(@PathVariable Long id) {
+        try {
+            Map<String, Object> segments = annonceService.getSegmentsInfo(id);
+            return ResponseEntity.ok(segments);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("message", e.getMessage()));
+        }
     }
     
     @GetMapping("/{id}/livraisons")
