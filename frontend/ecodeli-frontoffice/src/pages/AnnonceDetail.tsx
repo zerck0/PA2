@@ -26,30 +26,9 @@ const AnnonceDetail: React.FC = () => {
   const [selectedTypeLivraison, setSelectedTypeLivraison] = useState<'complete' | 'partielle' | 'directe'>('complete');
   const [selectedEntrepot, setSelectedEntrepot] = useState<number | null>(null);
   const [loadingLivraison, setLoadingLivraison] = useState(false);
+  const [segmentsInfo, setSegmentsInfo] = useState<any>(null);
 
-  // Détecter si l'annonce a un segment dépôt assigné
-  const detecterSegmentDepotAssigne = () => {
-    if (annonce?.description && annonce.description.includes('##SEGMENT_DEPOT_ASSIGNE##')) {
-      const parts = annonce.description.split('##SEGMENT_DEPOT_ASSIGNE##');
-      const infosParts = parts[1]?.split('##');
-      return {
-        aSegmentDepotAssigne: true,
-        descriptionOriginale: parts[0],
-        entrepotNom: infosParts[0] || '',
-        livreurNom: infosParts[1] || ''
-      };
-    }
-    return {
-      aSegmentDepotAssigne: false,
-      descriptionOriginale: annonce?.description || '',
-      entrepotNom: '',
-      livreurNom: ''
-    };
-  };
-
-  const segmentInfo = detecterSegmentDepotAssigne();
-
-  // Charger l'annonce
+  // Charger l'annonce et les informations de segments
   useEffect(() => {
     const loadAnnonce = async () => {
       try {
@@ -57,6 +36,22 @@ const AnnonceDetail: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           setAnnonce(data);
+          
+          // Charger les informations de segments
+          const segmentsData = await livraisonApi.getSegmentsInfo(Number(id));
+          setSegmentsInfo(segmentsData);
+          
+          // Définir automatiquement le type de livraison selon la situation
+          if (segmentsData.hasSegmentDepot && !segmentsData.hasSegmentRetrait) {
+            // Segment dépôt existe -> seule option possible est le retrait
+            setSelectedTypeLivraison('directe');
+          } else if (segmentsData.canCreateComplete) {
+            // Aucun segment -> défaut à complet
+            setSelectedTypeLivraison('complete');
+          } else if (segmentsData.canCreatePartielleDepot) {
+            // Peut créer dépôt -> défaut à partielle
+            setSelectedTypeLivraison('partielle');
+          }
         } else {
           setError('Annonce non trouvée');
         }
@@ -124,27 +119,12 @@ const AnnonceDetail: React.FC = () => {
         await livraisonApi.creerComplete(annonce.id, currentUser.user.id, annonce.prixPropose);
         showSuccess('Livraison complète créée avec succès !');
       } else if (selectedTypeLivraison === 'directe') {
-        // Pour la livraison directe (segment retrait), utiliser l'entrepôt du segment dépôt
-        // On récupère l'ID de l'entrepôt à partir des segments existants
-        try {
-          const segmentsResponse = await fetch(`http://localhost:8080/api/annonces/${annonce.id}/segments`);
-          if (segmentsResponse.ok) {
-            const segmentsData = await segmentsResponse.json();
-            const entrepotId = segmentsData.depot?.entrepotId;
-            
-            if (entrepotId) {
-              await livraisonApi.creerPartielleRetrait(annonce.id, currentUser.user.id, entrepotId, annonce.prixPropose);
-              showSuccess('Livraison directe créée avec succès !');
-            } else {
-              showError('Impossible de récupérer l\'entrepôt de dépôt');
-              return;
-            }
-          } else {
-            showError('Erreur lors de la récupération des informations de l\'entrepôt');
-            return;
-          }
-        } catch (segmentError) {
-          showError('Erreur lors de la récupération des informations de segments');
+        // Pour la livraison directe (segment retrait), utiliser l'entrepôt du segment dépôt existant
+        if (segmentsInfo && segmentsInfo.entrepotId) {
+          await livraisonApi.creerPartielleRetrait(annonce.id, currentUser.user.id, segmentsInfo.entrepotId, annonce.prixPropose);
+          showSuccess('Livraison retrait créée avec succès !');
+        } else {
+          showError('Impossible de récupérer l\'entrepôt de dépôt');
           return;
         }
       } else {
@@ -229,7 +209,7 @@ const AnnonceDetail: React.FC = () => {
 
               <div className="mb-4">
                 <h5>Description</h5>
-                <p className="text-muted">{segmentInfo.descriptionOriginale}</p>
+                <p className="text-muted">{annonce.description}</p>
               </div>
 
               {/* Localisation */}
@@ -334,12 +314,12 @@ const AnnonceDetail: React.FC = () => {
           title="Prendre en charge cette annonce"
         >
           <div className="mb-4">
-            {segmentInfo.aSegmentDepotAssigne ? (
-              // Annonce avec segment dépôt assigné - seule option: livraison directe
+            {segmentsInfo && segmentsInfo.hasSegmentDepot && !segmentsInfo.hasSegmentRetrait ? (
+              // Annonce avec segment dépôt assigné - seule option: livraison retrait
               <div>
                 <div className="alert alert-info mb-3">
                   <i className="bi bi-info-circle me-2"></i>
-                  <strong>Segment dépôt déjà assigné</strong> - Le colis est en cours de dépôt par {segmentInfo.livreurNom} vers {segmentInfo.entrepotNom}
+                  <strong>Segment dépôt déjà assigné</strong> - Le colis est en cours de dépôt vers {segmentsInfo.entrepotNom}
                 </div>
                 
                 <h6>Option disponible :</h6>
@@ -353,56 +333,60 @@ const AnnonceDetail: React.FC = () => {
                     onChange={() => setSelectedTypeLivraison('directe')}
                   />
                   <label className="form-check-label" htmlFor="directe">
-                    <strong>Livraison directe depuis l'entrepôt</strong>
+                    <strong>Livraison retrait depuis l'entrepôt</strong>
                     <br />
                     <small className="text-muted">
-                      Je prends en charge la livraison de {segmentInfo.entrepotNom} à {annonce?.villeArrivee}
+                      Je prends en charge la livraison de {segmentsInfo.entrepotNom} à {annonce?.villeArrivee}
                     </small>
                   </label>
                 </div>
               </div>
             ) : (
-              // Annonce normale - toutes les options disponibles
+              // Annonce normale - options disponibles selon l'état
               <div>
                 <h6>Choisissez le type de livraison :</h6>
                 
-                {/* Option livraison complète */}
-                <div className="form-check mb-3">
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name="typeLivraison"
-                    id="complete"
-                    checked={selectedTypeLivraison === 'complete'}
-                    onChange={() => setSelectedTypeLivraison('complete')}
-                  />
-                  <label className="form-check-label" htmlFor="complete">
-                    <strong>Livraison complète</strong>
-                    <br />
-                    <small className="text-muted">
-                      Je prends en charge la livraison de {annonce?.villeDepart} à {annonce?.villeArrivee} directement
-                    </small>
-                  </label>
-                </div>
+                {/* Option livraison complète - seulement si aucun segment n'existe */}
+                {segmentsInfo && segmentsInfo.canCreateComplete && (
+                  <div className="form-check mb-3">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      name="typeLivraison"
+                      id="complete"
+                      checked={selectedTypeLivraison === 'complete'}
+                      onChange={() => setSelectedTypeLivraison('complete')}
+                    />
+                    <label className="form-check-label" htmlFor="complete">
+                      <strong>Livraison complète</strong>
+                      <br />
+                      <small className="text-muted">
+                        Je prends en charge la livraison de {annonce?.villeDepart} à {annonce?.villeArrivee} directement
+                      </small>
+                    </label>
+                  </div>
+                )}
 
-                {/* Option livraison partielle */}
-                <div className="form-check mb-3">
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name="typeLivraison"
-                    id="partielle"
-                    checked={selectedTypeLivraison === 'partielle'}
-                    onChange={() => setSelectedTypeLivraison('partielle')}
-                  />
-                  <label className="form-check-label" htmlFor="partielle">
-                    <strong>Livraison partielle</strong>
-                    <br />
-                    <small className="text-muted">
-                      Je prends en charge la livraison de {annonce?.villeDepart} vers un entrepôt EcoDeli
-                    </small>
-                  </label>
-                </div>
+                {/* Option livraison partielle dépôt - seulement si pas de segment dépôt */}
+                {segmentsInfo && segmentsInfo.canCreatePartielleDepot && (
+                  <div className="form-check mb-3">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      name="typeLivraison"
+                      id="partielle"
+                      checked={selectedTypeLivraison === 'partielle'}
+                      onChange={() => setSelectedTypeLivraison('partielle')}
+                    />
+                    <label className="form-check-label" htmlFor="partielle">
+                      <strong>Livraison partielle (dépôt)</strong>
+                      <br />
+                      <small className="text-muted">
+                        Je prends en charge la livraison de {annonce?.villeDepart} vers un entrepôt EcoDeli
+                      </small>
+                    </label>
+                  </div>
+                )}
 
                 {/* Sélection d'entrepôt pour livraison partielle */}
                 {selectedTypeLivraison === 'partielle' && (
@@ -423,6 +407,14 @@ const AnnonceDetail: React.FC = () => {
                         </option>
                       ))}
                     </select>
+                  </div>
+                )}
+
+                {/* Message si aucune option n'est disponible */}
+                {segmentsInfo && !segmentsInfo.canCreateComplete && !segmentsInfo.canCreatePartielleDepot && !segmentsInfo.canCreatePartielleRetrait && (
+                  <div className="alert alert-warning">
+                    <i className="bi bi-exclamation-triangle me-2"></i>
+                    Cette annonce a déjà toutes ses livraisons assignées.
                   </div>
                 )}
               </div>

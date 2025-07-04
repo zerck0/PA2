@@ -4,7 +4,7 @@
 # ===========================================
 # STAGE 1: BASE - Dépendances partagées
 # ===========================================
-FROM eclipse-temurin:21-jdk AS base
+FROM eclipse-temurin:21-jdk-jammy AS base
 
 LABEL description="EcoDeli Backend - Base Stage"
 
@@ -14,7 +14,7 @@ WORKDIR /app
 COPY pom.xml mvnw ./
 COPY .mvn .mvn
 
-# Téléchargement des dépendances (cache Docker)
+# Téléchargement des dépendances (cache Docker optimisé)
 RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
 
 # ===========================================
@@ -24,8 +24,7 @@ FROM base AS development
 
 LABEL description="EcoDeli Backend - Development with Hot Reload"
 
-# Installation de curl pour health checks
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# curl est déjà inclus dans l'image jammy - plus besoin d'installation !
 
 # Copie du code source (sera overridé par volume en dev)
 COPY src ./src
@@ -60,7 +59,7 @@ RUN ./mvnw clean package -DskipTests -B
 # ===========================================
 # STAGE 4: PRODUCTION - Runtime optimisé
 # ===========================================
-FROM eclipse-temurin:21-jre AS production
+FROM eclipse-temurin:21-jre-jammy AS production
 
 LABEL description="EcoDeli Backend - Production Runtime"
 LABEL version="1.0.0"
@@ -68,10 +67,7 @@ LABEL version="1.0.0"
 # Utilisateur non-root pour la sécurité
 RUN groupadd -r ecodeli && useradd -r -g ecodeli ecodeli
 
-# Installation des outils essentiels
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    rm -rf /var/lib/apt/lists/*
+# curl est déjà inclus dans l'image jammy - build plus rapide !
 
 WORKDIR /app
 

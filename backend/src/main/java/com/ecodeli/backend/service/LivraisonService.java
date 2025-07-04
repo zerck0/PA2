@@ -277,6 +277,10 @@ public class LivraisonService {
         livraison.setAnnonce(annonce);
         livraison.setLivreur(livreur);
         livraison.setEntrepot(entrepot);
+        // NOUVEAU : Définir les champs du nouveau workflow
+        livraison.setEstPartielle(true);
+        livraison.setSegmentOrdre(1);  // Segment 1 = dépôt
+        // ANCIEN : Compatibilité avec l'ancien système
         livraison.setTypeLivraison(Livraison.TypeLivraison.PARTIELLE_DEPOT);
         livraison.setAdresseDepart(annonce.getAdresseDepart());
         livraison.setAdresseArrivee(entrepot.getAdresse());
@@ -328,6 +332,10 @@ public class LivraisonService {
         livraison.setAnnonce(annonce);
         livraison.setLivreur(livreur);
         livraison.setEntrepot(entrepot);
+        // NOUVEAU : Définir les champs du nouveau workflow
+        livraison.setEstPartielle(true);
+        livraison.setSegmentOrdre(2);  // Segment 2 = retrait
+        // ANCIEN : Compatibilité avec l'ancien système
         livraison.setTypeLivraison(Livraison.TypeLivraison.PARTIELLE_RETRAIT);
         livraison.setAdresseDepart(entrepot.getAdresse());
         livraison.setAdresseArrivee(annonce.getAdresseArrivee());

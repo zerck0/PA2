@@ -42,7 +42,36 @@ const LivreurDashboard: React.FC = () => {
     setLivraisonsLoading(true);
     try {
       const mesLivraisons = await livraisonApi.getLivraisonsByLivreur(currentUser.user.id);
-      setLivraisons(mesLivraisons);
+      
+      // Pour chaque segment retrait, vérifier le statut du segment dépôt correspondant
+      const livraisonsAvecVerification = await Promise.all(
+        mesLivraisons.map(async (livraison: Livraison) => {
+          if (livraison.typeLivraison === 'PARTIELLE_RETRAIT') {
+            try {
+              // Requête directe en base pour récupérer le segment dépôt
+              const segmentDepot = await livraisonApi.getSegmentDepotByAnnonce(livraison.annonce.id);
+              return {
+                ...livraison,
+                peutCommencer: segmentDepot && segmentDepot.statut === 'STOCKEE'
+              };
+            } catch (error) {
+              console.error(`Erreur lors de la vérification du segment dépôt pour l'annonce ${livraison.annonce.id}:`, error);
+              return {
+                ...livraison,
+                peutCommencer: false
+              };
+            }
+          }
+          
+          // Pour les autres types de livraison, utiliser la logique standard
+          return {
+            ...livraison,
+            peutCommencer: livraison.statut === 'ASSIGNEE'
+          };
+        })
+      );
+      
+      setLivraisons(livraisonsAvecVerification);
     } catch (error: any) {
       console.error('Erreur lors du chargement des livraisons:', error);
       setLivraisons([]);
@@ -81,32 +110,9 @@ const LivreurDashboard: React.FC = () => {
   };
 
   // Vérifier si une livraison partielle peut être commencée
-  const peutCommencerLivraisonPartielle = (livraison: Livraison): boolean => {
-    // Pour les livraisons complètes, toujours autorisé
-    if (livraison.typeLivraison === 'COMPLETE') {
-      return true;
-    }
-
-    // Pour les livraisons partielles, vérifier que l'annonce a le statut ASSIGNEE
-    // (ce qui signifie que les 2 segments sont pris)
-    if (livraison.annonce.statut !== 'ASSIGNEE') {
-      return false;
-    }
-
-    // Pour le segment DÉPÔT, peut commencer dès que les 2 segments sont assignés
-    if (livraison.typeLivraison === 'PARTIELLE_DEPOT') {
-      return true;
-    }
-
-    // Pour le segment RETRAIT, on délègue au backend la vérification
-    // que le segment dépôt est terminé (STOCKEE)
-    if (livraison.typeLivraison === 'PARTIELLE_RETRAIT') {
-      // Le bouton sera activé, mais le backend vérifiera les prérequis
-      // Si le dépôt n'est pas terminé, l'utilisateur aura un message d'erreur explicite
-      return true;
-    }
-
-    return false;
+  const peutCommencerLivraisonPartielle = (livraison: any): boolean => {
+    // Utiliser la propriété peutCommencer calculée lors du chargement
+    return livraison.peutCommencer || false;
   };
 
   // Message d'aide pour les livraisons partielles en attente
@@ -115,19 +121,33 @@ const LivreurDashboard: React.FC = () => {
       return '';
     }
 
-    if (livraison.annonce.statut === 'ACTIVE') {
-      return livraison.typeLivraison === 'PARTIELLE_DEPOT' 
-        ? 'En attente qu\'un livreur prenne en charge le segment retrait'
-        : 'En attente qu\'un livreur prenne en charge le segment dépôt';
+    // Pour le segment DÉPÔT
+    if (livraison.typeLivraison === 'PARTIELLE_DEPOT') {
+      return ''; // Pas de message spécial pour le segment dépôt
     }
 
-    // Pour le segment retrait, message spécifique selon le statut
+    // Pour le segment RETRAIT, vérifier le statut du segment dépôt
     if (livraison.typeLivraison === 'PARTIELLE_RETRAIT') {
-      if (livraison.annonce.statut === 'ASSIGNEE') {
-        return 'En attente que le livreur du segment 1 termine le dépôt à l\'entrepôt (statut STOCKEE)';
+      // Chercher le segment dépôt de la même annonce
+      const segmentDepot = livraisons.find(l => 
+        l.annonce.id === livraison.annonce.id && 
+        l.typeLivraison === 'PARTIELLE_DEPOT'
+      );
+
+      if (!segmentDepot) {
+        return 'En attente qu\'un livreur prenne en charge le segment dépôt (1/2)';
       }
-      if (livraison.annonce.statut === 'EN_COURS') {
-        return 'Le livreur du segment 1 est en cours de dépôt à l\'entrepôt';
+
+      // Messages selon le statut du segment dépôt
+      switch (segmentDepot.statut) {
+        case 'ASSIGNEE':
+          return 'En attente que le livreur du segment 1 commence le dépôt vers l\'entrepôt';
+        case 'EN_COURS':
+          return 'Le livreur du segment 1 est en cours de dépôt vers l\'entrepôt';
+        case 'STOCKEE':
+          return ''; // Segment dépôt terminé, pas de message d'attente
+        default:
+          return 'En attente que le segment dépôt soit terminé';
       }
     }
 

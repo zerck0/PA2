@@ -162,6 +162,11 @@ export const livraisonApi = {
     return response.data;
   },
 
+  getLivraisonsByAnnonce: async (annonceId: number) => {
+    const response = await api.get(`/livraisons/annonce/${annonceId}`);
+    return response.data;
+  },
+
   getLivraisonById: async (id: number) => {
     const response = await api.get(`/livraisons/${id}`);
     return response.data;
@@ -184,6 +189,23 @@ export const livraisonApi = {
   commencerLivraison: async (id: number) => {
     const response = await api.put(`/livraisons/${id}/commencer`);
     return response.data;
+  },
+
+  getSegmentsInfo: async (annonceId: number) => {
+    const response = await api.get(`/livraisons/annonce/${annonceId}/segments-info`);
+    return response.data;
+  },
+
+  getSegmentDepotByAnnonce: async (annonceId: number) => {
+    try {
+      const response = await api.get(`/livraisons/annonce/${annonceId}/segment-depot`);
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null; // Aucun segment dépôt trouvé
+      }
+      throw error;
+    }
   },
 };
 
