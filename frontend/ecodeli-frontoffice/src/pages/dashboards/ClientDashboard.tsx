@@ -6,31 +6,85 @@ import Loading from '../../components/ui/Loading';
 import DocumentSection from '../../components/DocumentSection';
 import CreateAnnonceModal from '../../components/CreateAnnonceModal';
 import AnnonceCard from '../../components/AnnonceCard';
+import LivraisonCard from '../../components/LivraisonCard';
+import LivraisonDetailModal from '../../components/LivraisonDetailModal';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi } from '../../hooks/useApi';
-import { annonceApi } from '../../services/api';
-import { Annonce } from '../../types';
-import { useNavigate } from 'react-router-dom';
+import { annonceApi, livraisonApi } from '../../services/api';
+import { Annonce, Livraison } from '../../types';
 
 const ClientDashboard: React.FC = () => {
   const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const navigate = useNavigate();
+  const [livraisons, setLivraisons] = useState<Livraison[]>([]);
+  const [livraisonsLoading, setLivraisonsLoading] = useState(false);
+  const [filtreActif, setFiltreActif] = useState<string>('tous');
+  const [selectedLivraison, setSelectedLivraison] = useState<Livraison | null>(null);
+  const [showLivraisonModal, setShowLivraisonModal] = useState(false);
   
   const { 
     data: annonces, 
     loading: annoncesLoading, 
     execute: loadAnnonces 
-  } = useApi<Annonce[]>(annonceApi.getAll);
+  } = useApi<Annonce[]>(() => annonceApi.getMesAnnonces(currentUser?.user.id || 0));
 
   useEffect(() => {
-    loadAnnonces();
-  }, []);
+    if (currentUser?.user.id) {
+      loadAnnonces();
+    }
+  }, [currentUser]);
+
+  // Charger les livraisons de toutes les annonces du client
+  useEffect(() => {
+    if (currentUser?.user.id && activeTab === 'livraisons') {
+      loadLivraisons();
+    }
+  }, [currentUser, activeTab]);
+
+  const loadLivraisons = async () => {
+    if (!currentUser?.user.id || !annonces?.length) return;
+    
+    setLivraisonsLoading(true);
+    try {
+      // Pour chaque annonce du client, récupérer ses livraisons
+      const toutesLivraisons: Livraison[] = [];
+      for (const annonce of annonces) {
+        try {
+          const livraisonsAnnonce = await livraisonApi.getLivraisonsByAnnonce(annonce.id);
+          toutesLivraisons.push(...livraisonsAnnonce);
+        } catch (error) {
+          console.error(`Erreur lors du chargement des livraisons pour l'annonce ${annonce.id}:`, error);
+        }
+      }
+      setLivraisons(toutesLivraisons);
+    } catch (error: any) {
+      console.error('Erreur lors du chargement des livraisons:', error);
+      setLivraisons([]);
+    } finally {
+      setLivraisonsLoading(false);
+    }
+  };
+
+  // Handlers pour le modal de livraison (côté client = lecture seule)
+  const handleConsulterLivraison = (livraison: Livraison) => {
+    setSelectedLivraison(livraison);
+    setShowLivraisonModal(true);
+  };
+
+  const handleCloseLivraisonModal = () => {
+    setSelectedLivraison(null);
+    setShowLivraisonModal(false);
+  };
+
+  const handleLivraisonUpdated = () => {
+    loadLivraisons(); // Recharger les livraisons
+  };
 
   const tabs = [
     { id: 'overview', label: 'Vue d\'ensemble', icon: 'bi-house-door' },
     { id: 'annonces', label: 'Mes annonces', icon: 'bi-megaphone' },
+    { id: 'livraisons', label: 'Suivi livraisons', icon: 'bi-truck' },
     { id: 'reservations', label: 'Mes réservations', icon: 'bi-calendar-check' },
     { id: 'paiements', label: 'Mes paiements', icon: 'bi-credit-card' },
     { id: 'documents', label: 'Documents', icon: 'bi-file-earmark-text' }
@@ -98,31 +152,18 @@ const ClientDashboard: React.FC = () => {
 
       {/* Actions rapides */}
       <Card title="Actions rapides">
-        <div className="row">
-          <div className="col-md-6">
-            <div className="d-grid gap-2">
-              <Button variant="primary" onClick={() => setShowCreateModal(true)}>
-                <i className="bi bi-plus-lg me-2"></i>
-                Déposer une annonce
-              </Button>
-              <Button variant="secondary">
-                <i className="bi bi-search me-2"></i>
-                Rechercher un livreur
-              </Button>
-            </div>
-          </div>
-          <div className="col-md-6">
-            <div className="d-grid gap-2">
-              <Button variant="success">
-                <i className="bi bi-calendar-plus me-2"></i>
-                Réserver un service
-              </Button>
-              <Button variant="secondary">
-                <i className="bi bi-archive me-2"></i>
-                Louer une box
-              </Button>
-            </div>
-          </div>
+        <div className="d-grid gap-2">
+          <Button variant="primary" onClick={() => setShowCreateModal(true)}>
+            <i className="bi bi-plus-lg me-2"></i>
+            Déposer une annonce
+          </Button>
+          <Button 
+            variant="secondary" 
+            onClick={() => setActiveTab('annonces')}
+          >
+            <i className="bi bi-megaphone me-2"></i>
+            Voir mes annonces
+          </Button>
         </div>
       </Card>
     </div>
@@ -255,28 +296,266 @@ const ClientDashboard: React.FC = () => {
     );
   };
 
+  const renderLivraisons = () => {
+    // Grouper les livraisons par statut (même logique que LivreurDashboard)
+    const livraisonsACommencer = livraisons?.filter(l => l.statut === 'ASSIGNEE') || [];
+    const livraisonsEnCours = livraisons?.filter(l => l.statut === 'EN_COURS') || [];
+    const livraisonsTerminees = livraisons?.filter(l => ['STOCKEE', 'LIVREE'].includes(l.statut)) || [];
+    const livraisonsAnnulees = livraisons?.filter(l => l.statut === 'ANNULEE') || [];
+
+    // Fonction pour filtrer les livraisons selon le filtre actif
+    const getLivraisonsFiltrees = () => {
+      switch (filtreActif) {
+        case 'a-commencer':
+          return livraisonsACommencer;
+        case 'en-cours':
+          return livraisonsEnCours;
+        case 'terminees':
+          return livraisonsTerminees;
+        case 'annulees':
+          return livraisonsAnnulees;
+        default:
+          return livraisons || [];
+      }
+    };
+
+    const livraisonsFiltrees = getLivraisonsFiltrees();
+
+    return (
+      <div>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h4 className="mb-0">Suivi de mes livraisons</h4>
+          <Button variant="secondary" onClick={() => setActiveTab('annonces')}>
+            <i className="bi bi-megaphone me-2"></i>
+            Voir mes annonces
+          </Button>
+        </div>
+
+        {/* Filtres (réutilise la logique du LivreurDashboard) */}
+        <Card className="mb-4">
+          <div className="card-body">
+            <div className="d-flex flex-wrap gap-2">
+              <Button
+                variant={filtreActif === 'tous' ? 'primary' : 'outline-secondary'}
+                size="sm"
+                onClick={() => setFiltreActif('tous')}
+              >
+                <i className="bi bi-list me-1"></i>
+                Tous ({livraisons?.length || 0})
+              </Button>
+              
+              <Button
+                variant={filtreActif === 'a-commencer' ? 'warning' : 'outline-warning'}
+                size="sm"
+                onClick={() => setFiltreActif('a-commencer')}
+              >
+                <i className="bi bi-clock me-1"></i>
+                À commencer ({livraisonsACommencer.length})
+              </Button>
+              
+              <Button
+                variant={filtreActif === 'en-cours' ? 'info' : 'outline-info'}
+                size="sm"
+                onClick={() => setFiltreActif('en-cours')}
+              >
+                <i className="bi bi-truck me-1"></i>
+                En cours ({livraisonsEnCours.length})
+              </Button>
+              
+              <Button
+                variant={filtreActif === 'terminees' ? 'success' : 'outline-success'}
+                size="sm"
+                onClick={() => setFiltreActif('terminees')}
+              >
+                <i className="bi bi-check-circle me-1"></i>
+                Terminées ({livraisonsTerminees.length})
+              </Button>
+              
+              {livraisonsAnnulees.length > 0 && (
+                <Button
+                  variant={filtreActif === 'annulees' ? 'danger' : 'outline-danger'}
+                  size="sm"
+                  onClick={() => setFiltreActif('annulees')}
+                >
+                  <i className="bi bi-x-circle me-1"></i>
+                  Annulées ({livraisonsAnnulees.length})
+                </Button>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        {livraisonsLoading ? (
+          <div className="text-center py-5">
+            <Loading />
+          </div>
+        ) : (
+          <>
+            {filtreActif === 'tous' && livraisons && livraisons.length > 0 ? (
+              <div>
+                {/* Affichage groupé quand "Tous" est sélectionné */}
+                {livraisonsACommencer.length > 0 && (
+                  <div className="mb-5">
+                    <h5 className="text-warning mb-3">
+                      <i className="bi bi-clock me-2"></i>
+                      À commencer ({livraisonsACommencer.length})
+                    </h5>
+                    <div className="row g-4">
+                      {livraisonsACommencer.map((livraison) => (
+                        <div key={livraison.id} className="col-lg-6">
+                          <LivraisonCard
+                            livraison={livraison}
+                            onConsulter={handleConsulterLivraison}
+                            onCommencer={() => {}} // Pas d'action côté client
+                            peutCommencer={false} // Client ne peut pas commencer
+                            messageAttente=""
+                            isClientView={true} // Masquer les actions côté client
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {livraisonsEnCours.length > 0 && (
+                  <div className="mb-5">
+                    <h5 className="text-info mb-3">
+                      <i className="bi bi-truck me-2"></i>
+                      En cours ({livraisonsEnCours.length})
+                    </h5>
+                    <div className="row g-4">
+                      {livraisonsEnCours.map((livraison) => (
+                        <div key={livraison.id} className="col-lg-6">
+                          <LivraisonCard
+                            livraison={livraison}
+                            onConsulter={handleConsulterLivraison}
+                            onCommencer={() => {}}
+                            peutCommencer={false}
+                            messageAttente=""
+                            isClientView={true} // Masquer les actions côté client
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {livraisonsTerminees.length > 0 && (
+                  <div className="mb-5">
+                    <h5 className="text-success mb-3">
+                      <i className="bi bi-check-circle me-2"></i>
+                      Terminées ({livraisonsTerminees.length})
+                    </h5>
+                    <div className="row g-4">
+                      {livraisonsTerminees.map((livraison) => (
+                        <div key={livraison.id} className="col-lg-6">
+                          <LivraisonCard
+                            livraison={livraison}
+                            onConsulter={handleConsulterLivraison}
+                            onCommencer={() => {}}
+                            peutCommencer={false}
+                            messageAttente=""
+                            isClientView={true} // Masquer les actions côté client
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {livraisonsAnnulees.length > 0 && (
+                  <div className="mb-5">
+                    <h5 className="text-danger mb-3">
+                      <i className="bi bi-x-circle me-2"></i>
+                      Annulées ({livraisonsAnnulees.length})
+                    </h5>
+                    <div className="row g-4">
+                      {livraisonsAnnulees.map((livraison) => (
+                        <div key={livraison.id} className="col-lg-6">
+                          <LivraisonCard
+                            livraison={livraison}
+                            onConsulter={handleConsulterLivraison}
+                            onCommencer={() => {}}
+                            peutCommencer={false}
+                            messageAttente=""
+                            isClientView={true} // Masquer les actions côté client
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : livraisonsFiltrees.length > 0 ? (
+              <div className="row g-4">
+                {livraisonsFiltrees.map((livraison) => (
+                  <div key={livraison.id} className="col-lg-6">
+                    <LivraisonCard
+                      livraison={livraison}
+                      onConsulter={handleConsulterLivraison}
+                      onCommencer={() => {}}
+                      peutCommencer={false}
+                      messageAttente=""
+                      isClientView={true} // Masquer les actions côté client
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <div className="text-center py-5">
+                  <i className="bi bi-truck" style={{fontSize: '4rem', color: '#6c757d'}}></i>
+                  <h5 className="mt-3 text-muted">
+                    {filtreActif === 'tous' 
+                      ? 'Aucune livraison en cours'
+                      : `Aucune livraison ${filtreActif === 'a-commencer' ? 'à commencer' : 
+                                           filtreActif === 'en-cours' ? 'en cours' :
+                                           filtreActif === 'terminees' ? 'terminée' : 'annulée'}`
+                    }
+                  </h5>
+                  <p className="text-muted mb-4">
+                    {filtreActif === 'tous' 
+                      ? 'Aucune de vos annonces n\'a encore été prise en charge par un livreur.'
+                      : 'Aucune livraison dans cette catégorie.'
+                    }
+                  </p>
+                  {filtreActif === 'tous' && (
+                    <Button variant="primary" onClick={() => setActiveTab('annonces')}>
+                      <i className="bi bi-megaphone me-2"></i>
+                      Voir mes annonces
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
+
   const renderReservations = () => (
     <Card title="Mes réservations">
-      <div className="text-center py-4">
+      <div className="text-center py-5">
         <i className="bi bi-calendar-check" style={{fontSize: '3rem', color: '#6c757d'}}></i>
-        <p className="mt-3 text-muted">Aucune réservation en cours.</p>
-        <Button variant="primary">
-          <i className="bi bi-plus-lg me-2"></i>
-          Réserver un service
-        </Button>
+        <p className="mt-3 text-muted">Fonctionnalité en cours de développement</p>
+        <p className="text-muted small">
+          Cette section permettra de gérer vos réservations de services 
+          et de boxes de stockage.
+        </p>
       </div>
     </Card>
   );
 
   const renderPaiements = () => (
     <Card title="Mes paiements">
-      <div className="text-center py-4">
+      <div className="text-center py-5">
         <i className="bi bi-credit-card" style={{fontSize: '3rem', color: '#6c757d'}}></i>
-        <p className="mt-3 text-muted">Aucun paiement enregistré.</p>
-        <Button variant="primary">
-          <i className="bi bi-plus-lg me-2"></i>
-          Configurer un moyen de paiement
-        </Button>
+        <p className="mt-3 text-muted">Système de paiement en cours de développement</p>
+        <p className="text-muted small">
+          Cette section permettra de gérer vos moyens de paiement 
+          et l'historique de vos transactions.
+        </p>
       </div>
     </Card>
   );
@@ -309,6 +588,8 @@ const ClientDashboard: React.FC = () => {
         return renderOverview();
       case 'annonces':
         return renderAnnonces();
+      case 'livraisons':
+        return renderLivraisons();
       case 'reservations':
         return renderReservations();
       case 'paiements':
@@ -336,6 +617,14 @@ const ClientDashboard: React.FC = () => {
         onSuccess={() => {
           loadAnnonces(); // Rafraîchir la liste des annonces
         }}
+      />
+
+      {/* Modal de détails de livraison (côté client = lecture seule) */}
+      <LivraisonDetailModal
+        isOpen={showLivraisonModal}
+        onClose={handleCloseLivraisonModal}
+        livraison={selectedLivraison}
+        onLivraisonUpdated={handleLivraisonUpdated}
       />
     </>
   );

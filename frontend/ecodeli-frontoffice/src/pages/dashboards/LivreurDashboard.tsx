@@ -19,6 +19,7 @@ const LivreurDashboard: React.FC = () => {
   const [livraisonsLoading, setLivraisonsLoading] = useState(false);
   const [selectedLivraison, setSelectedLivraison] = useState<Livraison | null>(null);
   const [showLivraisonModal, setShowLivraisonModal] = useState(false);
+  const [filtreActif, setFiltreActif] = useState<string>('tous');
 
   // Gérer le paramètre tab depuis l'URL
   useEffect(() => {
@@ -225,31 +226,21 @@ const LivreurDashboard: React.FC = () => {
 
       {/* Actions rapides */}
       <Card title="Actions rapides">
-        <div className="row">
-          <div className="col-md-6">
-            <div className="d-grid gap-2">
-              <Button variant="primary">
-                <i className="bi bi-plus-lg me-2"></i>
-                Ajouter un trajet
-              </Button>
-              <Button variant="secondary">
-                <i className="bi bi-search me-2"></i>
-                Rechercher des missions
-              </Button>
-            </div>
-          </div>
-          <div className="col-md-6">
-            <div className="d-grid gap-2">
-              <Button variant="success">
-                <i className="bi bi-check-circle me-2"></i>
-                Valider une livraison
-              </Button>
-              <Button variant="secondary">
-                <i className="bi bi-calendar me-2"></i>
-                Gérer mon planning
-              </Button>
-            </div>
-          </div>
+        <div className="d-grid gap-2">
+          <Button 
+            variant="primary" 
+            onClick={() => window.location.href = '/annonces'}
+          >
+            <i className="bi bi-search me-2"></i>
+            Rechercher des missions
+          </Button>
+          <Button 
+            variant="secondary" 
+            onClick={() => setActiveTab('livraisons')}
+          >
+            <i className="bi bi-truck me-2"></i>
+            Voir mes livraisons
+          </Button>
         </div>
       </Card>
     </div>
@@ -257,90 +248,260 @@ const LivreurDashboard: React.FC = () => {
 
   const renderAnnonces = () => (
     <Card title="Mes trajets prévisionnels">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h6 className="mb-0">Trajets proposés</h6>
-        <Button variant="primary">
-          <i className="bi bi-plus-lg me-2"></i>
-          Nouveau trajet
-        </Button>
-      </div>
-      
-      <div className="text-center py-4">
+      <div className="text-center py-5">
         <i className="bi bi-road" style={{fontSize: '3rem', color: '#6c757d'}}></i>
-        <p className="mt-3 text-muted">Aucun trajet proposé.</p>
+        <p className="mt-3 text-muted">Fonctionnalité en cours de développement</p>
         <p className="text-muted small">
-          Ajoutez vos trajets prévisionnels pour recevoir des notifications 
-          quand des clients cherchent un livreur sur votre route.
+          Cette section permettra de gérer vos trajets prévisionnels 
+          pour recevoir des notifications de missions correspondantes.
         </p>
-        <Button variant="primary">
-          <i className="bi bi-plus-lg me-2"></i>
-          Ajouter mon premier trajet
-        </Button>
       </div>
     </Card>
   );
 
 
-  const renderLivraisons = () => (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0">Mes livraisons</h4>
-        <Button variant="primary" onClick={() => window.location.href = '/annonces'}>
-          <i className="bi bi-search me-2"></i>
-          Rechercher des missions
-        </Button>
-      </div>
+  const renderLivraisons = () => {
+    // Grouper les livraisons par statut
+    const livraisonsACommencer = livraisons?.filter(l => l.statut === 'ASSIGNEE') || [];
+    const livraisonsEnCours = livraisons?.filter(l => l.statut === 'EN_COURS') || [];
+    const livraisonsTerminees = livraisons?.filter(l => ['STOCKEE', 'LIVREE'].includes(l.statut)) || [];
+    const livraisonsAnnulees = livraisons?.filter(l => l.statut === 'ANNULEE') || [];
 
-      {livraisonsLoading ? (
-        <div className="text-center py-5">
-          <Loading />
+    // Fonction pour filtrer les livraisons selon le filtre actif
+    const getLivraisonsFiltrees = () => {
+      switch (filtreActif) {
+        case 'a-commencer':
+          return livraisonsACommencer;
+        case 'en-cours':
+          return livraisonsEnCours;
+        case 'terminees':
+          return livraisonsTerminees;
+        case 'annulees':
+          return livraisonsAnnulees;
+        default:
+          return livraisons || [];
+      }
+    };
+
+    const livraisonsFiltrees = getLivraisonsFiltrees();
+
+    return (
+      <div>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h4 className="mb-0">Mes livraisons</h4>
+          <Button variant="primary" onClick={() => window.location.href = '/annonces'}>
+            <i className="bi bi-search me-2"></i>
+            Rechercher des missions
+          </Button>
         </div>
-      ) : (
-        <>
-          {livraisons && livraisons.length > 0 ? (
-            <div className="row g-4">
-              {livraisons.map((livraison) => (
-                <div key={livraison.id} className="col-lg-6">
-                  <LivraisonCard
-                    livraison={livraison}
-                    onConsulter={handleConsulterLivraison}
-                    onCommencer={handleCommencerLivraison}
-                    peutCommencer={peutCommencerLivraisonPartielle(livraison)}
-                    messageAttente={getMessageAttenteLivraisonPartielle(livraison)}
-                  />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <div className="text-center py-5">
-                <i className="bi bi-truck" style={{fontSize: '4rem', color: '#6c757d'}}></i>
-                <h5 className="mt-3 text-muted">Aucune livraison en cours</h5>
-                <p className="text-muted mb-4">
-                  Vous n'avez pas encore de mission assignée. 
-                  Recherchez des annonces disponibles pour commencer.
-                </p>
-                <Button variant="primary" onClick={() => window.location.href = '/annonces'}>
-                  <i className="bi bi-search me-2"></i>
-                  Voir les annonces disponibles
+
+        {/* Filtres */}
+        <Card className="mb-4">
+          <div className="card-body">
+            <div className="d-flex flex-wrap gap-2">
+              <Button
+                variant={filtreActif === 'tous' ? 'primary' : 'outline-secondary'}
+                size="sm"
+                onClick={() => setFiltreActif('tous')}
+              >
+                <i className="bi bi-list me-1"></i>
+                Tous ({livraisons?.length || 0})
+              </Button>
+              
+              <Button
+                variant={filtreActif === 'a-commencer' ? 'warning' : 'outline-warning'}
+                size="sm"
+                onClick={() => setFiltreActif('a-commencer')}
+              >
+                <i className="bi bi-clock me-1"></i>
+                À commencer ({livraisonsACommencer.length})
+              </Button>
+              
+              <Button
+                variant={filtreActif === 'en-cours' ? 'info' : 'outline-info'}
+                size="sm"
+                onClick={() => setFiltreActif('en-cours')}
+              >
+                <i className="bi bi-truck me-1"></i>
+                En cours ({livraisonsEnCours.length})
+              </Button>
+              
+              <Button
+                variant={filtreActif === 'terminees' ? 'success' : 'outline-success'}
+                size="sm"
+                onClick={() => setFiltreActif('terminees')}
+              >
+                <i className="bi bi-check-circle me-1"></i>
+                Terminées ({livraisonsTerminees.length})
+              </Button>
+              
+              {livraisonsAnnulees.length > 0 && (
+                <Button
+                  variant={filtreActif === 'annulees' ? 'danger' : 'outline-danger'}
+                  size="sm"
+                  onClick={() => setFiltreActif('annulees')}
+                >
+                  <i className="bi bi-x-circle me-1"></i>
+                  Annulées ({livraisonsAnnulees.length})
                 </Button>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        {livraisonsLoading ? (
+          <div className="text-center py-5">
+            <Loading />
+          </div>
+        ) : (
+          <>
+            {filtreActif === 'tous' && livraisons && livraisons.length > 0 ? (
+              <div>
+                {/* Affichage groupé quand "Tous" est sélectionné */}
+                {livraisonsACommencer.length > 0 && (
+                  <div className="mb-5">
+                    <h5 className="text-warning mb-3">
+                      <i className="bi bi-clock me-2"></i>
+                      À commencer ({livraisonsACommencer.length})
+                    </h5>
+                    <div className="row g-4">
+                      {livraisonsACommencer.map((livraison) => (
+                        <div key={livraison.id} className="col-lg-6">
+                          <LivraisonCard
+                            livraison={livraison}
+                            onConsulter={handleConsulterLivraison}
+                            onCommencer={handleCommencerLivraison}
+                            peutCommencer={peutCommencerLivraisonPartielle(livraison)}
+                            messageAttente={getMessageAttenteLivraisonPartielle(livraison)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {livraisonsEnCours.length > 0 && (
+                  <div className="mb-5">
+                    <h5 className="text-info mb-3">
+                      <i className="bi bi-truck me-2"></i>
+                      En cours ({livraisonsEnCours.length})
+                    </h5>
+                    <div className="row g-4">
+                      {livraisonsEnCours.map((livraison) => (
+                        <div key={livraison.id} className="col-lg-6">
+                          <LivraisonCard
+                            livraison={livraison}
+                            onConsulter={handleConsulterLivraison}
+                            onCommencer={handleCommencerLivraison}
+                            peutCommencer={peutCommencerLivraisonPartielle(livraison)}
+                            messageAttente={getMessageAttenteLivraisonPartielle(livraison)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {livraisonsTerminees.length > 0 && (
+                  <div className="mb-5">
+                    <h5 className="text-success mb-3">
+                      <i className="bi bi-check-circle me-2"></i>
+                      Terminées ({livraisonsTerminees.length})
+                    </h5>
+                    <div className="row g-4">
+                      {livraisonsTerminees.map((livraison) => (
+                        <div key={livraison.id} className="col-lg-6">
+                          <LivraisonCard
+                            livraison={livraison}
+                            onConsulter={handleConsulterLivraison}
+                            onCommencer={handleCommencerLivraison}
+                            peutCommencer={false}
+                            messageAttente=""
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {livraisonsAnnulees.length > 0 && (
+                  <div className="mb-5">
+                    <h5 className="text-danger mb-3">
+                      <i className="bi bi-x-circle me-2"></i>
+                      Annulées ({livraisonsAnnulees.length})
+                    </h5>
+                    <div className="row g-4">
+                      {livraisonsAnnulees.map((livraison) => (
+                        <div key={livraison.id} className="col-lg-6">
+                          <LivraisonCard
+                            livraison={livraison}
+                            onConsulter={handleConsulterLivraison}
+                            onCommencer={handleCommencerLivraison}
+                            peutCommencer={false}
+                            messageAttente=""
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            </Card>
-          )}
-        </>
-      )}
-    </div>
-  );
+            ) : livraisonsFiltrees.length > 0 ? (
+              <div className="row g-4">
+                {livraisonsFiltrees.map((livraison) => (
+                  <div key={livraison.id} className="col-lg-6">
+                    <LivraisonCard
+                      livraison={livraison}
+                      onConsulter={handleConsulterLivraison}
+                      onCommencer={handleCommencerLivraison}
+                      peutCommencer={peutCommencerLivraisonPartielle(livraison)}
+                      messageAttente={getMessageAttenteLivraisonPartielle(livraison)}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <div className="text-center py-5">
+                  <i className="bi bi-truck" style={{fontSize: '4rem', color: '#6c757d'}}></i>
+                  <h5 className="mt-3 text-muted">
+                    {filtreActif === 'tous' 
+                      ? 'Aucune livraison en cours'
+                      : `Aucune livraison ${filtreActif === 'a-commencer' ? 'à commencer' : 
+                                           filtreActif === 'en-cours' ? 'en cours' :
+                                           filtreActif === 'terminees' ? 'terminée' : 'annulée'}`
+                    }
+                  </h5>
+                  <p className="text-muted mb-4">
+                    {filtreActif === 'tous' 
+                      ? 'Vous n\'avez pas encore de mission assignée. Recherchez des annonces disponibles pour commencer.'
+                      : 'Aucune livraison dans cette catégorie.'
+                    }
+                  </p>
+                  {filtreActif === 'tous' && (
+                    <Button variant="primary" onClick={() => window.location.href = '/annonces'}>
+                      <i className="bi bi-search me-2"></i>
+                      Voir les annonces disponibles
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
 
   const renderPlanning = () => (
     <Card title="Mon planning">
-      <div className="text-center py-4">
+      <div className="text-center py-5">
         <i className="bi bi-calendar" style={{fontSize: '3rem', color: '#6c757d'}}></i>
-        <p className="mt-3 text-muted">Aucune mission planifiée.</p>
-        <Button variant="primary">
-          <i className="bi bi-calendar-plus me-2"></i>
-          Planifier mes disponibilités
-        </Button>
+        <p className="mt-3 text-muted">Fonctionnalité en cours de développement</p>
+        <p className="text-muted small">
+          Cette section permettra de gérer votre planning de disponibilités 
+          et vos missions planifiées.
+        </p>
       </div>
     </Card>
   );
@@ -369,11 +530,10 @@ const LivreurDashboard: React.FC = () => {
       </div>
       
       <div className="text-center py-4">
-        <p className="text-muted">Aucun paiement enregistré.</p>
-        <Button variant="primary">
-          <i className="bi bi-bank me-2"></i>
-          Configurer mon compte bancaire
-        </Button>
+        <p className="text-muted">Système de paiement en cours de développement</p>
+        <p className="text-muted small">
+          Les gains seront calculés automatiquement selon les livraisons effectuées.
+        </p>
       </div>
     </Card>
   );

@@ -9,6 +9,7 @@ interface LivraisonCardProps {
   onCommencer?: (livraison: Livraison) => void;
   peutCommencer?: boolean;
   messageAttente?: string;
+  isClientView?: boolean; // Pour masquer les actions côté client
 }
 
 const LivraisonCard: React.FC<LivraisonCardProps> = ({ 
@@ -16,7 +17,8 @@ const LivraisonCard: React.FC<LivraisonCardProps> = ({
   onConsulter, 
   onCommencer,
   peutCommencer = false,
-  messageAttente
+  messageAttente,
+  isClientView = false
 }) => {
   // Construire l'URL complète de l'image
   const getImageUrl = (photoUrl?: string) => {
@@ -281,33 +283,38 @@ const LivraisonCard: React.FC<LivraisonCardProps> = ({
                   Consulter
                 </Button>
                 
-                {livraison.statut === 'ASSIGNEE' && onCommencer && (
-                  <span 
-                    title={!peutCommencer 
-                      ? "En attente que le segment précédent soit terminé" 
-                      : "Commencer la livraison"}
-                  >
-                    <Button 
-                      variant="success" 
-                      size="sm"
-                      onClick={() => onCommencer(livraison)}
-                      disabled={!peutCommencer}
-                    >
-                      <i className="bi bi-play-circle me-1"></i>
-                      Commencer
-                    </Button>
-                  </span>
-                )}
-                
-                {livraison.statut === 'EN_COURS' && (
-                  <Button 
-                    variant="primary" 
-                    size="sm"
-                    onClick={() => onConsulter(livraison)}
-                  >
-                    <i className="bi bi-check-circle me-1"></i>
-                    Terminer
-                  </Button>
+                {/* Actions livreur uniquement (masquées côté client) */}
+                {!isClientView && (
+                  <>
+                    {livraison.statut === 'ASSIGNEE' && onCommencer && (
+                      <span 
+                        title={!peutCommencer 
+                          ? "En attente que le segment précédent soit terminé" 
+                          : "Commencer la livraison"}
+                      >
+                        <Button 
+                          variant="success" 
+                          size="sm"
+                          onClick={() => onCommencer(livraison)}
+                          disabled={!peutCommencer}
+                        >
+                          <i className="bi bi-play-circle me-1"></i>
+                          Commencer
+                        </Button>
+                      </span>
+                    )}
+                    
+                    {livraison.statut === 'EN_COURS' && (
+                      <Button 
+                        variant="primary" 
+                        size="sm"
+                        onClick={() => onConsulter(livraison)}
+                      >
+                        <i className="bi bi-check-circle me-1"></i>
+                        Terminer
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
