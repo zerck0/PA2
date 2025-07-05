@@ -6,6 +6,7 @@ import Loading from '../../components/ui/Loading';
 import DocumentSection from '../../components/DocumentSection';
 import LivraisonCard from '../../components/LivraisonCard';
 import LivraisonDetailModal from '../../components/LivraisonDetailModal';
+import AffiliationCard from '../../components/AffiliationCard';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { Annonce, Livraison } from '../../types';
@@ -222,6 +223,11 @@ const LivreurDashboard: React.FC = () => {
             </div>
           </Card>
         </div>
+      </div>
+
+      {/* Section Affiliation EcoDeli */}
+      <div className="mb-4">
+        <AffiliationCard />
       </div>
 
       {/* Actions rapides */}

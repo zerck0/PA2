@@ -6,6 +6,11 @@ export interface User {
   telephone?: string;
   role: 'CLIENT' | 'LIVREUR' | 'COMMERCANT' | 'PRESTATAIRE';
   statut: 'NON_VERIFIE' | 'EN_ATTENTE' | 'VALIDE' | 'SUSPENDU' | 'REFUSE';
+  // Champs spécifiques au livreur
+  statutAffiliation?: 'NON_AFFILIE' | 'DEMANDE_AFFILIATION' | 'AFFILIE' | 'AFFILIATION_REFUSEE';
+  dateDemandeAffiliation?: string;
+  dateValidationAffiliation?: string;
+  commentaireAffiliation?: string;
 }
 
 export interface AuthResponse {
@@ -96,4 +101,49 @@ export interface Livraison {
   commentaires?: string;
   annonce: Annonce;
   livreur?: User;
+}
+
+// Interface pour les annonces de commerçants
+export interface AnnonceCommercant {
+  id: number;
+  titre: string;
+  description: string;
+  adresseDepart: string;
+  adresseArrivee: string;
+  villeDepart: string;
+  villeArrivee: string;
+  listeCourses: string;
+  quantiteProduits?: number;
+  prixPropose: number;
+  reserveAuxAffilies: boolean;
+  dateCreation: string;
+  dateLimite?: string;
+  datePreferee?: string;
+  statut: 'ACTIVE' | 'ASSIGNEE' | 'EN_COURS' | 'TERMINEE' | 'ANNULEE';
+  commercant: User;
+  livreurAssigne?: User;
+}
+
+// Interface pour créer une annonce commerçant
+export interface CreateAnnonceCommercantData {
+  titre: string;
+  description: string;
+  adresseDepart: string;
+  adresseArrivee: string;
+  villeDepart: string;
+  villeArrivee: string;
+  listeCourses: string;
+  quantiteProduits?: number;
+  prixPropose: number;
+  reserveAuxAffilies: boolean;
+  dateLimite?: string;
+  datePreferee?: string;
+}
+
+// Interface pour le statut d'affiliation
+export interface StatutAffiliationResponse {
+  statut: 'NON_AFFILIE' | 'DEMANDE_AFFILIATION' | 'AFFILIE' | 'AFFILIATION_REFUSEE';
+  dateDemandeAffiliation?: string;
+  dateValidationAffiliation?: string;
+  commentaire?: string;
 }

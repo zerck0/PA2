@@ -209,4 +209,66 @@ export const livraisonApi = {
   },
 };
 
+// Services d'affiliation des livreurs
+export const affiliationApi = {
+  demanderAffiliation: async (livreurId: number, commentaire?: string) => {
+    const response = await api.post(`/livreurs/${livreurId}/demander-affiliation`, commentaire || '');
+    return response.data;
+  },
+
+  getStatutAffiliation: async (livreurId: number) => {
+    const response = await api.get(`/livreurs/${livreurId}/statut-affiliation`);
+    return response.data;
+  },
+
+  validerAffiliation: async (livreurId: number, valider: boolean, commentaire?: string) => {
+    const params = new URLSearchParams({
+      valider: valider.toString()
+    });
+    if (commentaire) {
+      params.append('commentaire', commentaire);
+    }
+    const response = await api.put(`/livreurs/${livreurId}/valider-affiliation?${params}`);
+    return response.data;
+  },
+};
+
+// Services des annonces commerçants
+export const annonceCommercantApi = {
+  getAll: async () => {
+    const response = await api.get('/annonces-commercants');
+    return response.data;
+  },
+
+  getByCommercant: async (commercantId: number) => {
+    const response = await api.get(`/annonces-commercants/commercant/${commercantId}`);
+    return response.data;
+  },
+
+  create: async (annonceData: any, commercantId: number) => {
+    const response = await api.post(`/annonces-commercants?commercantId=${commercantId}`, annonceData);
+    return response.data;
+  },
+
+  getById: async (id: number) => {
+    const response = await api.get(`/annonces-commercants/${id}`);
+    return response.data;
+  },
+
+  update: async (id: number, annonceData: any) => {
+    const response = await api.put(`/annonces-commercants/${id}`, annonceData);
+    return response.data;
+  },
+
+  delete: async (id: number) => {
+    const response = await api.delete(`/annonces-commercants/${id}`);
+    return response.data;
+  },
+
+  countByCommercant: async (commercantId: number) => {
+    const response = await api.get(`/annonces-commercants/count/commercant/${commercantId}`);
+    return response.data;
+  },
+};
+
 export default api;

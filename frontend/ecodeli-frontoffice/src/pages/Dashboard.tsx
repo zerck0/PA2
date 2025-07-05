@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../hooks/useAuth';
 import ClientDashboard from './dashboards/ClientDashboard';
 import LivreurDashboard from './dashboards/LivreurDashboard';
-// import CommercantDashboard from './dashboards/CommercantDashboard';
+import CommercantDashboard from './dashboards/CommercantDashboard';
 // import PrestataireDashboard from './dashboards/PrestataireDashboard';
 import Layout from '../components/Layout';
 
@@ -26,8 +26,7 @@ const Dashboard: React.FC = () => {
     case 'LIVREUR':
       return <LivreurDashboard />;
     case 'COMMERCANT':
-      // return <CommercantDashboard />;
-      return <ClientDashboard />; // Temporaire jusqu'à création
+      return <CommercantDashboard />;
     case 'PRESTATAIRE':
       // return <PrestataireDashboard />;
       return <ClientDashboard />; // Temporaire jusqu'à création
