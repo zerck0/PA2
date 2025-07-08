@@ -147,3 +147,47 @@ export interface StatutAffiliationResponse {
   dateValidationAffiliation?: string;
   commentaire?: string;
 }
+
+// Interface pour les contrats commerçant
+export interface ContratCommercant {
+  id: number;
+  numeroContrat: string;
+  dateDebut: string;
+  dateFin?: string;
+  dateSignature: string;
+  statutContrat: 'ACTIF' | 'EXPIRE' | 'SUSPENDU' | 'RESILIÉ';
+  
+  // Conditions tarifaires
+  commissionPourcentage?: number;
+  fraisInscription?: number;
+  abonnementMensuel?: number;
+  
+  // Services inclus
+  livraisonRapideIncluse?: boolean;
+  assuranceIncluse?: boolean;
+  supportPrioritaire?: boolean;
+  nombreLivraisonsMensuelles?: number;
+  
+  // Documents
+  urlContratPdf?: string;
+  cheminContratPdf?: string;
+  
+  // Relation
+  commercant: User;
+}
+
+// Interface pour créer/modifier un contrat
+export interface CreateContratData {
+  dateDebut: string;
+  dateFin?: string;
+  dateSignature: string;
+  commissionPourcentage?: number;
+  fraisInscription?: number;
+  abonnementMensuel?: number;
+  livraisonRapideIncluse?: boolean;
+  assuranceIncluse?: boolean;
+  supportPrioritaire?: boolean;
+  nombreLivraisonsMensuelles?: number;
+  urlContratPdf?: string;
+  cheminContratPdf?: string;
+}

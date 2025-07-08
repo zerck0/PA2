@@ -6,8 +6,8 @@ import Loading from '../../components/ui/Loading';
 import CreateAnnonceCommercantModal from '../../components/CreateAnnonceCommercantModal';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
-import { AnnonceCommercant } from '../../types';
-import { annonceCommercantApi } from '../../services/api';
+import { AnnonceCommercant, ContratCommercant } from '../../types';
+import { annonceCommercantApi, contratApi } from '../../services/api';
 
 const CommercantDashboard: React.FC = () => {
   const { currentUser } = useAuth();
@@ -17,6 +17,9 @@ const CommercantDashboard: React.FC = () => {
   const [annoncesLoading, setAnnoncesLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [countAnnonces, setCountAnnonces] = useState(0);
+  const [contrat, setContrat] = useState<ContratCommercant | null>(null);
+  const [contratLoading, setContratLoading] = useState(false);
+  const [hasContrat, setHasContrat] = useState(false);
 
   // Charger les annonces du commerçant
   useEffect(() => {
@@ -31,6 +34,13 @@ const CommercantDashboard: React.FC = () => {
       loadCountAnnonces();
     }
   }, [currentUser]);
+
+  // Charger le contrat quand on accède à l'onglet contrat
+  useEffect(() => {
+    if (currentUser?.user.id && activeTab === 'contrat') {
+      loadContrat();
+    }
+  }, [currentUser, activeTab]);
 
   const loadAnnonces = async () => {
     if (!currentUser?.user.id) return;
@@ -56,6 +66,36 @@ const CommercantDashboard: React.FC = () => {
       setCountAnnonces(count);
     } catch (error) {
       console.error('Erreur lors du chargement du nombre d\'annonces:', error);
+    }
+  };
+
+  const loadContrat = async () => {
+    if (!currentUser?.user.id) return;
+    
+    setContratLoading(true);
+    try {
+      // Vérifier si le commerçant a un contrat
+      const hasContratResult = await contratApi.hasContrat(currentUser.user.id);
+      setHasContrat(hasContratResult);
+      
+      if (hasContratResult) {
+        // Charger les détails du contrat
+        const contratData = await contratApi.getByCommercant(currentUser.user.id);
+        setContrat(contratData);
+      } else {
+        setContrat(null);
+      }
+    } catch (error: any) {
+      console.error('Erreur lors du chargement du contrat:', error);
+      if (error.response?.status === 404) {
+        // Pas de contrat trouvé
+        setHasContrat(false);
+        setContrat(null);
+      } else {
+        showError('Erreur lors du chargement du contrat');
+      }
+    } finally {
+      setContratLoading(false);
     }
   };
 
@@ -284,17 +324,185 @@ const CommercantDashboard: React.FC = () => {
     </div>
   );
 
-  const renderContrat = () => (
-    <Card title="Mon contrat EcoDeli">
-      <div className="text-center py-5">
-        <i className="bi bi-file-earmark-text" style={{fontSize: '3rem', color: '#6c757d'}}></i>
-        <p className="mt-3 text-muted">Gestion des contrats en cours de développement</p>
-        <p className="text-muted small">
-          Cette section permettra de consulter et gérer votre contrat commerçant avec EcoDeli.
-        </p>
+  const renderContrat = () => {
+    if (contratLoading) {
+      return (
+        <Card title="Mon contrat EcoDeli">
+          <div className="text-center py-5">
+            <Loading />
+            <p className="mt-3 text-muted">Chargement du contrat...</p>
+          </div>
+        </Card>
+      );
+    }
+
+    if (!hasContrat) {
+      return (
+        <Card title="Mon contrat EcoDeli">
+          <div className="text-center py-5">
+            <i className="bi bi-exclamation-triangle" style={{fontSize: '3rem', color: '#ffc107'}}></i>
+            <h5 className="mt-3 text-warning">Aucun contrat établi</h5>
+            <p className="text-muted mb-4">
+              Vous devez établir un contrat avec EcoDeli pour commencer à utiliser nos services.
+            </p>
+            <div className="alert alert-info">
+              <i className="bi bi-info-circle me-2"></i>
+              <strong>Prochaines étapes :</strong>
+              <ul className="mb-0 mt-2 text-start">
+                <li>Contactez notre équipe commerciale</li>
+                <li>Finalisation des conditions tarifaires</li>
+                <li>Signature du contrat de partenariat</li>
+                <li>Activation de votre compte commerçant</li>
+              </ul>
+            </div>
+            <Button variant="primary" className="me-2">
+              <i className="bi bi-envelope me-2"></i>
+              Contacter le service commercial
+            </Button>
+            <Button variant="outline-secondary">
+              <i className="bi bi-telephone me-2"></i>
+              Planifier un rendez-vous
+            </Button>
+          </div>
+        </Card>
+      );
+    }
+
+    return (
+      <div>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h4 className="mb-0">Mon contrat EcoDeli</h4>
+          <div className="d-flex gap-2">
+            <Button variant="outline-primary" size="sm">
+              <i className="bi bi-download me-2"></i>
+              Télécharger le PDF
+            </Button>
+            <Button variant="outline-secondary" size="sm">
+              <i className="bi bi-printer me-2"></i>
+              Imprimer
+            </Button>
+          </div>
+        </div>
+
+        <div className="row g-4">
+          {/* Visualiseur PDF */}
+          <div className="col-lg-8">
+            <Card title="Document contractuel">
+              <div style={{ height: '600px', border: '1px solid #dee2e6', borderRadius: '8px', overflow: 'hidden' }}>
+                <iframe
+                  src="/contrat-exemple.pdf"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 'none' }}
+                  title="Contrat EcoDeli"
+                >
+                  <p>
+                    Votre navigateur ne peut pas afficher ce PDF. 
+                    <a href="/contrat-exemple.pdf" target="_blank" rel="noopener noreferrer">
+                      Téléchargez-le ici
+                    </a>
+                  </p>
+                </iframe>
+              </div>
+            </Card>
+          </div>
+
+          {/* Informations du contrat */}
+          <div className="col-lg-4">
+            {/* Informations générales */}
+            <Card title="📋 Informations générales" className="mb-4">
+              <div className="mb-3">
+                <label className="small text-muted">Numéro de contrat</label>
+                <div className="fw-bold">{contrat?.numeroContrat}</div>
+              </div>
+              <div className="mb-3">
+                <label className="small text-muted">Statut</label>
+                <div>
+                  <span className={`badge ${
+                    contrat?.statutContrat === 'ACTIF' ? 'bg-success' :
+                    contrat?.statutContrat === 'EXPIRE' ? 'bg-danger' :
+                    contrat?.statutContrat === 'SUSPENDU' ? 'bg-warning' :
+                    'bg-secondary'
+                  }`}>
+                    {contrat?.statutContrat}
+                  </span>
+                </div>
+              </div>
+              <div className="mb-3">
+                <label className="small text-muted">Date de signature</label>
+                <div>{contrat?.dateSignature ? new Date(contrat.dateSignature).toLocaleDateString('fr-FR') : '-'}</div>
+              </div>
+              <div className="mb-3">
+                <label className="small text-muted">Date de début</label>
+                <div>{contrat?.dateDebut ? new Date(contrat.dateDebut).toLocaleDateString('fr-FR') : '-'}</div>
+              </div>
+              {contrat?.dateFin && (
+                <div className="mb-3">
+                  <label className="small text-muted">Date de fin</label>
+                  <div>{new Date(contrat.dateFin).toLocaleDateString('fr-FR')}</div>
+                </div>
+              )}
+            </Card>
+
+            {/* Conditions tarifaires */}
+            <Card title="💰 Conditions tarifaires" className="mb-4">
+              {contrat?.commissionPourcentage && (
+                <div className="mb-3">
+                  <label className="small text-muted">Commission</label>
+                  <div className="fw-bold text-primary">{contrat.commissionPourcentage}%</div>
+                </div>
+              )}
+              {contrat?.fraisInscription && (
+                <div className="mb-3">
+                  <label className="small text-muted">Frais d'inscription</label>
+                  <div>{contrat.fraisInscription}€</div>
+                </div>
+              )}
+              {contrat?.abonnementMensuel && (
+                <div className="mb-3">
+                  <label className="small text-muted">Abonnement mensuel</label>
+                  <div>{contrat.abonnementMensuel}€/mois</div>
+                </div>
+              )}
+            </Card>
+
+            {/* Services inclus */}
+            <Card title="🔧 Services inclus">
+              <div className="d-flex flex-wrap gap-2">
+                {contrat?.livraisonRapideIncluse && (
+                  <span className="badge bg-success">
+                    <i className="bi bi-lightning me-1"></i>
+                    Livraison rapide
+                  </span>
+                )}
+                {contrat?.assuranceIncluse && (
+                  <span className="badge bg-primary">
+                    <i className="bi bi-shield-check me-1"></i>
+                    Assurance
+                  </span>
+                )}
+                {contrat?.supportPrioritaire && (
+                  <span className="badge bg-warning">
+                    <i className="bi bi-headset me-1"></i>
+                    Support prioritaire
+                  </span>
+                )}
+                {contrat?.nombreLivraisonsMensuelles && (
+                  <span className="badge bg-info">
+                    <i className="bi bi-box me-1"></i>
+                    {contrat.nombreLivraisonsMensuelles} livraisons/mois
+                  </span>
+                )}
+              </div>
+              {!contrat?.livraisonRapideIncluse && !contrat?.assuranceIncluse && !contrat?.supportPrioritaire && (
+                <p className="text-muted small mb-0">Contrat de base</p>
+              )}
+            </Card>
+          </div>
+        </div>
       </div>
-    </Card>
-  );
+    );
+  };
 
   const renderFacturation = () => (
     <Card title="Facturation">

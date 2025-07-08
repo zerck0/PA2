@@ -271,4 +271,37 @@ export const annonceCommercantApi = {
   },
 };
 
+// Services des contrats commerçants
+export const contratApi = {
+  getByCommercant: async (commercantId: number) => {
+    const response = await api.get(`/contrats/commercant/${commercantId}`);
+    return response.data;
+  },
+
+  hasContrat: async (commercantId: number) => {
+    const response = await api.get(`/contrats/commercant/${commercantId}/exists`);
+    return response.data;
+  },
+
+  getByNumero: async (numeroContrat: string) => {
+    const response = await api.get(`/contrats/numero/${numeroContrat}`);
+    return response.data;
+  },
+
+  create: async (contratData: any, commercantId: number) => {
+    const response = await api.post(`/contrats/commercant/${commercantId}`, contratData);
+    return response.data;
+  },
+
+  update: async (contratId: number, contratData: any) => {
+    const response = await api.put(`/contrats/${contratId}`, contratData);
+    return response.data;
+  },
+
+  delete: async (contratId: number) => {
+    const response = await api.delete(`/contrats/${contratId}`);
+    return response.data;
+  },
+};
+
 export default api;
