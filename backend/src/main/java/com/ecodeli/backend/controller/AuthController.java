@@ -1,6 +1,7 @@
 package com.ecodeli.backend.controller;
 
 import com.ecodeli.model.Utilisateur;
+import com.ecodeli.model.Livreur;
 import com.ecodeli.backend.service.UtilisateurService;
 import com.ecodeli.model.dto.LoginDTO;
 import com.ecodeli.backend.security.JwtService;
@@ -69,6 +70,14 @@ public class AuthController {
         userInfo.put("role", utilisateur.getRole().toString());
         userInfo.put("statut", utilisateur.getStatut() != null ? utilisateur.getStatut().toString() : "NON_VERIFIE");
         
+        // Ajouter statutAffiliation pour les livreurs
+        if (utilisateur instanceof Livreur) {
+            Livreur livreur = (Livreur) utilisateur;
+            String statutAffiliation = livreur.getStatutAffiliation() != null ? livreur.getStatutAffiliation().toString() : "NON_AFFILIE";
+            userInfo.put("statutAffiliation", statutAffiliation);
+            
+        }
+        
         response.put("user", userInfo);
         
         return ResponseEntity.ok(response);
@@ -92,16 +101,26 @@ public class AuthController {
                 Optional<Utilisateur> utilisateur = utilisateurService.findByEmail(email);
                 
                 if (utilisateur.isPresent()) {
+                    Utilisateur user = utilisateur.get();
                     Map<String, Object> response = new HashMap<>();
                     response.put("valid", true);
-                    response.put("user", Map.of(
-                        "id", utilisateur.get().getId(),
-                        "nom", utilisateur.get().getNom(),
-                        "prenom", utilisateur.get().getPrenom(),
-                        "email", utilisateur.get().getEmail(),
-                        "role", utilisateur.get().getRole().toString(),
-                        "statut", utilisateur.get().getStatut() != null ? utilisateur.get().getStatut().toString() : "NON_VERIFIE"
-                    ));
+                    
+                    // Informations utilisateur avec statutAffiliation pour les livreurs
+                    Map<String, Object> userInfo = new HashMap<>();
+                    userInfo.put("id", user.getId());
+                    userInfo.put("nom", user.getNom());
+                    userInfo.put("prenom", user.getPrenom());
+                    userInfo.put("email", user.getEmail());
+                    userInfo.put("role", user.getRole().toString());
+                    userInfo.put("statut", user.getStatut() != null ? user.getStatut().toString() : "NON_VERIFIE");
+                    
+                    // Ajouter statutAffiliation pour les livreurs
+                    if (user instanceof Livreur) {
+                        Livreur livreur = (Livreur) user;
+                        userInfo.put("statutAffiliation", livreur.getStatutAffiliation() != null ? livreur.getStatutAffiliation().toString() : "NON_AFFILIE");
+                    }
+                    
+                    response.put("user", userInfo);
                     return ResponseEntity.ok(response);
                 }
             }

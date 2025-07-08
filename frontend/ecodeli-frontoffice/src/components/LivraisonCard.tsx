@@ -39,21 +39,38 @@ const LivraisonCard: React.FC<LivraisonCardProps> = ({
     return baseUrl + photoUrl;
   };
 
-  // Obtenir les bonnes adresses selon le type de livraison
+  // Obtenir les bonnes adresses selon le type de livraison et la source (annonce ou annonceCommercant)
   const getAdressesAffichage = () => {
-    const annonce = livraison.annonce;
+    // Déterminer la source des données : annonce client ou annonce commerçant
+    const source = livraison.annonce || livraison.annonceCommercant;
+    
+    if (!source) {
+      // Fallback si aucune source n'est trouvée
+      return {
+        depart: {
+          label: livraison.adresseDepart || 'Adresse inconnue',
+          adresse: livraison.adresseDepart || 'Adresse de départ',
+          icon: 'bi-geo-alt'
+        },
+        arrivee: {
+          label: livraison.adresseArrivee || 'Adresse inconnue',
+          adresse: livraison.adresseArrivee || 'Adresse d\'arrivée',
+          icon: 'bi-geo-alt-fill'
+        }
+      };
+    }
     
     switch (livraison.typeLivraison) {
       case 'COMPLETE':
         return {
           depart: {
-            label: annonce.villeDepart,
-            adresse: annonce.adresseDepart,
+            label: source.villeDepart,
+            adresse: source.adresseDepart,
             icon: 'bi-geo-alt'
           },
           arrivee: {
-            label: annonce.villeArrivee,
-            adresse: annonce.adresseArrivee,
+            label: source.villeArrivee,
+            adresse: source.adresseArrivee,
             icon: 'bi-geo-alt-fill'
           }
         };
@@ -61,8 +78,8 @@ const LivraisonCard: React.FC<LivraisonCardProps> = ({
       case 'PARTIELLE_DEPOT':
         return {
           depart: {
-            label: annonce.villeDepart,
-            adresse: annonce.adresseDepart,
+            label: source.villeDepart,
+            adresse: source.adresseDepart,
             icon: 'bi-geo-alt'
           },
           arrivee: {
@@ -80,8 +97,8 @@ const LivraisonCard: React.FC<LivraisonCardProps> = ({
             icon: 'bi-building'
           },
           arrivee: {
-            label: annonce.villeArrivee,
-            adresse: annonce.adresseArrivee,
+            label: source.villeArrivee,
+            adresse: source.adresseArrivee,
             icon: 'bi-geo-alt-fill'
           }
         };
@@ -89,13 +106,13 @@ const LivraisonCard: React.FC<LivraisonCardProps> = ({
       default:
         return {
           depart: {
-            label: livraison.adresseDepart,
-            adresse: livraison.adresseDepart,
+            label: livraison.adresseDepart || source.villeDepart,
+            adresse: livraison.adresseDepart || source.adresseDepart,
             icon: 'bi-geo-alt'
           },
           arrivee: {
-            label: livraison.adresseArrivee,
-            adresse: livraison.adresseArrivee,
+            label: livraison.adresseArrivee || source.villeArrivee,
+            adresse: livraison.adresseArrivee || source.adresseArrivee,
             icon: 'bi-geo-alt-fill'
           }
         };
@@ -166,29 +183,33 @@ const LivraisonCard: React.FC<LivraisonCardProps> = ({
               overflow: 'hidden'
             }}
           >
-            {getImageUrl(livraison.annonce.photoUrl) ? (
-              <img 
-                src={getImageUrl(livraison.annonce.photoUrl)!} 
-                alt={livraison.annonce.titre}
-                className="rounded-start"
-                style={{ 
-                  maxWidth: '100%',
-                  maxHeight: '100%',
-                  objectFit: 'contain',
-                  objectPosition: 'center'
-                }}
-                onError={(e) => {
-                  console.error('Erreur chargement image:', getImageUrl(livraison.annonce.photoUrl));
-                  (e.target as HTMLImageElement).style.display = 'none';
-                  const container = (e.target as HTMLImageElement).parentElement;
-                  if (container) {
-                    container.innerHTML = '<i class="bi bi-image text-muted" style="font-size: 2rem;"></i>';
-                  }
-                }}
-              />
-            ) : (
-              <i className="bi bi-image text-muted" style={{ fontSize: '2rem' }}></i>
-            )}
+            {(() => {
+              const source = livraison.annonce || livraison.annonceCommercant;
+              const photoUrl = source?.photoUrl;
+              return getImageUrl(photoUrl) ? (
+                <img 
+                  src={getImageUrl(photoUrl)!} 
+                  alt={source?.titre || 'Livraison'}
+                  className="rounded-start"
+                  style={{ 
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                    objectPosition: 'center'
+                  }}
+                  onError={(e) => {
+                    console.error('Erreur chargement image:', getImageUrl(photoUrl));
+                    (e.target as HTMLImageElement).style.display = 'none';
+                    const container = (e.target as HTMLImageElement).parentElement;
+                    if (container) {
+                      container.innerHTML = '<i class="bi bi-image text-muted" style="font-size: 2rem;"></i>';
+                    }
+                  }}
+                />
+              ) : (
+                <i className="bi bi-image text-muted" style={{ fontSize: '2rem' }}></i>
+              );
+            })()}
           </div>
         </div>
         
@@ -197,17 +218,28 @@ const LivraisonCard: React.FC<LivraisonCardProps> = ({
           <div className="card-body h-100 d-flex flex-column">
             {/* Header avec badges */}
             <div className="d-flex flex-wrap align-items-center mb-2 gap-1">
-              {getTypeBadge(livraison.annonce.type)}
+              {(() => {
+                const source = livraison.annonce || livraison.annonceCommercant;
+                return source?.type && getTypeBadge(source.type);
+              })()}
               {getTypeLivraisonBadge(livraison.typeLivraison)}
               {getStatutLivraisonBadge(livraison.statut)}
             </div>
             
             {/* Titre */}
-            <h5 className="card-title mb-2">{livraison.annonce.titre}</h5>
+            <h5 className="card-title mb-2">
+              {(() => {
+                const source = livraison.annonce || livraison.annonceCommercant;
+                return source?.titre || 'Livraison';
+              })()}
+            </h5>
             
             {/* Description */}
             <p className="card-text text-muted mb-3">
-              {truncateText(livraison.annonce.description)}
+              {(() => {
+                const source = livraison.annonce || livraison.annonceCommercant;
+                return source?.description ? truncateText(source.description) : 'Aucune description';
+              })()}
             </p>
             
             {/* Itinéraire spécialisé selon le type de livraison */}
@@ -250,15 +282,23 @@ const LivraisonCard: React.FC<LivraisonCardProps> = ({
               {/* Prix et date */}
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  {livraison.annonce.prixPropose && (
-                    <span className="h6 text-success mb-0">
-                      <i className="bi bi-currency-euro me-1"></i>
-                      {livraison.annonce.prixPropose}€
-                    </span>
-                  )}
+                  {(() => {
+                    const source = livraison.annonce || livraison.annonceCommercant;
+                    return source?.prixPropose && (
+                      <span className="h6 text-success mb-0">
+                        <i className="bi bi-currency-euro me-1"></i>
+                        {source.prixPropose}€
+                      </span>
+                    );
+                  })()}
                 </div>
                 <small className="text-muted">
-                  {new Date(livraison.annonce.dateCreation).toLocaleDateString()}
+                  {(() => {
+                    const source = livraison.annonce || livraison.annonceCommercant;
+                    return source?.dateCreation 
+                      ? new Date(source.dateCreation).toLocaleDateString()
+                      : 'Date inconnue';
+                  })()}
                 </small>
               </div>
             </div>

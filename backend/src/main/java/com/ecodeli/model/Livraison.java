@@ -18,9 +18,15 @@ public class Livraison {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "annonce_id", nullable = false)
+    @JoinColumn(name = "annonce_id", nullable = true)  // Maintenant nullable pour supporter les missions commerçant
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Annonce annonce;
+
+    // NOUVEAU : Support pour les missions commerçant
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "annonce_commercant_id", nullable = true)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private AnnonceCommercant annonceCommercant;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "livreur_id")
@@ -88,11 +94,6 @@ public class Livraison {
         ANNULEE         // Livraison annulée
     }
 
-    @PrePersist
-    protected void onCreate() {
-        dateCreation = LocalDateTime.now();
-    }
-
     // NOUVELLES MÉTHODES UTILITAIRES SIMPLIFIÉES
     public boolean isPartielle() {
         return Boolean.TRUE.equals(estPartielle);
@@ -121,6 +122,63 @@ public class Livraison {
 
     public boolean estStockee() {
         return statut == StatutLivraison.STOCKEE;
+    }
+
+    // NOUVELLES MÉTHODES pour gérer les deux types de sources
+    public boolean isMissionCommercant() {
+        return annonceCommercant != null;
+    }
+
+    public boolean isMissionClient() {
+        return annonce != null;
+    }
+
+    public String getTitreSource() {
+        if (isMissionCommercant()) {
+            return annonceCommercant.getTitre();
+        } else if (isMissionClient()) {
+            return annonce.getTitre();
+        }
+        return "Mission inconnue";
+    }
+
+    public String getTypeSource() {
+        if (isMissionCommercant()) {
+            return "MISSION_COMMERCANT";
+        } else if (isMissionClient()) {
+            return "MISSION_CLIENT";
+        }
+        return "INCONNU";
+    }
+
+    // Méthodes de cycle de vie JPA - fusionnées pour éviter les conflits
+    @PrePersist
+    protected void onCreateAndValidate() {
+        // Initialiser la date de création
+        dateCreation = LocalDateTime.now();
+        
+        // Valider qu'une seule source est définie
+        validateSource();
+    }
+
+    @PreUpdate
+    protected void onUpdateAndValidate() {
+        // Valider qu'une seule source est définie
+        validateSource();
+    }
+
+    // Méthode de validation privée
+    private void validateSource() {
+        boolean hasAnnonce = (annonce != null);
+        boolean hasAnnonceCommercant = (annonceCommercant != null);
+        
+        if (!hasAnnonce && !hasAnnonceCommercant) {
+            throw new IllegalStateException("Une livraison doit être liée soit à une Annonce soit à une AnnonceCommercant");
+        }
+        
+        if (hasAnnonce && hasAnnonceCommercant) {
+            throw new IllegalStateException("Une livraison ne peut pas être liée à la fois à une Annonce et une AnnonceCommercant");
+        }
     }
 
     // MÉTHODES DE COMPATIBILITÉ (pour l'ancien code)

@@ -103,14 +103,21 @@ const CommercantDashboard: React.FC = () => {
     if (!currentUser?.user.id) return;
 
     try {
-      await annonceCommercantApi.create(annonceData, currentUser.user.id);
-      showSuccess('🎉 Annonce créée avec succès !');
+      // Convertir les dates au format LocalDateTime pour le backend
+      const processedData = {
+        ...annonceData,
+        dateLimite: annonceData.dateLimite ? `${annonceData.dateLimite}T00:00:00` : null,
+        datePreferee: annonceData.datePreferee ? `${annonceData.datePreferee}T00:00:00` : null
+      };
+
+      await annonceCommercantApi.create(processedData, currentUser.user.id);
+      showSuccess('Annonce créée avec succès !');
       setShowCreateModal(false);
       loadAnnonces();
       loadCountAnnonces();
     } catch (error: any) {
       console.error('Erreur lors de la création de l\'annonce:', error);
-      showError('❌ Erreur lors de la création de l\'annonce : ' + (error.response?.data || error.message));
+      showError('Erreur lors de la création de l\'annonce : ' + (error.response?.data || error.message));
     }
   };
 

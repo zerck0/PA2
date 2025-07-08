@@ -245,6 +245,18 @@ export const annonceCommercantApi = {
     return response.data;
   },
 
+  // Nouvelle méthode : Récupérer les annonces pour livreurs affiliés
+  getForAffiliatedDeliverers: async () => {
+    const response = await api.get('/annonces-commercants/affilies');
+    return response.data;
+  },
+
+  // Nouvelle méthode : Prendre en charge une annonce commerçant
+  prendreEnCharge: async (annonceId: number, livreurId: number) => {
+    const response = await api.post(`/annonces-commercants/${annonceId}/prendre-en-charge?livreurId=${livreurId}`);
+    return response.data;
+  },
+
   create: async (annonceData: any, commercantId: number) => {
     const response = await api.post(`/annonces-commercants?commercantId=${commercantId}`, annonceData);
     return response.data;

@@ -186,14 +186,26 @@ public class LivraisonService {
         if (livraison.isPartielle()) {
             System.out.println("Livraison partielle - Vérifications de coordination...");
             
+            // Obtenir l'ID de l'annonce (client ou commerçant)
+            Long annonceId = null;
+            if (livraison.getAnnonce() != null) {
+                annonceId = livraison.getAnnonce().getId();
+            } else if (livraison.getAnnonceCommercant() != null) {
+                annonceId = livraison.getAnnonceCommercant().getId();
+            }
+            
+            if (annonceId == null) {
+                throw new RuntimeException("Impossible de commencer : aucune annonce source trouvée");
+            }
+            
             // Vérifier que tous les segments sont assignés
-            if (!tousLesSegmentsSontAssignes(livraison.getAnnonce().getId())) {
+            if (!tousLesSegmentsSontAssignes(annonceId)) {
                 throw new RuntimeException("Impossible de commencer : tous les segments ne sont pas encore assignés");
             }
             
             // Pour le segment 2 (retrait), vérifier que le segment 1 (dépôt) est terminé
             if (livraison.isSegmentRetrait()) {
-                if (!segment1EstTermine(livraison.getAnnonce().getId())) {
+                if (!segment1EstTermine(annonceId)) {
                     throw new RuntimeException("Impossible de commencer le retrait : le dépôt n'est pas encore terminé");
                 }
             }
@@ -203,10 +215,16 @@ public class LivraisonService {
         livraison.setStatut(Livraison.StatutLivraison.EN_COURS);
         livraison.setDateDebut(LocalDateTime.now());
 
-        // Mettre à jour le statut de l'annonce
-        Annonce annonce = livraison.getAnnonce();
-        annonce.setStatut(Annonce.StatutAnnonce.EN_COURS);
-        annonceRepository.save(annonce);
+        // Mettre à jour le statut de l'annonce (gérer les deux types de sources)
+        if (livraison.getAnnonce() != null) {
+            // Annonce client
+            Annonce annonce = livraison.getAnnonce();
+            annonce.setStatut(Annonce.StatutAnnonce.EN_COURS);
+            annonceRepository.save(annonce);
+        } else if (livraison.getAnnonceCommercant() != null) {
+            // Annonce commerçant - pas de mise à jour de statut car gérée différemment
+            System.out.println("Livraison d'annonce commerçant démarrée - pas de mise à jour statut");
+        }
 
         System.out.println("Livraison démarrée avec succès !");
         return livraisonRepository.save(livraison);
@@ -578,10 +596,27 @@ public class LivraisonService {
      */
     private void envoyerEmailCodeValidation(Livraison livraison) {
         try {
-            String emailClient = livraison.getAnnonce().getAuteur().getEmail();
-            String nomClient = livraison.getAnnonce().getAuteur().getPrenom() + " " + livraison.getAnnonce().getAuteur().getNom();
-            String nomLivreur = livraison.getLivreur().getPrenom() + " " + livraison.getLivreur().getNom();
+            String emailClient;
+            String nomClient;
+            String titreAnnonce;
             
+            // Gérer les deux types de sources
+            if (livraison.getAnnonce() != null) {
+                // Annonce client
+                emailClient = livraison.getAnnonce().getAuteur().getEmail();
+                nomClient = livraison.getAnnonce().getAuteur().getPrenom() + " " + livraison.getAnnonce().getAuteur().getNom();
+                titreAnnonce = livraison.getAnnonce().getTitre();
+            } else if (livraison.getAnnonceCommercant() != null) {
+                // Annonce commerçant - envoyer au commerçant
+                emailClient = livraison.getAnnonceCommercant().getCommercant().getEmail();
+                nomClient = livraison.getAnnonceCommercant().getCommercant().getPrenom() + " " + livraison.getAnnonceCommercant().getCommercant().getNom();
+                titreAnnonce = livraison.getAnnonceCommercant().getTitre();
+            } else {
+                System.out.println("Aucune source trouvée pour l'email de validation - livraison ignorée");
+                return;
+            }
+            
+            String nomLivreur = livraison.getLivreur().getPrenom() + " " + livraison.getLivreur().getNom();
             String sujet = "EcoDeli - Votre livraison a été prise en charge";
             
             String contenu = String.format(
@@ -597,7 +632,7 @@ public class LivraisonService {
                 "Cordialement,\n" +
                 "L'équipe EcoDeli",
                 nomClient,
-                livraison.getAnnonce().getTitre(),
+                titreAnnonce,
                 nomLivreur,
                 livraison.getAdresseDepart(),
                 livraison.getAdresseArrivee(),
