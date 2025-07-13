@@ -35,7 +35,11 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('authToken');
       localStorage.removeItem('currentUser');
-      window.location.href = '/login';
+      // Ne pas rediriger si on est déjà sur la page de login ou d'inscription
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/login' && currentPath !== '/register' && currentPath !== '/verify-email') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

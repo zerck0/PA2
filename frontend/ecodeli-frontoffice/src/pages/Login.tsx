@@ -6,38 +6,59 @@ import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import Alert from '../components/ui/Alert';
 import { useAuth } from '../hooks/useAuth';
-import { useToast } from '../hooks/useToast';
-import { validateEmail, validateRequired } from '../utils/helpers';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [alert, setAlert] = useState<{ type: 'success' | 'danger', message: string } | null>(null);
+  const [error, setError] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
   
-  const { login, loading } = useAuth();
-  const { showSuccess, showError } = useToast();
+  const { login } = useAuth();
   const navigate = useNavigate();
+
+  // Validation simple
+  const validateForm = (): string | null => {
+    if (!email.trim()) return 'Email requis';
+    if (!email.includes('@')) return 'Email invalide';
+    if (!password.trim()) return 'Mot de passe requis';
+    return null;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validation simple
-    const newErrors: { [key: string]: string } = {};
-    if (!validateRequired(email)) newErrors.email = 'Email requis';
-    else if (!validateEmail(email)) newErrors.email = 'Email invalide';
-    if (!validateRequired(password)) newErrors.password = 'Mot de passe requis';
-    
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
+    setError('');
+
+    // Validation côté frontend
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       await login(email, password);
-      showSuccess('Connexion réussie ! Redirection en cours...');
-      setTimeout(() => navigate('/dashboard'), 1500);
+      // Redirection réussie sera gérée par le context d'auth
+      navigate('/dashboard');
     } catch (error: any) {
-      showError(error.message || 'Erreur de connexion');
+      // Récupérer le message d'erreur du backend ou utiliser un message générique
+      const errorMessage = error.response?.data?.message || 'Email ou mot de passe incorrect';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  // Réinitialiser l'erreur quand l'utilisateur tape
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (error) setError('');
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    if (error) setError('');
   };
 
   return (
@@ -45,9 +66,9 @@ const Login: React.FC = () => {
       <div className="row justify-content-center">
         <div className="col-md-6">
           <Card title="Connexion">
-            {alert && (
-              <Alert type={alert.type} onClose={() => setAlert(null)}>
-                {alert.message}
+            {error && (
+              <Alert type="danger">
+                {error}
               </Alert>
             )}
             
@@ -56,8 +77,7 @@ const Login: React.FC = () => {
                 type="email"
                 label="Email"
                 value={email}
-                onChange={setEmail}
-                error={errors.email}
+                onChange={handleEmailChange}
                 required
               />
               
@@ -65,13 +85,12 @@ const Login: React.FC = () => {
                 type="password"
                 label="Mot de passe"
                 value={password}
-                onChange={setPassword}
-                error={errors.password}
+                onChange={handlePasswordChange}
                 required
               />
               
-              <Button type="submit" disabled={loading} className="w-100 mb-3">
-                {loading ? 'Connexion...' : 'Se connecter'}
+              <Button type="submit" disabled={isLoading} className="w-100 mb-3">
+                {isLoading ? 'Connexion...' : 'Se connecter'}
               </Button>
             </form>
             

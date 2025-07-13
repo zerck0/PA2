@@ -5,6 +5,8 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Alert from '../components/ui/Alert';
 import Card from '../components/ui/Card';
+import PasswordStrengthInput from '../components/ui/PasswordStrengthInput';
+import AddressInput from '../components/ui/AddressInput';
 
 interface RegisterFormData {
   role: string;
@@ -13,6 +15,9 @@ interface RegisterFormData {
   email: string;
   motDePasse: string;
   telephone: string;
+  adresse: string;
+  ville: string;
+  codePostal: string;
   // Champs spécifiques selon le rôle
   vehicule?: string;
   permisVerif?: boolean;
@@ -31,10 +36,14 @@ const Register: React.FC = () => {
     email: '',
     motDePasse: '',
     telephone: '',
+    adresse: '',
+    ville: '',
+    codePostal: '',
     permisVerif: false
   });
 
   const [error, setError] = useState<string>('');
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -43,6 +52,10 @@ const Register: React.FC = () => {
       ...prev,
       [name]: value
     }));
+    // Réinitialiser les erreurs de validation quand l'utilisateur modifie quelque chose
+    if (validationErrors.length > 0) {
+      setValidationErrors([]);
+    }
   };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,12 +64,90 @@ const Register: React.FC = () => {
       ...prev,
       [name]: checked
     }));
+    // Réinitialiser les erreurs de validation quand l'utilisateur modifie quelque chose
+    if (validationErrors.length > 0) {
+      setValidationErrors([]);
+    }
+  };
+
+  // Fonction helper pour les champs Input avec réinitialisation des erreurs
+  const handleInputChange = (field: keyof RegisterFormData) => (value: string | number) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Réinitialiser les erreurs de validation quand l'utilisateur modifie quelque chose
+    if (validationErrors.length > 0) {
+      setValidationErrors([]);
+    }
+  };
+
+  // Fonction de validation simple
+  const validateForm = (): string[] => {
+    const errors: string[] = [];
+
+    // Champs de base obligatoires
+    if (!formData.role) errors.push('Veuillez sélectionner votre profil');
+    if (!formData.prenom.trim()) errors.push('Le prénom est obligatoire');
+    if (!formData.nom.trim()) errors.push('Le nom est obligatoire');
+    if (!formData.telephone.trim()) errors.push('Le téléphone est obligatoire');
+    if (!formData.adresse.trim()) errors.push('L\'adresse est obligatoire');
+    if (!formData.ville.trim()) errors.push('La ville est obligatoire');
+    if (!formData.codePostal.trim()) errors.push('Le code postal est obligatoire');
+
+    // Validation email
+    if (!formData.email.trim()) {
+      errors.push('L\'email est obligatoire');
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.push('L\'email n\'est pas valide');
+    }
+
+    // Validation mot de passe
+    if (!formData.motDePasse) {
+      errors.push('Le mot de passe est obligatoire');
+    } else {
+      if (formData.motDePasse.length < 8) errors.push('Le mot de passe doit contenir au moins 8 caractères');
+      if (!/[A-Z]/.test(formData.motDePasse)) errors.push('Le mot de passe doit contenir au moins une majuscule');
+      if (!/\d/.test(formData.motDePasse)) errors.push('Le mot de passe doit contenir au moins un chiffre');
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.motDePasse)) errors.push('Le mot de passe doit contenir au moins un caractère spécial');
+    }
+
+    // Validation selon le rôle
+    switch (formData.role) {
+      case 'LIVREUR':
+        if (!formData.vehicule?.trim()) errors.push('Le type de véhicule est obligatoire pour un livreur');
+        if (!formData.permisVerif) errors.push('La certification du permis est obligatoire pour un livreur');
+        break;
+
+      case 'COMMERCANT':
+        if (!formData.siret?.trim()) {
+          errors.push('Le numéro SIRET est obligatoire pour un commerçant');
+        } else if (!/^\d{14}$/.test(formData.siret)) {
+          errors.push('Le numéro SIRET doit contenir exactement 14 chiffres');
+        }
+        break;
+
+      case 'PRESTATAIRE':
+        if (!formData.typeService?.trim()) errors.push('Le type de service est obligatoire pour un prestataire');
+        if (!formData.tarifHoraire || formData.tarifHoraire <= 0) {
+          errors.push('Le tarif horaire doit être supérieur à 0 pour un prestataire');
+        }
+        break;
+    }
+
+    return errors;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
+    setValidationErrors([]);
+
+    // Validation côté frontend
+    const errors = validateForm();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       const response = await fetch('http://localhost:8080/api/inscription', {
@@ -166,6 +257,20 @@ const Register: React.FC = () => {
               </Alert>
             )}
 
+            {validationErrors.length > 0 && (
+              <Alert type="warning">
+                <div className="fw-bold mb-2">
+                  <i className="bi bi-exclamation-triangle me-2"></i>
+                  Veuillez corriger les erreurs suivantes :
+                </div>
+                <ul className="mb-0 ps-3">
+                  {validationErrors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </Alert>
+            )}
+
             <form onSubmit={handleSubmit}>
               {/* Choix du rôle */}
               <div className="mb-3">
@@ -211,16 +316,14 @@ const Register: React.FC = () => {
                 label="Email"
                 type="email"
                 value={formData.email}
-                onChange={(value) => setFormData(prev => ({ ...prev, email: value }))}
+                onChange={handleInputChange('email')}
                 required
               />
 
-              <Input
+              <PasswordStrengthInput
                 label="Mot de passe"
-                type="password"
                 value={formData.motDePasse}
-                onChange={(value) => setFormData(prev => ({ ...prev, motDePasse: value }))}
-                placeholder="Au moins 6 caractères"
+                onChange={handleInputChange('motDePasse')}
                 required
               />
 
@@ -228,10 +331,50 @@ const Register: React.FC = () => {
                 label="Téléphone"
                 type="tel"
                 value={formData.telephone}
-                onChange={(value) => setFormData(prev => ({ ...prev, telephone: value }))}
+                onChange={handleInputChange('telephone')}
                 placeholder="Ex: 06 12 34 56 78"
                 required
               />
+
+              {/* Section Adresse */}
+              <div className="mt-4">
+                <h5 className="text-primary mb-3">
+                  <i className="bi bi-geo-alt me-2"></i>
+                  Adresse
+                </h5>
+                
+                <AddressInput
+                  label="Adresse complète"
+                  value={formData.adresse}
+                  onChange={(value) => setFormData(prev => ({ ...prev, adresse: value }))}
+                  onCityChange={(city) => setFormData(prev => ({ ...prev, ville: city }))}
+                  placeholder="Saisissez votre adresse complète"
+                  required
+                />
+
+                <div className="row">
+                  <div className="col-md-8">
+                    <Input
+                      label="Ville"
+                      type="text"
+                      value={formData.ville}
+                      onChange={(value) => setFormData(prev => ({ ...prev, ville: value }))}
+                      placeholder="Ville"
+                      required
+                    />
+                  </div>
+                  <div className="col-md-4">
+                    <Input
+                      label="Code postal"
+                      type="text"
+                      value={formData.codePostal}
+                      onChange={(value) => setFormData(prev => ({ ...prev, codePostal: value }))}
+                      placeholder="75001"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
 
               {/* Champs spécifiques selon le rôle */}
               {formData.role && (

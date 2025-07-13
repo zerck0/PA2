@@ -21,11 +21,16 @@ public class InscriptionDTO {
     public String email;
     
     @NotBlank(message = "Le mot de passe est obligatoire")
-    @Size(min = 6, message = "Le mot de passe doit contenir au moins 6 caractères")
+    @Size(min = 8, message = "Le mot de passe doit contenir au moins 8 caractères")
     public String motDePasse;
     
     @NotBlank(message = "Le téléphone est obligatoire")
     public String telephone;
+    
+    // Nouveaux champs d'adresse
+    public String adresse;
+    public String ville;
+    public String codePostal;
     
     // Champs optionnels selon le rôle
     public String vehicule;

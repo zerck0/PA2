@@ -123,19 +123,38 @@ const LivraisonDetailModal: React.FC<LivraisonDetailModalProps> = ({
               </h6>
             </div>
             <div className="card-body">
-              <h6>{livraison.annonce.titre}</h6>
-              <p className="text-muted small mb-2">{livraison.annonce.description}</p>
-              
-              <div className="mb-2">
-                <strong>Client :</strong> {livraison.annonce.auteur.prenom} {livraison.annonce.auteur.nom}
-              </div>
-              
-              {livraison.annonce.prixPropose && (
-                <div className="mb-2">
-                  <strong>Prix proposé :</strong> 
-                  <span className="text-success ms-1">{livraison.annonce.prixPropose}€</span>
-                </div>
-              )}
+              {(() => {
+                // Déterminer la source : annonce client ou annonce commerçant
+                const source = livraison.annonce || livraison.annonceCommercant;
+                
+                if (!source) {
+                  return <p className="text-muted">Aucune information sur l'annonce</p>;
+                }
+                
+                return (
+                  <>
+                    <h6>{source.titre}</h6>
+                    <p className="text-muted small mb-2">{source.description}</p>
+                    
+                    <div className="mb-2">
+                      {livraison.annonce ? (
+                        // Annonce client
+                        <><strong>Client :</strong> {(source as any).auteur.prenom} {(source as any).auteur.nom}</>
+                      ) : (
+                        // Annonce commerçant
+                        <><strong>Commerçant :</strong> {(source as any).commercant.prenom} {(source as any).commercant.nom}</>
+                      )}
+                    </div>
+                    
+                    {source.prixPropose && (
+                      <div className="mb-2">
+                        <strong>Prix proposé :</strong> 
+                        <span className="text-success ms-1">{source.prixPropose}€</span>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>

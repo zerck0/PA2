@@ -73,6 +73,9 @@ export interface RegisterData {
   nom: string;
   prenom: string;
   telephone?: string;
+  adresse?: string;
+  ville?: string;
+  codePostal?: string;
   role: 'CLIENT' | 'LIVREUR' | 'COMMERCANT' | 'PRESTATAIRE';
 }
 
@@ -99,7 +102,9 @@ export interface Livraison {
   ordre: number;
   prixConvenu?: number;
   commentaires?: string;
-  annonce: Annonce;
+  // Support des deux types d'annonces
+  annonce?: Annonce;
+  annonceCommercant?: AnnonceCommercant;
   livreur?: User;
 }
 

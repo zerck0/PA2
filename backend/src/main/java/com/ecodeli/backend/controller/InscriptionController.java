@@ -64,7 +64,15 @@ public class InscriptionController {
                     .body(Map.of("message", "Cette adresse email est déjà utilisée"));
             }
             
-            // 2. Validation des champs selon le rôle
+            // 2. Validation de la politique de mot de passe
+            String passwordError = validatePasswordStrength(dto.motDePasse);
+            if (passwordError != null) {
+                return ResponseEntity
+                    .badRequest()
+                    .body(Map.of("message", passwordError));
+            }
+            
+            // 3. Validation des champs selon le rôle
             String validationError = validateRoleSpecificFields(dto);
             if (validationError != null) {
                 return ResponseEntity
@@ -149,10 +157,10 @@ public class InscriptionController {
         utilisateur.setPassword(passwordEncoder.encode(dto.motDePasse)); // Hashage du mot de passe
         utilisateur.setTelephone(dto.telephone);
         utilisateur.setDateCreation(dateCreation);
-        // Champs optionnels à remplir plus tard
-        utilisateur.setAdresse("");
-        utilisateur.setVille("");
-        utilisateur.setCodepostal("");
+        // Nouveaux champs d'adresse
+        utilisateur.setAdresse(dto.adresse != null ? dto.adresse : "");
+        utilisateur.setVille(dto.ville != null ? dto.ville : "");
+        utilisateur.setCodepostal(dto.codePostal != null ? dto.codePostal : "");
     }
 
     private String validateRoleSpecificFields(InscriptionDTO dto) {
@@ -189,5 +197,29 @@ public class InscriptionController {
 
     private boolean isValidSIRET(String siret) {
         return siret.matches("\\d{14}");
+    }
+
+    /**
+     * Validation de la politique de mot de passe robuste
+     * Requis : 8 caractères minimum + 1 majuscule + 1 chiffre + 1 caractère spécial
+     */
+    private String validatePasswordStrength(String password) {
+        if (password == null || password.length() < 8) {
+            return "Le mot de passe doit contenir au moins 8 caractères";
+        }
+        
+        if (!password.matches(".*[A-Z].*")) {
+            return "Le mot de passe doit contenir au moins une lettre majuscule";
+        }
+        
+        if (!password.matches(".*\\d.*")) {
+            return "Le mot de passe doit contenir au moins un chiffre";
+        }
+        
+        if (!password.matches(".*[!@#$%^&*(),.?\":{}|<>].*")) {
+            return "Le mot de passe doit contenir au moins un caractère spécial (!@#$%^&*(),.?\":{}|<>)";
+        }
+        
+        return null; // Mot de passe valide
     }
 }
