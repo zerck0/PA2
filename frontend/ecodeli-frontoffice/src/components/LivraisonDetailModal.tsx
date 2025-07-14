@@ -3,9 +3,11 @@ import Modal from './ui/Modal';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Alert from './ui/Alert';
+import EvaluationModal from './EvaluationModal';
 import { Livraison } from '../types';
-import { livraisonApi } from '../services/api';
+import { livraisonApi, evaluationApi } from '../services/api';
 import { useToast } from '../hooks/useToast';
+import { useAuth } from '../hooks/useAuth';
 
 interface LivraisonDetailModalProps {
   isOpen: boolean;
@@ -23,9 +25,71 @@ const LivraisonDetailModal: React.FC<LivraisonDetailModalProps> = ({
   const [codeValidation, setCodeValidation] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showEvaluationModal, setShowEvaluationModal] = useState(false);
+  const [canEvaluate, setCanEvaluate] = useState(false);
   const { showSuccess, showError, showInfo } = useToast();
+  const { currentUser } = useAuth();
+
+  // Vérifier si l'utilisateur peut évaluer cette livraison
+  React.useEffect(() => {
+    const checkCanEvaluate = async () => {
+      if (!currentUser || !livraison || livraison.statut !== 'LIVREE') {
+        setCanEvaluate(false);
+        return;
+      }
+
+      // Seul le client (auteur de l'annonce) peut évaluer le livreur
+      const source = livraison.annonce || livraison.annonceCommercant;
+      if (!source) {
+        setCanEvaluate(false);
+        return;
+      }
+
+      const isClient = livraison.annonce 
+        ? (source as any).auteur?.id === currentUser.user.id
+        : (source as any).commercant?.id === currentUser.user.id;
+
+      if (!isClient || !livraison.livreur) {
+        setCanEvaluate(false);
+        return;
+      }
+
+      try {
+        // Vérifier si une évaluation existe déjà
+        const evaluationExists = await evaluationApi.exists(
+          currentUser.user.id,
+          'LIVRAISON',
+          livraison.id
+        );
+        setCanEvaluate(!evaluationExists);
+      } catch (error) {
+        console.error('Erreur lors de la vérification de l\'évaluation:', error);
+        setCanEvaluate(false);
+      }
+    };
+
+    checkCanEvaluate();
+  }, [currentUser, livraison]);
 
   if (!livraison) return null;
+
+  // Déterminer la source et les informations client/commerçant
+  const source = livraison.annonce || livraison.annonceCommercant;
+  const isAnnonceClient = !!livraison.annonce;
+  const clientInfo = isAnnonceClient 
+    ? (source as any)?.auteur 
+    : (source as any)?.commercant;
+
+  // Gestionnaire pour ouvrir le modal d'évaluation
+  const handleOpenEvaluation = () => {
+    setShowEvaluationModal(true);
+  };
+
+  // Gestionnaire après soumission d'évaluation
+  const handleEvaluationSubmitted = () => {
+    setCanEvaluate(false); // Ne plus permettre d'évaluer
+    onLivraisonUpdated(); // Refresh les données
+  };
 
   // Fonction pour obtenir le badge du statut
   const getStatutBadge = (statut: string) => {
@@ -264,6 +328,35 @@ const LivraisonDetailModal: React.FC<LivraisonDetailModalProps> = ({
         </div>
       )}
 
+      {/* Section d'évaluation pour livraisons terminées */}
+      {canEvaluate && livraison.statut === 'LIVREE' && livraison.livreur && (
+        <div className="mt-4">
+          <div className="card border-success">
+            <div className="card-header bg-light">
+              <h6 className="mb-0 text-success">
+                <i className="bi bi-star me-2"></i>
+                Évaluer la livraison
+              </h6>
+            </div>
+            <div className="card-body">
+              <p className="text-muted mb-3">
+                La livraison a été terminée avec succès ! Vous pouvez maintenant évaluer{' '}
+                <strong>{livraison.livreur.prenom} {livraison.livreur.nom}</strong> pour cette livraison.
+              </p>
+              
+              <Button
+                variant="primary"
+                onClick={handleOpenEvaluation}
+                className="btn-sm"
+              >
+                <i className="bi bi-star-fill me-2"></i>
+                Donner une note
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Boutons d'action dans le footer */}
       <div className="modal-footer">
         <div className="d-flex gap-2 w-100">
@@ -288,6 +381,21 @@ const LivraisonDetailModal: React.FC<LivraisonDetailModalProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* Modal d'évaluation */}
+      {showEvaluationModal && livraison.livreur && currentUser && (
+        <EvaluationModal
+          isOpen={showEvaluationModal}
+          onClose={() => setShowEvaluationModal(false)}
+          evalueId={livraison.livreur.id}
+          serviceType="LIVRAISON"
+          serviceId={livraison.id}
+          evaluateurId={currentUser.user.id}
+          evalueNom={`${livraison.livreur.prenom} ${livraison.livreur.nom}`}
+          serviceTitre={source?.titre || 'Livraison'}
+          onEvaluationSubmitted={handleEvaluationSubmitted}
+        />
+      )}
     </Modal>
   );
 };

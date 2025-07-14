@@ -27,4 +27,7 @@ public class Prestataire extends Utilisateur{
     
     private boolean profilConfigured = false; // Indique si le prestataire a configuré son profil
     
+    // Note moyenne calculée automatiquement depuis les évaluations
+    private Double noteMoyenne = 0.0;
+    
 }

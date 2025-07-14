@@ -458,4 +458,95 @@ export const prestationApi = {
   },
 };
 
+// Services des évaluations
+export const evaluationApi = {
+  // Créer une nouvelle évaluation
+  create: async (evaluationData: {
+    evaluateurId: number;
+    evalueId: number;
+    serviceType: 'PRESTATION' | 'LIVRAISON';
+    serviceId: number;
+    note: number;
+    commentaire?: string;
+  }) => {
+    const response = await api.post('/evaluations', evaluationData);
+    return response.data;
+  },
+
+  // Vérifier si une évaluation existe déjà
+  exists: async (evaluateurId: number, serviceType: 'PRESTATION' | 'LIVRAISON', serviceId: number) => {
+    const response = await api.get(`/evaluations/existe?evaluateurId=${evaluateurId}&serviceType=${serviceType}&serviceId=${serviceId}`);
+    return response.data;
+  },
+
+  // Récupérer les évaluations données par un utilisateur
+  getEvaluationsDonnees: async (evaluateurId: number) => {
+    const response = await api.get(`/evaluations/donnees/${evaluateurId}`);
+    return response.data;
+  },
+
+  // Récupérer les évaluations reçues par un utilisateur
+  getEvaluationsRecues: async (evalueId: number) => {
+    const response = await api.get(`/evaluations/recues/${evalueId}`);
+    return response.data;
+  },
+
+  // Récupérer les évaluations d'un service spécifique
+  getEvaluationsService: async (serviceType: 'PRESTATION' | 'LIVRAISON', serviceId: number) => {
+    const response = await api.get(`/evaluations/service?serviceType=${serviceType}&serviceId=${serviceId}`);
+    return response.data;
+  },
+
+  // Récupérer la note moyenne d'un utilisateur
+  getNoteMoyenne: async (evalueId: number) => {
+    const response = await api.get(`/evaluations/moyenne/${evalueId}`);
+    return response.data;
+  },
+
+  // Récupérer la note moyenne par type de service
+  getNoteMoyenneParService: async (evalueId: number, serviceType: 'PRESTATION' | 'LIVRAISON') => {
+    const response = await api.get(`/evaluations/moyenne/${evalueId}/${serviceType}`);
+    return response.data;
+  },
+
+  // Récupérer le nombre d'évaluations d'un utilisateur
+  getNombreEvaluations: async (evalueId: number) => {
+    const response = await api.get(`/evaluations/nombre/${evalueId}`);
+    return response.data;
+  },
+
+  // Récupérer les statistiques complètes d'un utilisateur
+  getStatistiques: async (evalueId: number) => {
+    const response = await api.get(`/evaluations/statistiques/${evalueId}`);
+    return response.data;
+  },
+
+  // Récupérer les dernières évaluations (limitées)
+  getDernieresEvaluations: async (evalueId: number, limite: number = 5) => {
+    const response = await api.get(`/evaluations/dernieres/${evalueId}?limite=${limite}`);
+    return response.data;
+  },
+
+  // Modifier une évaluation existante
+  update: async (evaluationId: number, updateData: {
+    note?: number;
+    commentaire?: string;
+  }) => {
+    const response = await api.put(`/evaluations/${evaluationId}`, updateData);
+    return response.data;
+  },
+
+  // Supprimer une évaluation
+  delete: async (evaluationId: number) => {
+    const response = await api.delete(`/evaluations/${evaluationId}`);
+    return response.data;
+  },
+
+  // Récupérer une évaluation par ID
+  getById: async (evaluationId: number) => {
+    const response = await api.get(`/evaluations/${evaluationId}`);
+    return response.data;
+  },
+};
+
 export default api;

@@ -211,3 +211,53 @@ export interface ConfigurerProfilPrestataireData {
   typePrestationPrincipale: string | null;
   photoPrestation: string;
 }
+
+// ============ ÉVALUATIONS ============
+
+// Types pour le système d'évaluation
+export type TypeService = 'PRESTATION' | 'LIVRAISON';
+
+// Interface pour une évaluation
+export interface Evaluation {
+  id: number;
+  evaluateurId: number;
+  evalueId: number;
+  serviceType: TypeService;
+  serviceId: number;
+  note: number; // 1-5
+  commentaire?: string;
+  dateEvaluation: string;
+}
+
+// Interface pour créer une évaluation
+export interface CreateEvaluationData {
+  evaluateurId: number;
+  evalueId: number;
+  serviceType: TypeService;
+  serviceId: number;
+  note: number;
+  commentaire?: string;
+}
+
+// Interface pour modifier une évaluation
+export interface UpdateEvaluationData {
+  note?: number;
+  commentaire?: string;
+}
+
+// Interface pour les statistiques d'évaluation
+export interface StatistiquesEvaluation {
+  totalEvaluations: number;
+  noteMoyenne: number;
+  noteMoyennePrestation: number;
+  noteMoyenneLivraison: number;
+  nombrePrestations: number;
+  nombreLivraisons: number;
+}
+
+// Interface pour l'affichage de note moyenne
+export interface NoteMoyenneDisplay {
+  note: number;
+  nombreEvaluations: number;
+  typeService?: TypeService;
+}
