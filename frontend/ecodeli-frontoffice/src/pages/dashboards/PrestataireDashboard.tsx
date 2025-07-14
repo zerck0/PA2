@@ -44,7 +44,7 @@ interface DashboardStats {
 const PrestataireDashboard: React.FC = () => {
   const { currentUser } = useAuth();
   const { showSuccess, showError } = useToast();
-  const [activeTab, setActiveTab] = useState<'overview' | 'prestations' | 'ma-prestation' | 'planning' | 'revenus'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'prestations' | 'ma-prestation' | 'planning' | 'planning-config' | 'revenus'>('overview');
   
   // États
   const [prestations, setPrestations] = useState<Prestation[]>([]);
@@ -65,6 +65,18 @@ const PrestataireDashboard: React.FC = () => {
   });
   const [categories, setCategories] = useState<Record<string, Array<{value: string, label: string}>>>({});
   const [loadingProfil, setLoadingProfil] = useState(false);
+  
+  // États pour la configuration des disponibilités
+  const [configDisponibilites, setConfigDisponibilites] = useState<{[key: string]: {actif: boolean, heureDebut: string, heureFin: string}}>({
+    'MONDAY': { actif: false, heureDebut: '08:00', heureFin: '18:00' },
+    'TUESDAY': { actif: false, heureDebut: '08:00', heureFin: '18:00' },
+    'WEDNESDAY': { actif: false, heureDebut: '08:00', heureFin: '18:00' },
+    'THURSDAY': { actif: false, heureDebut: '08:00', heureFin: '18:00' },
+    'FRIDAY': { actif: false, heureDebut: '08:00', heureFin: '18:00' },
+    'SATURDAY': { actif: false, heureDebut: '08:00', heureFin: '18:00' },
+    'SUNDAY': { actif: false, heureDebut: '08:00', heureFin: '18:00' }
+  });
+  const [loadingConfig, setLoadingConfig] = useState(false);
 
   const userId = currentUser?.user?.id;
 
@@ -222,6 +234,75 @@ const PrestataireDashboard: React.FC = () => {
       photoPrestation: ''
     }));
   };
+
+  // Fonctions pour la gestion des disponibilités
+  const initConfigFromDisponibilites = () => {
+    const newConfig = { ...configDisponibilites };
+    disponibilites.forEach(dispo => {
+      newConfig[dispo.jourSemaine] = {
+        actif: dispo.actif,
+        heureDebut: dispo.heureDebut,
+        heureFin: dispo.heureFin
+      };
+    });
+    setConfigDisponibilites(newConfig);
+  };
+
+  const saveDisponibilites = async () => {
+    try {
+      if (!userId) return;
+      
+      setLoadingConfig(true);
+      
+      // Convertir la configuration en tableau de PlageDisponibilite
+      const plages: PlageDisponibilite[] = Object.entries(configDisponibilites)
+        .filter(([_, config]) => config.actif)
+        .map(([jour, config]) => ({
+          jourSemaine: jour,
+          heureDebut: config.heureDebut,
+          heureFin: config.heureFin,
+          actif: true
+        }));
+      
+      await prestationApi.configurerDisponibilites(userId, plages);
+      showSuccess('Disponibilités mises à jour avec succès');
+      
+      // Recharger les disponibilités
+      await loadDisponibilites();
+      setActiveTab('planning');
+    } catch (error) {
+      showError('Erreur lors de la mise à jour des disponibilités');
+    } finally {
+      setLoadingConfig(false);
+    }
+  };
+
+  const toggleJour = (jour: string) => {
+    setConfigDisponibilites(prev => ({
+      ...prev,
+      [jour]: {
+        ...prev[jour],
+        actif: !prev[jour].actif
+      }
+    }));
+  };
+
+  const updateHoraire = (jour: string, field: 'heureDebut' | 'heureFin', value: string) => {
+    setConfigDisponibilites(prev => ({
+      ...prev,
+      [jour]: {
+        ...prev[jour],
+        [field]: value
+      }
+    }));
+  };
+
+  // Initialiser la configuration quand on charge les disponibilités
+  useEffect(() => {
+    if (disponibilites.length > 0) {
+      initConfigFromDisponibilites();
+    }
+  }, [disponibilites]);
 
   const getStatusBadgeClass = (statut: string) => {
     switch (statut) {
@@ -418,12 +499,97 @@ const PrestataireDashboard: React.FC = () => {
 
   const renderPlanning = () => (
     <div>
-      <h4 className="mb-4">Gérer mes disponibilités</h4>
-      <Alert type="info">
-        <strong>Configuration du planning à venir</strong><br />
-        Cette section permettra de configurer vos disponibilités par jour de la semaine 
-        avec pause déjeuner automatique de 12h à 13h.
-      </Alert>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h4>Mon planning</h4>
+          <p className="text-muted mb-0">Configurez vos disponibilités par jour de la semaine</p>
+        </div>
+        <Button variant="primary" onClick={() => setActiveTab('planning-config')}>
+          <i className="bi bi-gear me-1"></i>
+          Configurer
+        </Button>
+      </div>
+
+      {/* Résumé des disponibilités */}
+      <Card title="Mes disponibilités" className="mb-4">
+        {disponibilites.length > 0 ? (
+          <div className="row">
+            {['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'].map((day) => {
+              const dayDisplay = {
+                'MONDAY': 'Lundi',
+                'TUESDAY': 'Mardi', 
+                'WEDNESDAY': 'Mercredi',
+                'THURSDAY': 'Jeudi',
+                'FRIDAY': 'Vendredi',
+                'SATURDAY': 'Samedi',
+                'SUNDAY': 'Dimanche'
+              }[day];
+              
+              const dispo = disponibilites.find(d => d.jourSemaine === day);
+              
+              return (
+                <div key={day} className="col-md-6 col-lg-4 mb-2">
+                  <div className={`p-2 rounded ${dispo ? 'bg-success bg-opacity-10 border border-success' : 'bg-light'}`}>
+                    <strong>{dayDisplay}</strong>
+                    {dispo ? (
+                      <div className="small text-success">
+                        {dispo.heureDebut} - {dispo.heureFin}
+                        <br />
+                        <span className="text-muted">(Pause 12h-13h)</span>
+                      </div>
+                    ) : (
+                      <div className="small text-muted">Non disponible</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <Alert type="warning">
+            <i className="bi bi-exclamation-triangle me-2"></i>
+            <strong>Aucune disponibilité configurée</strong><br />
+            Configurez vos créneaux de disponibilité pour que les clients puissent réserver vos services.
+          </Alert>
+        )}
+      </Card>
+
+      {/* Prochaines prestations */}
+      <Card title="Prestations à venir">
+        {prestations.filter(p => new Date(p.dateDebut) > new Date() && p.statut !== 'ANNULEE').length > 0 ? (
+          <div className="row">
+            {prestations
+              .filter(p => new Date(p.dateDebut) > new Date() && p.statut !== 'ANNULEE')
+              .slice(0, 4)
+              .map((prestation) => (
+                <div key={prestation.id} className="col-md-6 mb-3">
+                  <div className="border rounded p-3">
+                    <h6 className="mb-1">{prestation.titre}</h6>
+                    <div className="small text-muted mb-2">
+                      <i className="bi bi-calendar me-1"></i>
+                      {formatDateTime(prestation.dateDebut)}
+                    </div>
+                    <div className="small text-muted mb-2">
+                      <i className="bi bi-person me-1"></i>
+                      {prestation.client.prenom} {prestation.client.nom}
+                    </div>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <span className={`badge ${getStatusBadgeClass(prestation.statut)}`}>
+                        {getStatusLabel(prestation.statut)}
+                      </span>
+                      <strong className="text-success">{prestation.prix}€</strong>
+                    </div>
+                  </div>
+                </div>
+              ))}
+          </div>
+        ) : (
+          <Alert type="info">
+            <i className="bi bi-calendar-x me-2"></i>
+            Aucune prestation programmée.
+          </Alert>
+        )}
+      </Card>
     </div>
   );
 
@@ -582,6 +748,170 @@ const PrestataireDashboard: React.FC = () => {
     </div>
   );
 
+  const renderPlanningConfig = () => (
+    <div>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h4>Configurer mes disponibilités</h4>
+          <p className="text-muted mb-0">Définissez vos horaires de travail par jour</p>
+        </div>
+        <Button variant="outline-secondary" onClick={() => setActiveTab('planning')}>
+          <i className="bi bi-arrow-left me-1"></i>
+          Retour au planning
+        </Button>
+      </div>
+
+      <Alert type="info" className="mb-4">
+        <i className="bi bi-info-circle me-2"></i>
+        <strong>Pause déjeuner automatique :</strong> Une pause de 12h à 13h sera automatiquement appliquée sur tous vos créneaux.
+      </Alert>
+
+      <Card title="Configuration par jour">
+        {Object.entries(configDisponibilites).map(([jour, config]) => {
+          const dayDisplay = {
+            'MONDAY': 'Lundi',
+            'TUESDAY': 'Mardi',
+            'WEDNESDAY': 'Mercredi', 
+            'THURSDAY': 'Jeudi',
+            'FRIDAY': 'Vendredi',
+            'SATURDAY': 'Samedi',
+            'SUNDAY': 'Dimanche'
+          }[jour];
+
+          return (
+            <div key={jour} className="row align-items-center py-3 border-bottom">
+              <div className="col-md-2">
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id={`jour-${jour}`}
+                    checked={config.actif}
+                    onChange={() => toggleJour(jour)}
+                  />
+                  <label className="form-check-label fw-bold" htmlFor={`jour-${jour}`}>
+                    {dayDisplay}
+                  </label>
+                </div>
+              </div>
+
+              {config.actif && (
+                <>
+                  <div className="col-md-3">
+                    <label className="form-label small">Début</label>
+                    <select
+                      className="form-select form-select-sm"
+                      value={config.heureDebut}
+                      onChange={(e) => updateHoraire(jour, 'heureDebut', e.target.value)}
+                    >
+                      {Array.from({length: 13}, (_, i) => {
+                        const hour = (i + 8).toString().padStart(2, '0');
+                        return (
+                          <option key={hour} value={`${hour}:00`}>
+                            {hour}:00
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  <div className="col-md-3">
+                    <label className="form-label small">Fin</label>
+                    <select
+                      className="form-select form-select-sm"
+                      value={config.heureFin}
+                      onChange={(e) => updateHoraire(jour, 'heureFin', e.target.value)}
+                    >
+                      {Array.from({length: 13}, (_, i) => {
+                        const hour = (i + 8).toString().padStart(2, '0');
+                        return (
+                          <option key={hour} value={`${hour}:00`}>
+                            {hour}:00
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  <div className="col-md-4">
+                    <small className="text-muted">
+                      <i className="bi bi-clock me-1"></i>
+                      Créneaux : {config.heureDebut}-12:00 et 13:00-{config.heureFin}
+                    </small>
+                  </div>
+                </>
+              )}
+
+              {!config.actif && (
+                <div className="col-md-6">
+                  <small className="text-muted">Non disponible</small>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        <div className="d-flex justify-content-end mt-4">
+          <Button
+            variant="primary"
+            onClick={saveDisponibilites}
+            disabled={loadingConfig}
+          >
+            {loadingConfig ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Enregistrement...
+              </>
+            ) : (
+              <>
+                <i className="bi bi-check-lg me-2"></i>
+                Enregistrer mes disponibilités
+              </>
+            )}
+          </Button>
+        </div>
+      </Card>
+
+      {/* Aperçu */}
+      <Card title="Aperçu de vos disponibilités" className="mt-4">
+        <div className="row">
+          {Object.entries(configDisponibilites)
+            .filter(([_, config]) => config.actif)
+            .map(([jour, config]) => {
+              const dayDisplay = {
+                'MONDAY': 'Lundi',
+                'TUESDAY': 'Mardi',
+                'WEDNESDAY': 'Mercredi',
+                'THURSDAY': 'Jeudi', 
+                'FRIDAY': 'Vendredi',
+                'SATURDAY': 'Samedi',
+                'SUNDAY': 'Dimanche'
+              }[jour];
+
+              return (
+                <div key={jour} className="col-md-6 col-lg-4 mb-3">
+                  <div className="p-3 bg-success bg-opacity-10 border border-success rounded">
+                    <h6 className="mb-1 text-success">{dayDisplay}</h6>
+                    <div className="small">
+                      <div>{config.heureDebut} - 12:00</div>
+                      <div>13:00 - {config.heureFin}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+        </div>
+
+        {Object.values(configDisponibilites).every(config => !config.actif) && (
+          <Alert type="warning">
+            <i className="bi bi-exclamation-triangle me-2"></i>
+            Aucun jour sélectionné. Activez au moins un jour pour permettre les réservations.
+          </Alert>
+        )}
+      </Card>
+    </div>
+  );
+
   const renderRevenus = () => (
     <div>
       <h4 className="mb-4">Mes revenus</h4>
@@ -621,6 +951,7 @@ const PrestataireDashboard: React.FC = () => {
       case 'prestations': return renderPrestations();
       case 'ma-prestation': return renderMaPrestation();
       case 'planning': return renderPlanning();
+      case 'planning-config': return renderPlanningConfig();
       case 'revenus': return renderRevenus();
       default: return renderOverview();
     }
