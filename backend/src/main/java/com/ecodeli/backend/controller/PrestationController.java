@@ -79,6 +79,19 @@ public class PrestationController {
     }
 
     /**
+     * Récupérer les prestations d'un client
+     */
+    @GetMapping("/client/{clientId}")
+    public ResponseEntity<List<Prestation>> getPrestationsClient(@PathVariable Long clientId) {
+        try {
+            List<Prestation> prestations = prestationService.getPrestationsClient(clientId);
+            return ResponseEntity.ok(prestations);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
      * Récupérer les disponibilités d'un prestataire
      */
     @GetMapping("/prestataire/{prestataireId}/disponibilites")

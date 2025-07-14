@@ -158,15 +158,16 @@ public class PrestataireService {
             prestationInfo.put("typeServiceCode", prestataire.getTypePrestationPrincipale() != null ? 
                 prestataire.getTypePrestationPrincipale().name() : null);
             prestationInfo.put("photoPrestation", prestataire.getPhotoPrestation());
+            prestationInfo.put("tauxHoraire", prestataire.getTarifHoraire()); // Ajout du taux horaire
             
             // Informations du prestataire
             prestationInfo.put("prestataireId", prestataire.getId());
             prestationInfo.put("prestataireName", prestataire.getPrenom() + " " + prestataire.getNom());
             prestationInfo.put("prestatairePhoto", prestataire.getPhotoProfilUrl());
             
-            // TODO: Ajouter note moyenne du prestataire (intégration avec le système d'évaluations)
-            prestationInfo.put("noteMoyenne", 0.0);
-            prestationInfo.put("nombreEvaluations", 0);
+            // Note moyenne du prestataire (utilise la note moyenne calculée)
+            prestationInfo.put("noteMoyenne", prestataire.getNoteMoyenne() != null ? prestataire.getNoteMoyenne() : 0.0);
+            prestationInfo.put("nombreEvaluations", 0); // TODO: calculer le nombre réel d'évaluations
             
             prestationsDisponibles.add(prestationInfo);
         }

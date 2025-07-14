@@ -261,3 +261,36 @@ export interface NoteMoyenneDisplay {
   nombreEvaluations: number;
   typeService?: TypeService;
 }
+
+// ============ PRESTATIONS ============
+
+// Interface pour une prestation
+export interface Prestation {
+  id: number;
+  titre: string;
+  description: string;
+  typePrestation: string;
+  dateDebut: string;
+  dateFin: string;
+  adresse: string;
+  ville: string;
+  codePostal: string;
+  prix: number;
+  statut: 'EN_ATTENTE' | 'ACCEPTEE' | 'REFUSEE' | 'EN_COURS' | 'RESERVEE' | 'TERMINEE' | 'ANNULEE';
+  commentairesClient?: string;
+  commentairesPrestataire?: string;
+  dateCreation: string;
+  dateModification?: string;
+  prestataire: PrestataireWithPhoto;
+  client: User;
+}
+
+// Interface étendue pour le prestataire avec photo
+export interface PrestataireWithPhoto extends User {
+  photoPrestation?: string;
+  photoProfilUrl?: string;
+  descriptionPrestation?: string;
+  typePrestationPrincipale?: string;
+  noteMoyenne?: number;
+  tarifHoraire?: number;
+}

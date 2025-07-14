@@ -81,7 +81,7 @@ public class PrestationService {
         prestation.setVille(ville);
         prestation.setCodePostal(codePostal);
         prestation.setPrix(prix); // Utiliser le prix fourni par le frontend
-        prestation.setStatut(Prestation.StatutPrestation.RESERVE); // Statut RESERVE pour réservation immédiate
+        prestation.setStatut(Prestation.StatutPrestation.RESERVEE); // Statut RESERVEE pour réservation immédiate
         prestation.setTitre(titre); // Utiliser le titre fourni par le client
         prestation.setDescription(description); // Utiliser la description fournie
         
@@ -177,6 +177,16 @@ public class PrestationService {
             .orElseThrow(() -> new RuntimeException("Prestataire non trouvé"));
         
         return prestationRepository.findByPrestataireOrderByDateDebutDesc(prestataire);
+    }
+    
+    /**
+     * Récupérer les prestations d'un client
+     */
+    public List<Prestation> getPrestationsClient(Long clientId) {
+        Client client = clientRepository.findById(clientId)
+            .orElseThrow(() -> new RuntimeException("Client non trouvé"));
+        
+        return prestationRepository.findByClientOrderByDateDebutDesc(client);
     }
     
     /**

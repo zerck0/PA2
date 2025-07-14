@@ -8,10 +8,11 @@ import CreateAnnonceModal from '../../components/CreateAnnonceModal';
 import AnnonceCard from '../../components/AnnonceCard';
 import LivraisonCard from '../../components/LivraisonCard';
 import LivraisonDetailModal from '../../components/LivraisonDetailModal';
+import PrestationCard from '../../components/PrestationCard';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi } from '../../hooks/useApi';
-import { annonceApi, livraisonApi } from '../../services/api';
-import { Annonce, Livraison } from '../../types';
+import { annonceApi, livraisonApi, prestationApi } from '../../services/api';
+import { Annonce, Livraison, Prestation } from '../../types';
 
 const ClientDashboard: React.FC = () => {
   const { currentUser } = useAuth();
@@ -22,6 +23,11 @@ const ClientDashboard: React.FC = () => {
   const [filtreActif, setFiltreActif] = useState<string>('tous');
   const [selectedLivraison, setSelectedLivraison] = useState<Livraison | null>(null);
   const [showLivraisonModal, setShowLivraisonModal] = useState(false);
+  
+  // États pour les prestations
+  const [prestations, setPrestations] = useState<Prestation[]>([]);
+  const [prestationsLoading, setPrestationsLoading] = useState(false);
+  const [filtrePrestations, setFiltrePrestations] = useState<string>('toutes');
   
   const { 
     data: annonces, 
@@ -42,6 +48,13 @@ const ClientDashboard: React.FC = () => {
     }
   }, [currentUser, activeTab]);
 
+  // Charger les prestations du client
+  useEffect(() => {
+    if (currentUser?.user.id && activeTab === 'reservations') {
+      loadPrestations();
+    }
+  }, [currentUser, activeTab]);
+
   const loadLivraisons = async () => {
     if (!currentUser?.user.id || !annonces?.length) return;
     
@@ -54,12 +67,11 @@ const ClientDashboard: React.FC = () => {
           const livraisonsAnnonce = await livraisonApi.getLivraisonsByAnnonce(annonce.id);
           toutesLivraisons.push(...livraisonsAnnonce);
         } catch (error) {
-          console.error(`Erreur lors du chargement des livraisons pour l'annonce ${annonce.id}:`, error);
+          // Gestion silencieuse des erreurs de livraisons
         }
       }
       setLivraisons(toutesLivraisons);
     } catch (error: any) {
-      console.error('Erreur lors du chargement des livraisons:', error);
       setLivraisons([]);
     } finally {
       setLivraisonsLoading(false);
@@ -79,6 +91,27 @@ const ClientDashboard: React.FC = () => {
 
   const handleLivraisonUpdated = () => {
     loadLivraisons(); // Recharger les livraisons
+  };
+
+  // Charger les prestations du client
+  const loadPrestations = async () => {
+    if (!currentUser?.user.id) return;
+    
+    setPrestationsLoading(true);
+    try {
+      const prestationsClient = await prestationApi.getByClient(currentUser.user.id);
+      setPrestations(prestationsClient);
+    } catch (error: any) {
+      setPrestations([]);
+    } finally {
+      setPrestationsLoading(false);
+    }
+  };
+
+  // Callback après évaluation d'une prestation
+  const handleEvaluationSubmitted = () => {
+    // Optionnel : recharger les prestations ou mettre à jour l'état
+    loadPrestations();
   };
 
   const tabs = [
@@ -207,7 +240,7 @@ const ClientDashboard: React.FC = () => {
                           <AnnonceCard
                             annonce={annonce}
                             onEdit={(id) => {
-                              console.log('Éditer annonce', id);
+                              // Action d'édition à implémenter
                             }}
                             showActions={true}
                           />
@@ -534,18 +567,228 @@ const ClientDashboard: React.FC = () => {
     );
   };
 
-  const renderReservations = () => (
-    <Card title="Mes réservations">
-      <div className="text-center py-5">
-        <i className="bi bi-calendar-check" style={{fontSize: '3rem', color: '#6c757d'}}></i>
-        <p className="mt-3 text-muted">Fonctionnalité en cours de développement</p>
-        <p className="text-muted small">
-          Cette section permettra de gérer vos réservations de services 
-          et de boxes de stockage.
-        </p>
+  const renderReservations = () => {
+    // Grouper les prestations par statut
+    const prestationsReservees = prestations?.filter(p => p.statut === 'RESERVEE') || [];
+    const prestationsEnCours = prestations?.filter(p => p.statut === 'EN_COURS') || [];
+    const prestationsTerminees = prestations?.filter(p => p.statut === 'TERMINEE') || [];
+    const prestationsAnnulees = prestations?.filter(p => p.statut === 'ANNULEE') || [];
+
+    // Fonction pour filtrer les prestations selon le filtre actif
+    const getPrestationsFiltrees = () => {
+      switch (filtrePrestations) {
+        case 'reservees':
+          return prestationsReservees;
+        case 'en-cours':
+          return prestationsEnCours;
+        case 'terminees':
+          return prestationsTerminees;
+        case 'annulees':
+          return prestationsAnnulees;
+        default:
+          return prestations || [];
+      }
+    };
+
+    const prestationsFiltrees = getPrestationsFiltrees();
+
+    return (
+      <div>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h4 className="mb-0">Mes réservations de prestations</h4>
+          <Button variant="secondary" onClick={() => window.location.href = '/annonces'}>
+            <i className="bi bi-search me-2"></i>
+            Rechercher des services
+          </Button>
+        </div>
+
+        {/* Filtres pour les prestations */}
+        <Card className="mb-4">
+          <div className="card-body">
+            <div className="d-flex flex-wrap gap-2">
+              <Button
+                variant={filtrePrestations === 'toutes' ? 'primary' : 'outline-secondary'}
+                size="sm"
+                onClick={() => setFiltrePrestations('toutes')}
+              >
+                <i className="bi bi-list me-1"></i>
+                Toutes ({prestations?.length || 0})
+              </Button>
+              
+              <Button
+                variant={filtrePrestations === 'reservees' ? 'primary' : 'outline-primary'}
+                size="sm"
+                onClick={() => setFiltrePrestations('reservees')}
+              >
+                <i className="bi bi-calendar-check me-1"></i>
+                Réservées ({prestationsReservees.length})
+              </Button>
+              
+              <Button
+                variant={filtrePrestations === 'en-cours' ? 'warning' : 'outline-warning'}
+                size="sm"
+                onClick={() => setFiltrePrestations('en-cours')}
+              >
+                <i className="bi bi-clock me-1"></i>
+                En cours ({prestationsEnCours.length})
+              </Button>
+              
+              <Button
+                variant={filtrePrestations === 'terminees' ? 'success' : 'outline-success'}
+                size="sm"
+                onClick={() => setFiltrePrestations('terminees')}
+              >
+                <i className="bi bi-check-circle me-1"></i>
+                Terminées ({prestationsTerminees.length})
+              </Button>
+              
+              {prestationsAnnulees.length > 0 && (
+                <Button
+                  variant={filtrePrestations === 'annulees' ? 'danger' : 'outline-danger'}
+                  size="sm"
+                  onClick={() => setFiltrePrestations('annulees')}
+                >
+                  <i className="bi bi-x-circle me-1"></i>
+                  Annulées ({prestationsAnnulees.length})
+                </Button>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        {prestationsLoading ? (
+          <div className="text-center py-5">
+            <Loading />
+          </div>
+        ) : (
+          <>
+            {filtrePrestations === 'toutes' && prestations && prestations.length > 0 ? (
+              <div>
+                {/* Affichage groupé quand "Toutes" est sélectionné */}
+                {prestationsReservees.length > 0 && (
+                  <div className="mb-5">
+                    <h5 className="text-primary mb-3">
+                      <i className="bi bi-calendar-check me-2"></i>
+                      Réservées ({prestationsReservees.length})
+                    </h5>
+                    <div className="row g-4">
+                      {prestationsReservees.map((prestation) => (
+                        <div key={prestation.id} className="col-lg-6">
+                          <PrestationCard
+                            prestation={prestation}
+                            currentUser={currentUser!.user}
+                            onEvaluationSubmitted={handleEvaluationSubmitted}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {prestationsEnCours.length > 0 && (
+                  <div className="mb-5">
+                    <h5 className="text-warning mb-3">
+                      <i className="bi bi-clock me-2"></i>
+                      En cours ({prestationsEnCours.length})
+                    </h5>
+                    <div className="row g-4">
+                      {prestationsEnCours.map((prestation) => (
+                        <div key={prestation.id} className="col-lg-6">
+                          <PrestationCard
+                            prestation={prestation}
+                            currentUser={currentUser!.user}
+                            onEvaluationSubmitted={handleEvaluationSubmitted}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {prestationsTerminees.length > 0 && (
+                  <div className="mb-5">
+                    <h5 className="text-success mb-3">
+                      <i className="bi bi-check-circle me-2"></i>
+                      Terminées ({prestationsTerminees.length})
+                    </h5>
+                    <div className="row g-4">
+                      {prestationsTerminees.map((prestation) => (
+                        <div key={prestation.id} className="col-lg-6">
+                          <PrestationCard
+                            prestation={prestation}
+                            currentUser={currentUser!.user}
+                            onEvaluationSubmitted={handleEvaluationSubmitted}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {prestationsAnnulees.length > 0 && (
+                  <div className="mb-5">
+                    <h5 className="text-danger mb-3">
+                      <i className="bi bi-x-circle me-2"></i>
+                      Annulées ({prestationsAnnulees.length})
+                    </h5>
+                    <div className="row g-4">
+                      {prestationsAnnulees.map((prestation) => (
+                        <div key={prestation.id} className="col-lg-6">
+                          <PrestationCard
+                            prestation={prestation}
+                            currentUser={currentUser!.user}
+                            onEvaluationSubmitted={handleEvaluationSubmitted}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : prestationsFiltrees.length > 0 ? (
+              <div className="row g-4">
+                {prestationsFiltrees.map((prestation) => (
+                  <div key={prestation.id} className="col-lg-6">
+                    <PrestationCard
+                      prestation={prestation}
+                      currentUser={currentUser!.user}
+                      onEvaluationSubmitted={handleEvaluationSubmitted}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <div className="text-center py-5">
+                  <i className="bi bi-calendar-check" style={{fontSize: '4rem', color: '#6c757d'}}></i>
+                  <h5 className="mt-3 text-muted">
+                    {filtrePrestations === 'toutes' 
+                      ? 'Aucune réservation trouvée'
+                      : `Aucune prestation ${filtrePrestations === 'reservees' ? 'réservée' : 
+                                            filtrePrestations === 'en-cours' ? 'en cours' :
+                                            filtrePrestations === 'terminees' ? 'terminée' : 'annulée'}`
+                    }
+                  </h5>
+                  <p className="text-muted mb-4">
+                    {filtrePrestations === 'toutes' 
+                      ? 'Vous n\'avez pas encore réservé de prestation. Découvrez nos services !'
+                      : 'Aucune prestation dans cette catégorie.'
+                    }
+                  </p>
+                  {filtrePrestations === 'toutes' && (
+                    <Button variant="primary" onClick={() => window.location.href = '/annonces'}>
+                      <i className="bi bi-search me-2"></i>
+                      Rechercher des services
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            )}
+          </>
+        )}
       </div>
-    </Card>
-  );
+    );
+  };
 
   const renderPaiements = () => (
     <Card title="Mes paiements">

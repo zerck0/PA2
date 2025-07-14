@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import AnnonceCard from '../components/AnnonceCard';
 import AnnonceCommercantCard from '../components/AnnonceCommercantCard';
+import ReservationModal from '../components/ReservationModal';
 import Button from '../components/ui/Button';
 import Loading from '../components/ui/Loading';
 import Alert from '../components/ui/Alert';
@@ -17,6 +18,10 @@ const Annonces: React.FC = () => {
   const { showSuccess, showError } = useToast();
   const [activeTab, setActiveTab] = useState('annonces');
   const [filter, setFilter] = useState('');
+  
+  // États pour la modal de réservation
+  const [showReservationModal, setShowReservationModal] = useState(false);
+  const [selectedPrestation, setSelectedPrestation] = useState<any>(null);
   
   // API pour les annonces normales
   const { 
@@ -100,8 +105,26 @@ const Annonces: React.FC = () => {
       showError('Vous devez être connecté pour réserver une prestation');
       return;
     }
-    // TODO: Ouvrir une modal de réservation
-    alert(`Réserver la prestation ${prestationId} - Modal à implémenter`);
+    
+    // Trouver la prestation sélectionnée
+    const prestation = prestations?.find(p => p.prestataireId === prestationId);
+    if (prestation) {
+      setSelectedPrestation(prestation);
+      setShowReservationModal(true);
+    } else {
+      showError('Prestation non trouvée');
+    }
+  };
+
+  // Gérer la fermeture de la modal
+  const handleCloseReservationModal = () => {
+    setShowReservationModal(false);
+    setSelectedPrestation(null);
+  };
+
+  // Gérer le succès de la réservation
+  const handleReservationSuccess = () => {
+    loadPrestations(); // Recharger les prestations
   };
 
   // Rendu conditionnel selon l'onglet actif
@@ -360,6 +383,15 @@ const Annonces: React.FC = () => {
 
       {/* Contenu selon l'onglet actif */}
       {renderContent()}
+
+      {/* Modal de réservation */}
+      <ReservationModal
+        isOpen={showReservationModal}
+        onClose={handleCloseReservationModal}
+        prestation={selectedPrestation}
+        currentUser={currentUser}
+        onReservationSuccess={handleReservationSuccess}
+      />
     </Layout>
   );
 };

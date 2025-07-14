@@ -348,6 +348,12 @@ export const prestationApi = {
     return response.data;
   },
 
+  // Récupérer les prestations d'un client
+  getByClient: async (clientId: number) => {
+    const response = await api.get(`/prestations/client/${clientId}`);
+    return response.data;
+  },
+
   // Récupérer les disponibilités d'un prestataire
   getDisponibilites: async (prestataireId: number) => {
     const response = await api.get(`/prestations/prestataire/${prestataireId}/disponibilites`);

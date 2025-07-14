@@ -152,9 +152,8 @@ public class Prestation {
         ACCEPTEE("Acceptée"),
         REFUSEE("Refusée"),
         EN_COURS("En cours"),
-        RESERVE("Réservée"),
-        TERMINE("Terminée"),
-        TERMINEE("Terminée"), // Garder pour compatibilité
+        RESERVEE("Réservée"),
+        TERMINEE("Terminée"),
         ANNULEE("Annulée");
         
         private final String libelle;
