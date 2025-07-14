@@ -30,9 +30,9 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
       return;
     }
 
-    // Validation de la taille (2MB max pour les photos)
-    if (file.size > 2 * 1024 * 1024) {
-      setError('La photo est trop volumineuse. Taille maximum: 2MB');
+    // Validation de la taille (1MB max pour éviter l'erreur 413)
+    if (file.size > 1 * 1024 * 1024) {
+      setError('La photo est trop volumineuse. Taille maximum: 1MB');
       setSelectedFile(null);
       setPreviewUrl(null);
       return;
@@ -70,7 +70,14 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
       const fileInput = document.getElementById('photoInput') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
     } catch (error: any) {
-      setError(error.message || 'Erreur lors de l\'upload');
+      // Gestion spécifique des erreurs d'upload
+      if (error.message && error.message.includes('413')) {
+        setError('La photo est trop volumineuse pour le serveur. Réduisez la taille de votre image.');
+      } else if (error.message && error.message.includes('Payload Too Large')) {
+        setError('Fichier trop volumineux. Choisissez une image plus petite (max 1MB).');
+      } else {
+        setError(error.message || 'Erreur lors de l\'upload de la photo');
+      }
     } finally {
       setUploading(false);
     }
@@ -133,7 +140,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
             disabled={disabled || uploading}
           />
           <small className="form-text text-muted">
-            Formats acceptés: JPEG, PNG, GIF - Taille max: 2MB
+            Formats acceptés: JPEG, PNG, GIF - Taille max: 1MB
           </small>
         </div>
       )}

@@ -101,12 +101,32 @@ export const photoApi = {
     formData.append('file', file);
     formData.append('userId', userId.toString());
     
-    const response = await api.post('/photos/annonce/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
+    try {
+      const response = await api.post('/photos/annonce/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      // Gestion spécifique de l'erreur 413 (Payload Too Large)
+      if (error.response?.status === 413) {
+        throw new Error('La photo est trop volumineuse pour le serveur. Choisissez une image plus petite (max 1MB).');
+      }
+      
+      // Autres erreurs du serveur
+      if (error.response?.status >= 400) {
+        throw new Error(error.response?.data?.message || `Erreur serveur: ${error.response.status}`);
+      }
+      
+      // Erreurs réseau
+      if (error.code === 'NETWORK_ERROR') {
+        throw new Error('Problème de connexion. Vérifiez votre connexion internet.');
+      }
+      
+      // Rethrow l'erreur originale si pas de cas spécifique
+      throw error;
+    }
   },
 };
 
@@ -316,6 +336,124 @@ export const contratApi = {
 
   delete: async (contratId: number) => {
     const response = await api.delete(`/contrats/${contratId}`);
+    return response.data;
+  },
+};
+
+// Services des prestations
+export const prestationApi = {
+  // Récupérer les prestations d'un prestataire
+  getByPrestataire: async (prestataireId: number) => {
+    const response = await api.get(`/prestations/prestataire/${prestataireId}`);
+    return response.data;
+  },
+
+  // Récupérer les disponibilités d'un prestataire
+  getDisponibilites: async (prestataireId: number) => {
+    const response = await api.get(`/prestations/prestataire/${prestataireId}/disponibilites`);
+    return response.data;
+  },
+
+  // Configurer les disponibilités d'un prestataire
+  configurerDisponibilites: async (prestataireId: number, plages: any[]) => {
+    const response = await api.post(`/prestations/prestataire/${prestataireId}/disponibilites`, plages);
+    return response.data;
+  },
+
+  // Créer une réservation de prestation
+  creerReservation: async (reservationData: {
+    prestataireId: number;
+    clientId: number;
+    dateDebut: string;
+    dateFin: string;
+    typePrestation: string;
+    adresse: string;
+    ville: string;
+    codePostal: string;
+  }) => {
+    const response = await api.post('/prestations/reserver', reservationData);
+    return response.data;
+  },
+
+  // Vérifier la disponibilité d'un prestataire
+  verifierDisponibilite: async (prestataireId: number, dateDebut: string, dateFin: string) => {
+    const response = await api.post(`/prestations/prestataire/${prestataireId}/verifier-disponibilite`, {
+      dateDebut,
+      dateFin
+    });
+    return response.data;
+  },
+
+  // Annuler une prestation
+  annuler: async (prestationId: number, utilisateurId: number) => {
+    const response = await api.put(`/prestations/${prestationId}/annuler?utilisateurId=${utilisateurId}`);
+    return response.data;
+  },
+
+  // Terminer une prestation
+  terminer: async (prestationId: number) => {
+    const response = await api.put(`/prestations/${prestationId}/terminer`);
+    return response.data;
+  },
+
+  // Récupérer les revenus mensuels
+  getRevenusMensuel: async (prestataireId: number, annee: number, mois: number) => {
+    const response = await api.get(`/prestations/prestataire/${prestataireId}/revenus?annee=${annee}&mois=${mois}`);
+    return response.data;
+  },
+
+  // Récupérer les types de prestations
+  getTypes: async () => {
+    const response = await api.get('/prestations/types');
+    return response.data;
+  },
+
+  // Récupérer les statuts de prestations
+  getStatuts: async () => {
+    const response = await api.get('/prestations/statuts');
+    return response.data;
+  },
+
+  // Récupérer les catégories de prestations groupées
+  getCategories: async () => {
+    const response = await api.get('/prestations/categories');
+    return response.data;
+  },
+
+  // Configurer le profil d'un prestataire
+  configurerProfil: async (prestataireId: number, profilData: {
+    descriptionPrestation: string;
+    typePrestationPrincipale: string | null;
+    photoPrestation?: string;
+  }) => {
+    try {
+      const response = await api.post(`/prestations/prestataire/${prestataireId}/configurer-profil`, profilData);
+      return response.data;
+    } catch (error: any) {
+      // Gestion spécifique de l'erreur 400 (Bad Request)
+      if (error.response?.status === 400) {
+        const errorMessage = error.response?.data?.message || 'Données de profil invalides';
+        throw new Error(`Erreur de validation: ${errorMessage}`);
+      }
+      
+      // Erreur 404 (Prestataire non trouvé)
+      if (error.response?.status === 404) {
+        throw new Error('Prestataire non trouvé. Veuillez vous reconnecter.');
+      }
+      
+      // Autres erreurs du serveur
+      if (error.response?.status >= 500) {
+        throw new Error('Erreur serveur. Veuillez réessayer plus tard.');
+      }
+      
+      // Rethrow l'erreur originale si pas de cas spécifique
+      throw error;
+    }
+  },
+
+  // Récupérer le profil d'un prestataire
+  getProfil: async (prestataireId: number) => {
+    const response = await api.get(`/prestations/prestataire/${prestataireId}/profil`);
     return response.data;
   },
 };

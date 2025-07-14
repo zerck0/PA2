@@ -196,3 +196,18 @@ export interface CreateContratData {
   urlContratPdf?: string;
   cheminContratPdf?: string;
 }
+
+// Interface pour le profil prestataire
+export interface ProfilPrestataire {
+  descriptionPrestation: string;
+  typePrestationPrincipale: string;
+  photoPrestation: string;
+  profilConfigured?: boolean;
+}
+
+// Interface pour configurer le profil prestataire
+export interface ConfigurerProfilPrestataireData {
+  descriptionPrestation: string;
+  typePrestationPrincipale: string | null;
+  photoPrestation: string;
+}
