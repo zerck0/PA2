@@ -56,7 +56,7 @@ const Profile: React.FC = () => {
           photoProfilUrl: profilData.photoProfilUrl || ''
         });
       } catch (error) {
-        console.error('Erreur lors du chargement du profil public:', error);
+        // Erreur silencieuse lors du chargement - profil peut ne pas exister encore
       }
     };
 
@@ -94,18 +94,11 @@ const Profile: React.FC = () => {
       const response = await photoApi.uploadAnnoncePhoto(file, currentUser!.user.id);
       const photoUrl = response.url || response; // Support des deux formats de réponse
       
-      console.log('Photo uploadée, URL reçue:', photoUrl);
-      
-      setProfilPublic(prev => {
-        const newProfile = { ...prev, photoProfilUrl: photoUrl };
-        console.log('Profil mis à jour avec photo:', newProfile);
-        return newProfile;
-      });
+      setProfilPublic(prev => ({ ...prev, photoProfilUrl: photoUrl }));
       
       showSuccess('Photo uploadée avec succès !');
       return photoUrl;
     } catch (error: any) {
-      console.error('Erreur upload photo:', error);
       showError(error.message || 'Erreur lors de l\'upload de la photo');
       throw error;
     }

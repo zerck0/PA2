@@ -43,6 +43,11 @@ public class PrestationController {
             String typeStr = requestData.get("typePrestation").toString();
             Prestation.TypePrestation typePrestation = Prestation.TypePrestation.valueOf(typeStr);
             
+            // Nouveaux champs
+            String titre = requestData.get("titre").toString();
+            String description = requestData.get("description").toString();
+            Double prix = Double.valueOf(requestData.get("prix").toString());
+            
             // Adresse
             String adresse = requestData.get("adresse").toString();
             String ville = requestData.get("ville").toString();
@@ -50,7 +55,7 @@ public class PrestationController {
             
             Prestation prestation = prestationService.creerReservation(
                 prestataireId, clientId, dateDebut, dateFin, 
-                typePrestation, adresse, ville, codePostal
+                typePrestation, titre, description, prix, adresse, ville, codePostal
             );
             
             return ResponseEntity.ok(prestation);
@@ -233,5 +238,18 @@ public class PrestationController {
         }
         
         return ResponseEntity.ok(categories);
+    }
+
+    /**
+     * Récupérer toutes les prestations disponibles (prestataires avec profils configurés)
+     */
+    @GetMapping("/disponibles")
+    public ResponseEntity<?> getPrestationsDisponibles(@RequestParam(required = false) String typeService) {
+        try {
+            List<Map<String, Object>> prestationsDisponibles = prestataireService.getPrestationsDisponibles(typeService);
+            return ResponseEntity.ok(prestationsDisponibles);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 }

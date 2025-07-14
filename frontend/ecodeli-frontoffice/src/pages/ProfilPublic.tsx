@@ -49,7 +49,6 @@ const ProfilPublic: React.FC = () => {
       setStats(statsData);
 
     } catch (error: any) {
-      console.error('Erreur lors du chargement du profil:', error);
       showError('Erreur lors du chargement du profil');
     } finally {
       setLoading(false);

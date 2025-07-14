@@ -32,6 +32,7 @@ public class PrestationService {
     public Prestation creerReservation(Long prestataireId, Long clientId, 
                                       LocalDateTime dateDebut, LocalDateTime dateFin, 
                                       Prestation.TypePrestation typePrestation,
+                                      String titre, String description, Double prix,
                                       String adresse, String ville, String codePostal) {
         
         // Vérifications préliminaires
@@ -69,9 +70,6 @@ public class PrestationService {
             throw new RuntimeException("Ce créneau est déjà réservé");
         }
         
-        // Calculer le prix
-        double prix = calculatePrix(prestataire, dateDebut, dateFin);
-        
         // Créer la prestation
         Prestation prestation = new Prestation();
         prestation.setPrestataire(prestataire);
@@ -82,13 +80,10 @@ public class PrestationService {
         prestation.setAdresse(adresse);
         prestation.setVille(ville);
         prestation.setCodePostal(codePostal);
-        prestation.setPrix(prix);
-        prestation.setStatut(Prestation.StatutPrestation.ACCEPTEE); // Réservation directe
-        prestation.setTitre(typePrestation.getLibelle());
-        prestation.setDescription("Prestation de " + typePrestation.getLibelle() + 
-                                  " du " + dateDebut.toLocalDate() + 
-                                  " de " + dateDebut.toLocalTime() + 
-                                  " à " + dateFin.toLocalTime());
+        prestation.setPrix(prix); // Utiliser le prix fourni par le frontend
+        prestation.setStatut(Prestation.StatutPrestation.RESERVE); // Statut RESERVE pour réservation immédiate
+        prestation.setTitre(titre); // Utiliser le titre fourni par le client
+        prestation.setDescription(description); // Utiliser la description fournie
         
         return prestationRepository.save(prestation);
     }

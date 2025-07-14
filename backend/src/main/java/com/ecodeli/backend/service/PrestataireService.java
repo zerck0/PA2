@@ -6,6 +6,9 @@ import com.ecodeli.backend.repository.PrestataireRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -112,5 +115,62 @@ public class PrestataireService {
         } else {
             throw new RuntimeException("Prestataire non trouvé avec l'ID : " + prestataireId);
         }
+    }
+
+    /**
+     * Récupérer toutes les prestations disponibles (prestataires avec profils configurés)
+     */
+    public List<Map<String, Object>> getPrestationsDisponibles(String typeService) {
+        List<Prestataire> prestataires;
+        
+        if (typeService != null && !typeService.trim().isEmpty()) {
+            // Filtrer par type de service si spécifié
+            try {
+                Prestation.TypePrestation type = Prestation.TypePrestation.valueOf(typeService);
+                prestataires = prestataireRepository.findAll().stream()
+                    .filter(p -> p.isProfilConfigured() && 
+                               p.getTypePrestationPrincipale() != null && 
+                               p.getTypePrestationPrincipale().equals(type))
+                    .toList();
+            } catch (IllegalArgumentException e) {
+                // Type invalide, retourner liste vide
+                return new ArrayList<>();
+            }
+        } else {
+            // Récupérer tous les prestataires avec profil configuré
+            prestataires = prestataireRepository.findAll().stream()
+                .filter(Prestataire::isProfilConfigured)
+                .toList();
+        }
+
+        // Convertir en format pour l'API
+        List<Map<String, Object>> prestationsDisponibles = new ArrayList<>();
+        
+        for (Prestataire prestataire : prestataires) {
+            Map<String, Object> prestationInfo = new HashMap<>();
+            
+            // Informations de la prestation
+            prestationInfo.put("id", prestataire.getId());
+            prestationInfo.put("description", prestataire.getDescriptionPrestation() != null ? 
+                prestataire.getDescriptionPrestation() : "Service disponible");
+            prestationInfo.put("typeService", prestataire.getTypePrestationPrincipale() != null ? 
+                prestataire.getTypePrestationPrincipale().getLibelle() : "Service général");
+            prestationInfo.put("typeServiceCode", prestataire.getTypePrestationPrincipale() != null ? 
+                prestataire.getTypePrestationPrincipale().name() : null);
+            prestationInfo.put("photoPrestation", prestataire.getPhotoPrestation());
+            
+            // Informations du prestataire
+            prestationInfo.put("prestataireId", prestataire.getId());
+            prestationInfo.put("prestataireName", prestataire.getPrenom() + " " + prestataire.getNom());
+            prestationInfo.put("prestatairePhoto", prestataire.getPhotoProfilUrl());
+            
+            // TODO: Ajouter note moyenne du prestataire (intégration avec le système d'évaluations)
+            prestationInfo.put("noteMoyenne", 0.0);
+            prestationInfo.put("nombreEvaluations", 0);
+            
+            prestationsDisponibles.add(prestationInfo);
+        }
+        
+        return prestationsDisponibles;
     }
 }

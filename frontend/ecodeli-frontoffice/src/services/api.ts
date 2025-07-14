@@ -367,9 +367,12 @@ export const prestationApi = {
     dateDebut: string;
     dateFin: string;
     typePrestation: string;
+    titre: string;
+    description: string;
     adresse: string;
     ville: string;
     codePostal: string;
+    prix: number;
   }) => {
     const response = await api.post('/prestations/reserver', reservationData);
     return response.data;
@@ -454,6 +457,13 @@ export const prestationApi = {
   // Récupérer le profil d'un prestataire
   getProfil: async (prestataireId: number) => {
     const response = await api.get(`/prestations/prestataire/${prestataireId}/profil`);
+    return response.data;
+  },
+
+  // Récupérer toutes les prestations disponibles
+  getDisponibles: async (typeService?: string) => {
+    const params = typeService ? `?typeService=${typeService}` : '';
+    const response = await api.get(`/prestations/disponibles${params}`);
     return response.data;
   },
 };
