@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import Annonces from './pages/Annonces';
 import AnnonceDetail from './pages/AnnonceDetail';
 import Profile from './pages/Profile';
+import ProfilPublic from './pages/ProfilPublic';
 import ToastContainer from './components/ui/ToastContainer';
 import './App.css';
 
@@ -34,6 +35,16 @@ function App() {
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/annonces" element={<Annonces />} />
             <Route path="/annonces/:id" element={<AnnonceDetail />} />
+            
+            {/* Route profil public (protégée) */}
+            <Route 
+              path="/profil-public/:role/:id" 
+              element={
+                <ProtectedRoute>
+                  <ProfilPublic />
+                </ProtectedRoute>
+              } 
+            />
             
             {/* Routes protégées */}
             <Route 

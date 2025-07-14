@@ -30,4 +30,11 @@ public class Prestataire extends Utilisateur{
     // Note moyenne calculée automatiquement depuis les évaluations
     private Double noteMoyenne = 0.0;
     
+    // Champs pour le profil public
+    @Column(name = "biographie", length = 1000)
+    private String biographie;
+    
+    @Column(name = "photo_profil_url")
+    private String photoProfilUrl;
+    
 }

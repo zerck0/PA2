@@ -31,6 +31,13 @@ public class Livreur extends Utilisateur {
     
     @Column(name = "commentaire_affiliation", length = 500)
     private String commentaireAffiliation;
+    
+    // Champs pour le profil public
+    @Column(name = "biographie", length = 1000)
+    private String biographie;
+    
+    @Column(name = "photo_profil_url")
+    private String photoProfilUrl;
 
     // Enum pour le statut d'affiliation
     public enum StatutAffiliation {

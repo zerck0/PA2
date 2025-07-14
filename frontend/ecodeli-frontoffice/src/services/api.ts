@@ -549,4 +549,37 @@ export const evaluationApi = {
   },
 };
 
+// Services des profils publics
+export const profilPublicApi = {
+  // Récupérer le profil public d'un livreur
+  getLivreur: async (id: number) => {
+    const response = await api.get(`/profils/livreur/${id}`);
+    return response.data;
+  },
+
+  // Récupérer le profil public d'un prestataire
+  getPrestataire: async (id: number) => {
+    const response = await api.get(`/profils/prestataire/${id}`);
+    return response.data;
+  },
+
+  // Mettre à jour le profil d'un livreur
+  updateLivreur: async (id: number, updateData: {
+    biographie?: string;
+    photoProfilUrl?: string;
+  }) => {
+    const response = await api.put(`/profils/livreur/${id}`, updateData);
+    return response.data;
+  },
+
+  // Mettre à jour le profil d'un prestataire
+  updatePrestataire: async (id: number, updateData: {
+    biographie?: string;
+    photoProfilUrl?: string;
+  }) => {
+    const response = await api.put(`/profils/prestataire/${id}`, updateData);
+    return response.data;
+  },
+};
+
 export default api;
