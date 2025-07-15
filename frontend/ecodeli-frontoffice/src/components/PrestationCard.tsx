@@ -5,6 +5,7 @@ import NoteMoyenne from './NoteMoyenne';
 import EvaluationModal from './EvaluationModal';
 import { Prestation, User } from '../types';
 import { useToast } from '../hooks/useToast';
+import { prestationApi, evaluationApi } from '../services/api';
 
 interface PrestationCardProps {
   prestation: Prestation;
@@ -17,8 +18,9 @@ const PrestationCard: React.FC<PrestationCardProps> = ({
   currentUser,
   onEvaluationSubmitted
 }) => {
-  const { showSuccess } = useToast();
+  const { showSuccess, showError } = useToast();
   const [showEvaluationModal, setShowEvaluationModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Fonction pour obtenir l'URL complète d'une image
   const getImageUrl = (photoUrl?: string) => {
@@ -62,12 +64,9 @@ const PrestationCard: React.FC<PrestationCardProps> = ({
   // Badge pour le statut de prestation
   const getStatutBadge = (statut: string) => {
     const badges = {
-      'EN_ATTENTE': { color: 'secondary', label: 'En attente' },
-      'ACCEPTEE': { color: 'info', label: 'Acceptée' },
-      'REFUSEE': { color: 'danger', label: 'Refusée' },
-      'EN_COURS': { color: 'warning', label: 'En cours' },
       'RESERVEE': { color: 'primary', label: 'Réservée' },
       'TERMINEE': { color: 'success', label: 'Terminée' },
+      'EVALUEE': { color: 'info', label: 'Évaluée' },
       'ANNULEE': { color: 'danger', label: 'Annulée' }
     };
     const badge = badges[statut as keyof typeof badges] || { color: 'secondary', label: statut };
@@ -106,16 +105,43 @@ const PrestationCard: React.FC<PrestationCardProps> = ({
            currentUser.id === prestation.client.id;
   };
 
+  // Vérifier si le client peut marquer comme terminée
+  const peutMarquerTerminee = () => {
+    return prestation.statut === 'RESERVEE' && 
+           currentUser.role === 'CLIENT' && 
+           currentUser.id === prestation.client.id;
+  };
+
+  // Marquer la prestation comme terminée
+  const handleMarquerTerminee = async () => {
+    setIsLoading(true);
+    try {
+      await prestationApi.marquerTerminee(prestation.id, currentUser.id);
+      showSuccess('Prestation marquée comme terminée !');
+      onEvaluationSubmitted?.(); // Recharger les prestations
+    } catch (error: any) {
+      showError(error.message || 'Erreur lors du marquage de la prestation');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Gérer l'ouverture du modal d'évaluation
   const handleEvaluer = () => {
     setShowEvaluationModal(true);
   };
 
   // Callback après soumission d'évaluation
-  const handleEvaluationSubmitted = () => {
-    showSuccess('Évaluation soumise avec succès !');
-    setShowEvaluationModal(false);
-    onEvaluationSubmitted?.();
+  const handleEvaluationSubmitted = async () => {
+    try {
+      // Marquer la prestation comme évaluée après l'évaluation
+      await prestationApi.marquerEvaluee(prestation.id);
+      showSuccess('Évaluation soumise avec succès !');
+      setShowEvaluationModal(false);
+      onEvaluationSubmitted?.();
+    } catch (error: any) {
+      showError('Erreur lors de la finalisation de l\'évaluation');
+    }
   };
 
   return (
@@ -315,6 +341,19 @@ const PrestationCard: React.FC<PrestationCardProps> = ({
               {/* Actions */}
               <div className="mt-auto">
                 <div className="d-flex gap-2 flex-wrap">
+                  {/* Bouton "Marquer terminée" - uniquement pour les clients et prestations réservées */}
+                  {peutMarquerTerminee() && (
+                    <Button 
+                      variant="success" 
+                      size="sm"
+                      onClick={handleMarquerTerminee}
+                      disabled={isLoading}
+                    >
+                      <i className="bi bi-check-circle me-1"></i>
+                      {isLoading ? 'En cours...' : 'Marquer terminée'}
+                    </Button>
+                  )}
+
                   {/* Bouton "Donner une note" - uniquement pour les clients et prestations terminées */}
                   {peutEvaluer() && (
                     <Button 
@@ -327,7 +366,7 @@ const PrestationCard: React.FC<PrestationCardProps> = ({
                     </Button>
                   )}
                   
-                  {/* Autres actions selon le statut et le rôle */}
+                  {/* Bouton "Annuler" - uniquement pour les clients et prestations réservées */}
                   {prestation.statut === 'RESERVEE' && currentUser.id === prestation.client.id && (
                     <Button 
                       variant="outline-danger" 

@@ -159,13 +159,41 @@ public class PrestationService {
     }
     
     /**
-     * Terminer une prestation
+     * Marquer une prestation comme terminée (action du client)
      */
-    public void terminerPrestation(Long prestationId) {
+    public void marquerPrestationTerminee(Long prestationId, Long clientId) {
         Prestation prestation = prestationRepository.findById(prestationId)
             .orElseThrow(() -> new RuntimeException("Prestation non trouvée"));
         
+        // Vérifier que c'est bien le client de la prestation
+        if (!prestation.getClient().getId().equals(clientId)) {
+            throw new RuntimeException("Seul le client de la prestation peut la marquer comme terminée");
+        }
+        
+        // Vérifier que le statut est RESERVEE
+        if (prestation.getStatut() != Prestation.StatutPrestation.RESERVEE) {
+            throw new RuntimeException("La prestation doit être en statut RESERVEE pour être marquée terminée");
+        }
+        
         prestation.setStatut(Prestation.StatutPrestation.TERMINEE);
+        prestation.setDateModification(LocalDateTime.now());
+        prestationRepository.save(prestation);
+    }
+    
+    /**
+     * Marquer une prestation comme évaluée (appelé après notation)
+     */
+    public void marquerPrestationEvaluee(Long prestationId) {
+        Prestation prestation = prestationRepository.findById(prestationId)
+            .orElseThrow(() -> new RuntimeException("Prestation non trouvée"));
+        
+        // Vérifier que le statut est TERMINEE
+        if (prestation.getStatut() != Prestation.StatutPrestation.TERMINEE) {
+            throw new RuntimeException("La prestation doit être terminée avant d'être évaluée");
+        }
+        
+        prestation.setStatut(Prestation.StatutPrestation.EVALUEE);
+        prestation.setDateModification(LocalDateTime.now());
         prestationRepository.save(prestation);
     }
     

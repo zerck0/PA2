@@ -49,7 +49,7 @@ public class Prestation {
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private StatutPrestation statut = StatutPrestation.EN_ATTENTE;
+    private StatutPrestation statut = StatutPrestation.RESERVEE;
     
     @Column
     private String commentairesClient;
@@ -148,12 +148,9 @@ public class Prestation {
     
     // Enum pour les statuts de prestations
     public enum StatutPrestation {
-        EN_ATTENTE("En attente"),
-        ACCEPTEE("Acceptée"),
-        REFUSEE("Refusée"),
-        EN_COURS("En cours"),
         RESERVEE("Réservée"),
         TERMINEE("Terminée"),
+        EVALUEE("Évaluée"),
         ANNULEE("Annulée");
         
         private final String libelle;

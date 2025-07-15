@@ -276,7 +276,7 @@ export interface Prestation {
   ville: string;
   codePostal: string;
   prix: number;
-  statut: 'EN_ATTENTE' | 'ACCEPTEE' | 'REFUSEE' | 'EN_COURS' | 'RESERVEE' | 'TERMINEE' | 'ANNULEE';
+  statut: 'RESERVEE' | 'TERMINEE' | 'EVALUEE' | 'ANNULEE';
   commentairesClient?: string;
   commentairesPrestataire?: string;
   dateCreation: string;

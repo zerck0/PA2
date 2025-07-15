@@ -568,10 +568,10 @@ const ClientDashboard: React.FC = () => {
   };
 
   const renderReservations = () => {
-    // Grouper les prestations par statut
+    // Grouper les prestations par statut (nouveaux statuts)
     const prestationsReservees = prestations?.filter(p => p.statut === 'RESERVEE') || [];
-    const prestationsEnCours = prestations?.filter(p => p.statut === 'EN_COURS') || [];
     const prestationsTerminees = prestations?.filter(p => p.statut === 'TERMINEE') || [];
+    const prestationsEvaluees = prestations?.filter(p => p.statut === 'EVALUEE') || [];
     const prestationsAnnulees = prestations?.filter(p => p.statut === 'ANNULEE') || [];
 
     // Fonction pour filtrer les prestations selon le filtre actif
@@ -579,10 +579,10 @@ const ClientDashboard: React.FC = () => {
       switch (filtrePrestations) {
         case 'reservees':
           return prestationsReservees;
-        case 'en-cours':
-          return prestationsEnCours;
         case 'terminees':
           return prestationsTerminees;
+        case 'evaluees':
+          return prestationsEvaluees;
         case 'annulees':
           return prestationsAnnulees;
         default:
@@ -625,21 +625,21 @@ const ClientDashboard: React.FC = () => {
               </Button>
               
               <Button
-                variant={filtrePrestations === 'en-cours' ? 'warning' : 'outline-warning'}
-                size="sm"
-                onClick={() => setFiltrePrestations('en-cours')}
-              >
-                <i className="bi bi-clock me-1"></i>
-                En cours ({prestationsEnCours.length})
-              </Button>
-              
-              <Button
                 variant={filtrePrestations === 'terminees' ? 'success' : 'outline-success'}
                 size="sm"
                 onClick={() => setFiltrePrestations('terminees')}
               >
                 <i className="bi bi-check-circle me-1"></i>
                 Terminées ({prestationsTerminees.length})
+              </Button>
+
+              <Button
+                variant={filtrePrestations === 'evaluees' ? 'info' : 'outline-info'}
+                size="sm"
+                onClick={() => setFiltrePrestations('evaluees')}
+              >
+                <i className="bi bi-star me-1"></i>
+                Évaluées ({prestationsEvaluees.length})
               </Button>
               
               {prestationsAnnulees.length > 0 && (
@@ -685,14 +685,14 @@ const ClientDashboard: React.FC = () => {
                   </div>
                 )}
 
-                {prestationsEnCours.length > 0 && (
+                {prestationsTerminees.length > 0 && (
                   <div className="mb-5">
-                    <h5 className="text-warning mb-3">
-                      <i className="bi bi-clock me-2"></i>
-                      En cours ({prestationsEnCours.length})
+                    <h5 className="text-success mb-3">
+                      <i className="bi bi-check-circle me-2"></i>
+                      Terminées ({prestationsTerminees.length})
                     </h5>
                     <div className="row g-4">
-                      {prestationsEnCours.map((prestation) => (
+                      {prestationsTerminees.map((prestation) => (
                         <div key={prestation.id} className="col-lg-6">
                           <PrestationCard
                             prestation={prestation}
@@ -705,14 +705,14 @@ const ClientDashboard: React.FC = () => {
                   </div>
                 )}
 
-                {prestationsTerminees.length > 0 && (
+                {prestationsEvaluees.length > 0 && (
                   <div className="mb-5">
-                    <h5 className="text-success mb-3">
-                      <i className="bi bi-check-circle me-2"></i>
-                      Terminées ({prestationsTerminees.length})
+                    <h5 className="text-info mb-3">
+                      <i className="bi bi-star me-2"></i>
+                      Évaluées ({prestationsEvaluees.length})
                     </h5>
                     <div className="row g-4">
-                      {prestationsTerminees.map((prestation) => (
+                      {prestationsEvaluees.map((prestation) => (
                         <div key={prestation.id} className="col-lg-6">
                           <PrestationCard
                             prestation={prestation}

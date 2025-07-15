@@ -399,9 +399,15 @@ export const prestationApi = {
     return response.data;
   },
 
-  // Terminer une prestation
-  terminer: async (prestationId: number) => {
-    const response = await api.put(`/prestations/${prestationId}/terminer`);
+  // Marquer une prestation comme terminée (action du client)
+  marquerTerminee: async (prestationId: number, clientId: number) => {
+    const response = await api.put(`/prestations/${prestationId}/marquer-terminee?clientId=${clientId}`);
+    return response.data;
+  },
+
+  // Marquer une prestation comme évaluée (appelé après notation)
+  marquerEvaluee: async (prestationId: number) => {
+    const response = await api.put(`/prestations/${prestationId}/marquer-evaluee`);
     return response.data;
   },
 

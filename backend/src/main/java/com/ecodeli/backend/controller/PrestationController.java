@@ -161,13 +161,28 @@ public class PrestationController {
     }
 
     /**
-     * Terminer une prestation
+     * Marquer une prestation comme terminée (action du client)
      */
-    @PutMapping("/{prestationId}/terminer")
-    public ResponseEntity<?> terminerPrestation(@PathVariable Long prestationId) {
+    @PutMapping("/{prestationId}/marquer-terminee")
+    public ResponseEntity<?> marquerPrestationTerminee(
+            @PathVariable Long prestationId,
+            @RequestParam Long clientId) {
         try {
-            prestationService.terminerPrestation(prestationId);
-            return ResponseEntity.ok(Map.of("message", "Prestation terminée avec succès"));
+            prestationService.marquerPrestationTerminee(prestationId, clientId);
+            return ResponseEntity.ok(Map.of("message", "Prestation marquée comme terminée avec succès"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+    
+    /**
+     * Marquer une prestation comme évaluée (appelé après notation)
+     */
+    @PutMapping("/{prestationId}/marquer-evaluee")
+    public ResponseEntity<?> marquerPrestationEvaluee(@PathVariable Long prestationId) {
+        try {
+            prestationService.marquerPrestationEvaluee(prestationId);
+            return ResponseEntity.ok(Map.of("message", "Prestation marquée comme évaluée"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
