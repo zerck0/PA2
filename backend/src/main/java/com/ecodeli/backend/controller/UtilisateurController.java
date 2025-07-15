@@ -2,10 +2,13 @@ package com.ecodeli.backend.controller;
 
 import com.ecodeli.model.Utilisateur;
 import com.ecodeli.backend.service.UtilisateurService;
+import com.ecodeli.backend.service.DocumentService;
+import com.ecodeli.backend.security.JwtService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import com.ecodeli.model.Livreur;
@@ -19,9 +22,13 @@ import com.ecodeli.model.dto.InscriptionDTO;
 public class UtilisateurController {
 
     private final UtilisateurService utilisateurService;
+    private final DocumentService documentService;
+    private final JwtService jwtService;
 
-    public UtilisateurController(UtilisateurService utilisateurService) {
+    public UtilisateurController(UtilisateurService utilisateurService, DocumentService documentService, JwtService jwtService) {
         this.utilisateurService = utilisateurService;
+        this.documentService = documentService;
+        this.jwtService = jwtService;
     }
 
     @GetMapping
@@ -43,6 +50,39 @@ public class UtilisateurController {
     @GetMapping("/count")
     public long countUtilisateurs() {
         return utilisateurService.countUtilisateurs();
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<Utilisateur> getCurrentUserProfile(HttpServletRequest request) {
+        try {
+            // Extraire le token JWT depuis l'en-tête Authorization
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            String token = authHeader.substring(7); // Enlever "Bearer "
+            
+            // Valider le token
+            if (!jwtService.validateToken(token)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            // Extraire l'email de l'utilisateur depuis le token
+            String email = jwtService.getEmailFromToken(token);
+            
+            // Récupérer l'utilisateur depuis la base de données
+            return utilisateurService.findByEmail(email)
+                    .map(utilisateur -> {
+                        // Vérifier et mettre à jour le statut selon les documents validés
+                        Utilisateur utilisateurMisAJour = documentService.checkAndUpdateUserStatus(utilisateur.getId());
+                        return ResponseEntity.ok(utilisateurMisAJour);
+                    })
+                    .orElse(ResponseEntity.notFound().build());
+                    
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
     }
 
     @DeleteMapping("/{id}")

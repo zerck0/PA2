@@ -8,6 +8,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (userData: any) => Promise<void>;
   logout: () => void;
+  refreshCurrentUser: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -68,6 +69,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const refreshCurrentUser = async () => {
+    if (!currentUser) return;
+    
+    try {
+      const userData = await authApi.getProfile();
+      
+      // Créer la nouvelle structure AuthResponse avec les données rafraîchies
+      const refreshedAuthResponse: AuthResponse = {
+        token: currentUser.token, // Garder le même token
+        user: userData // Utiliser les nouvelles données utilisateur
+      };
+      
+      // Mettre à jour le localStorage et l'état
+      localStorage.setItem('currentUser', JSON.stringify(refreshedAuthResponse));
+      setCurrentUser(refreshedAuthResponse);
+    } catch (error) {
+      console.error('Erreur lors du rafraîchissement des données utilisateur:', error);
+      // En cas d'erreur, on pourrait décider de déconnecter l'utilisateur
+      // logout();
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentUser');
@@ -80,6 +103,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     login,
     register,
     logout,
+    refreshCurrentUser,
     isAuthenticated: !!currentUser
   };
 

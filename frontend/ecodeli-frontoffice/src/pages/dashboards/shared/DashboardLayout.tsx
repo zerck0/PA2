@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect, useMemo } from 'react';
 import Layout from '../../../components/Layout';
 import { useAuth } from '../../../hooks/useAuth';
 import { getRoleLabel } from '../../../utils/helpers';
@@ -20,7 +20,68 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   onTabChange,
   tabs
 }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, refreshCurrentUser } = useAuth();
+
+  // Logique de restrictions intégrée
+  const restrictions = useMemo(() => {
+    const userStatus = currentUser?.user?.statut;
+    const userRole = currentUser?.user?.role;
+
+    // Définir les onglets autorisés selon le statut
+    const getAllowedTabs = () => {
+      switch (userStatus) {
+        case 'NON_VERIFIE':
+          return ['overview', 'documents'];
+        case 'EN_ATTENTE':
+          return ['overview', 'documents'];
+        case 'SUSPENDU':
+          return ['overview'];
+        case 'REFUSE':
+          return ['overview'];
+        case 'VALIDE':
+        default:
+          return tabs.map(tab => tab.id); // Tous les onglets
+      }
+    };
+
+    const allowedTabs = getAllowedTabs();
+    const isRestricted = userStatus !== 'VALIDE' && (userStatus === 'NON_VERIFIE' || userStatus === 'EN_ATTENTE' || userStatus === 'SUSPENDU' || userStatus === 'REFUSE');
+    const shouldShowDocumentsFirst = userStatus === 'NON_VERIFIE';
+
+    const getStatusMessage = () => {
+      switch (userStatus) {
+        case 'NON_VERIFIE':
+          return 'Compte non vérifié - Veuillez compléter vos documents pour accéder à toutes les fonctionnalités.';
+        case 'EN_ATTENTE':
+          return 'Documents en cours de vérification - Accès limité en attendant la validation.';
+        case 'SUSPENDU':
+          return 'Compte suspendu - Contactez le support pour plus d\'informations.';
+        case 'REFUSE':
+          return 'Compte refusé - Contactez le support pour plus d\'informations.';
+        default:
+          return '';
+      }
+    };
+
+    return {
+      canAccessTab: (tabId: string) => allowedTabs.includes(tabId),
+      isAccountRestricted: isRestricted,
+      shouldShowDocumentsFirst,
+      getStatusMessage
+    };
+  }, [currentUser?.user?.statut, tabs]);
+
+  // Rafraîchissement des données utilisateur au chargement
+  useEffect(() => {
+    refreshCurrentUser();
+  }, [refreshCurrentUser]);
+
+  // Redirection automatique vers documents si nécessaire
+  useEffect(() => {
+    if (restrictions.shouldShowDocumentsFirst && activeTab !== 'documents' && restrictions.canAccessTab('documents')) {
+      onTabChange('documents');
+    }
+  }, [restrictions.shouldShowDocumentsFirst, activeTab, onTabChange, restrictions]);
 
   if (!currentUser) {
     return (
@@ -31,6 +92,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       </Layout>
     );
   }
+
+  // Filtrer les onglets selon les restrictions
+  const filteredTabs = tabs.filter(tab => restrictions.canAccessTab(tab.id));
 
   // Fonction pour obtenir le badge de statut
   const getStatusBadge = (statut: string) => {
@@ -84,19 +148,45 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </div>
           </div>
         </div>
+        {/* Alerte de restriction de compte */}
+        {restrictions.isAccountRestricted && restrictions.getStatusMessage() && (
+          <div className="alert alert-warning d-flex align-items-center mb-4" role="alert">
+            <i className="bi bi-exclamation-triangle me-3" style={{fontSize: '1.5rem'}}></i>
+            <div className="flex-grow-1">
+              <strong>Accès limité</strong><br />
+              {restrictions.getStatusMessage()}
+            </div>
+            {restrictions.canAccessTab('documents') && (
+              <button 
+                className="btn btn-outline-warning btn-sm ms-3"
+                onClick={() => onTabChange('documents')}
+              >
+                <i className="bi bi-file-earmark-text me-2"></i>
+                Gérer mes documents
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Navigation Tabs */}
         <ul className="nav nav-tabs dashboard-nav">
-          {tabs.map((tab) => (
-            <li key={tab.id} className="nav-item">
-              <button
-                className={`nav-link ${activeTab === tab.id ? 'active' : ''}`}
-                onClick={() => onTabChange(tab.id)}
-              >
-                <i className={`bi ${tab.icon} me-2`}></i>
-                {tab.label}
-              </button>
-            </li>
-          ))}
+          {filteredTabs.map((tab) => {
+            const isRestricted = !restrictions.canAccessTab(tab.id);
+            return (
+              <li key={tab.id} className="nav-item">
+                <button
+                  className={`nav-link ${activeTab === tab.id ? 'active' : ''} ${isRestricted ? 'disabled opacity-50' : ''}`}
+                  onClick={() => restrictions.canAccessTab(tab.id) ? onTabChange(tab.id) : null}
+                  disabled={isRestricted}
+                  title={isRestricted ? 'Accès restreint - Complétez vos documents' : ''}
+                >
+                  <i className={`bi ${tab.icon} me-2`}></i>
+                  {tab.label}
+                  {isRestricted && <i className="bi bi-lock-fill ms-2 text-warning"></i>}
+                </button>
+              </li>
+            );
+          })}
         </ul>
 
         {/* Tab Content */}

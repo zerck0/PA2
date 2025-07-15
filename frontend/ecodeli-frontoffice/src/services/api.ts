@@ -56,6 +56,11 @@ export const authApi = {
     const response = await api.post('/inscriptions', userData);
     return response.data;
   },
+  
+  getProfile: async () => {
+    const response = await api.get('/utilisateurs/profile');
+    return response.data;
+  },
 };
 
 // Services des annonces
