@@ -25,7 +25,7 @@ public interface PrestationRepository extends JpaRepository<Prestation, Long> {
     
     // Vérifier les conflits de créneaux pour un prestataire
     @Query("SELECT p FROM Prestation p WHERE p.prestataire = :prestataire " +
-           "AND p.statut IN ('EN_ATTENTE', 'ACCEPTEE', 'EN_COURS') " +
+           "AND p.statut IN ('RESERVEE') " +
            "AND ((p.dateDebut BETWEEN :debut AND :fin) " +
            "OR (p.dateFin BETWEEN :debut AND :fin) " +
            "OR (p.dateDebut <= :debut AND p.dateFin >= :fin))")

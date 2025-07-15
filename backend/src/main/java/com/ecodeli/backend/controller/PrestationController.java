@@ -131,13 +131,12 @@ public class PrestationController {
             LocalDateTime dateDebut = LocalDateTime.parse(requestData.get("dateDebut"), formatter);
             LocalDateTime dateFin = LocalDateTime.parse(requestData.get("dateFin"), formatter);
             
-            // Récupérer le prestataire (simplifié pour l'exemple)
-            // En réalité, il faudrait injecter PrestataireRepository
-            // boolean disponible = prestationService.isPrestataireDisponible(prestataire, dateDebut, dateFin);
+            // Utiliser le service pour vérifier la disponibilité réelle
+            boolean disponible = prestationService.verifierDisponibiliteComplete(prestataireId, dateDebut, dateFin);
             
             Map<String, Object> response = new HashMap<>();
-            response.put("disponible", true); // Temporaire
-            response.put("message", "Créneau disponible");
+            response.put("disponible", disponible);
+            response.put("message", disponible ? "Créneau disponible" : "Créneau déjà réservé ou prestataire indisponible");
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {

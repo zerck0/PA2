@@ -5,6 +5,7 @@ import com.ecodeli.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
 import java.time.*;
 import java.util.List;
@@ -27,8 +28,9 @@ public class PrestationService {
     private ClientRepository clientRepository;
 
     /**
-     * Créer une réservation de prestation
+     * Créer une réservation de prestation avec protection contre les réservations simultanées
      */
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public Prestation creerReservation(Long prestataireId, Long clientId, 
                                       LocalDateTime dateDebut, LocalDateTime dateFin, 
                                       Prestation.TypePrestation typePrestation,
@@ -106,6 +108,30 @@ public class PrestationService {
         
         // Vérifier que le créneau est dans la plage de disponibilité
         return plage.isPlageDisponible(debut.toLocalTime(), fin.toLocalTime());
+    }
+    
+    /**
+     * Vérifier la disponibilité complète d'un prestataire (disponibilité + conflits)
+     */
+    public boolean verifierDisponibiliteComplete(Long prestataireId, LocalDateTime debut, LocalDateTime fin) {
+        Prestataire prestataire = prestataireRepository.findById(prestataireId)
+            .orElseThrow(() -> new RuntimeException("Prestataire non trouvé"));
+        
+        // Vérifier que le prestataire est validé
+        if (!prestataire.isVerifDossier()) {
+            return false;
+        }
+        
+        // Vérifier la disponibilité selon les plages horaires configurées
+        if (!isPrestataireDisponible(prestataire, debut, fin)) {
+            return false;
+        }
+        
+        // Vérifier les conflits avec d'autres prestations réservées
+        List<Prestation> conflits = prestationRepository.findConflictingPrestations(
+            prestataire, debut, fin);
+        
+        return conflits.isEmpty();
     }
     
     /**
