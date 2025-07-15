@@ -49,7 +49,7 @@ const LivreurDashboard: React.FC = () => {
       // Pour chaque segment retrait, vérifier le statut du segment dépôt correspondant
       const livraisonsAvecVerification = await Promise.all(
         mesLivraisons.map(async (livraison: Livraison) => {
-          if (livraison.typeLivraison === 'PARTIELLE_RETRAIT') {
+          if (livraison.typeLivraison === 'PARTIELLE_RETRAIT' && livraison.annonce) {
             try {
               // Requête directe en base pour récupérer le segment dépôt
               const segmentDepot = await livraisonApi.getSegmentDepotByAnnonce(livraison.annonce.id);
@@ -133,7 +133,7 @@ const LivreurDashboard: React.FC = () => {
     if (livraison.typeLivraison === 'PARTIELLE_RETRAIT') {
       // Chercher le segment dépôt de la même annonce
       const segmentDepot = livraisons.find(l => 
-        l.annonce.id === livraison.annonce.id && 
+        l.annonce?.id === livraison.annonce?.id && 
         l.typeLivraison === 'PARTIELLE_DEPOT'
       );
 
