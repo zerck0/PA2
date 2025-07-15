@@ -31,12 +31,13 @@ const LivreurDashboard: React.FC = () => {
     }
   }, []);
 
-  // Charger les livraisons du livreur
+  // Charger les livraisons du livreur - SUPPRESSION AUTO-REFRESH
   useEffect(() => {
-    if (currentUser?.user.id && activeTab === 'livraisons') {
+    if (currentUser?.user.id && activeTab === 'livraisons' && !livraisons.length) {
+      // Charger SEULEMENT si pas encore chargé
       loadLivraisons();
     }
-  }, [currentUser, activeTab]);
+  }, [currentUser?.user.id, activeTab]); // Dépendances stables uniquement
 
   const loadLivraisons = async () => {
     if (!currentUser?.user.id) return;

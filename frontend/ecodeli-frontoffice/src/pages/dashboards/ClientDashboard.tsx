@@ -35,25 +35,27 @@ const ClientDashboard: React.FC = () => {
     execute: loadAnnonces 
   } = useApi<Annonce[]>(() => annonceApi.getMesAnnonces(currentUser?.user.id || 0));
 
+  // SUPPRESSION DU useEffect AUTO-REFRESH - Chargement manuel uniquement
   useEffect(() => {
-    if (currentUser?.user.id) {
+    if (currentUser?.user.id && !annonces) {
+      // Charger SEULEMENT si pas encore chargé
       loadAnnonces();
     }
-  }, [currentUser]);
+  }, [currentUser?.user.id]); // Dépendance stable uniquement
 
   // Charger les livraisons de toutes les annonces du client
   useEffect(() => {
-    if (currentUser?.user.id && activeTab === 'livraisons') {
+    if (currentUser?.user.id && activeTab === 'livraisons' && annonces && annonces.length > 0) {
       loadLivraisons();
     }
-  }, [currentUser, activeTab]);
+  }, [currentUser?.user.id, activeTab, annonces?.length]); // Dépendances stables
 
   // Charger les prestations du client
   useEffect(() => {
     if (currentUser?.user.id && activeTab === 'reservations') {
       loadPrestations();
     }
-  }, [currentUser, activeTab]);
+  }, [currentUser?.user.id, activeTab]); // Dépendances stables
 
   const loadLivraisons = async () => {
     if (!currentUser?.user.id || !annonces?.length) return;

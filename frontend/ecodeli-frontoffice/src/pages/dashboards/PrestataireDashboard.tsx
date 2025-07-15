@@ -9,6 +9,7 @@ import Alert from '../../components/ui/Alert';
 import Input from '../../components/ui/Input';
 import PhotoUpload from '../../components/ui/PhotoUpload';
 import DocumentSection from '../../components/DocumentSection';
+import PrestationCard from '../../components/PrestationCard';
 
 interface Prestation {
   id: number;
@@ -78,6 +79,9 @@ const PrestataireDashboard: React.FC = () => {
     'SUNDAY': { actif: false, heureDebut: '08:00', heureFin: '18:00' }
   });
   const [loadingConfig, setLoadingConfig] = useState(false);
+  
+  // État pour les filtres (inspiré du LivreurDashboard)
+  const [filtreActif, setFiltreActif] = useState<string>('tous');
 
   const userId = currentUser?.user?.id;
 
@@ -437,66 +441,200 @@ const PrestataireDashboard: React.FC = () => {
     </div>
   );
 
-  const renderPrestations = () => (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4>Mes prestations</h4>
-        <div>
-          <Button variant="outline-primary" size="sm" className="me-2">
-            <i className="bi bi-funnel me-1"></i>
-            Filtrer
-          </Button>
+  const renderPrestations = () => {
+    // Grouper les prestations par statut (comme dans LivreurDashboard)
+    const prestationsReservees = prestations?.filter(p => p.statut === 'RESERVEE') || [];
+    const prestationsTerminees = prestations?.filter(p => p.statut === 'TERMINEE') || [];
+    const prestationsEvaluees = prestations?.filter(p => p.statut === 'EVALUEE') || [];
+    const prestationsAnnulees = prestations?.filter(p => p.statut === 'ANNULEE') || [];
+
+    // Fonction pour filtrer les prestations selon le filtre actif
+    const getPrestationsFiltrees = () => {
+      switch (filtreActif) {
+        case 'reservees':
+          return prestationsReservees;
+        case 'terminees':
+          return prestationsTerminees;
+        case 'evaluees':
+          return prestationsEvaluees;
+        case 'annulees':
+          return prestationsAnnulees;
+        default:
+          return prestations || [];
+      }
+    };
+
+    const prestationsFiltrees = getPrestationsFiltrees();
+
+    return (
+      <div>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h4 className="mb-0">Mes prestations</h4>
         </div>
-      </div>
 
-      <div className="row">
-        {prestations.map((prestation) => (
-          <div key={prestation.id} className="col-md-6 mb-3">
-            <Card>
-              <div className="card-header d-flex justify-content-between align-items-center">
-                <h6 className="mb-0">{prestation.titre}</h6>
-                <span className={`badge ${getStatusBadgeClass(prestation.statut)}`}>
-                  {getStatusLabel(prestation.statut)}
-                </span>
-              </div>
-              <div className="card-body">
-                <p className="mb-2">{prestation.description}</p>
-                <div className="row text-sm">
-                  <div className="col-6">
-                    <strong>Début:</strong><br />
-                    {formatDateTime(prestation.dateDebut)}
-                  </div>
-                  <div className="col-6">
-                    <strong>Fin:</strong><br />
-                    {formatDateTime(prestation.dateFin)}
-                  </div>
-                </div>
-                <hr />
-                <div className="d-flex justify-content-between align-items-center">
-                  <div>
-                    <small className="text-muted">
-                      {prestation.adresse}, {prestation.ville}
-                    </small>
-                  </div>
-                  <strong className="text-success">{prestation.prix}€</strong>
-                </div>
-              </div>
-            </Card>
+        {/* Filtres (inspirés du LivreurDashboard) */}
+        <Card className="mb-4">
+          <div className="card-body">
+            <div className="d-flex flex-wrap gap-2">
+              <Button
+                variant={filtreActif === 'tous' ? 'primary' : 'outline-secondary'}
+                size="sm"
+                onClick={() => setFiltreActif('tous')}
+              >
+                <i className="bi bi-list me-1"></i>
+                Tous ({prestations?.length || 0})
+              </Button>
+              
+              <Button
+                variant={filtreActif === 'reservees' ? 'primary' : 'outline-primary'}
+                size="sm"
+                onClick={() => setFiltreActif('reservees')}
+              >
+                <i className="bi bi-clock me-1"></i>
+                Réservées ({prestationsReservees.length})
+              </Button>
+              
+              <Button
+                variant={filtreActif === 'terminees' ? 'success' : 'outline-success'}
+                size="sm"
+                onClick={() => setFiltreActif('terminees')}
+              >
+                <i className="bi bi-check-circle me-1"></i>
+                Terminées ({prestationsTerminees.length})
+              </Button>
+              
+              <Button
+                variant={filtreActif === 'evaluees' ? 'info' : 'outline-info'}
+                size="sm"
+                onClick={() => setFiltreActif('evaluees')}
+              >
+                <i className="bi bi-star me-1"></i>
+                Évaluées ({prestationsEvaluees.length})
+              </Button>
+              
+              {prestationsAnnulees.length > 0 && (
+                <Button
+                  variant={filtreActif === 'annulees' ? 'danger' : 'outline-danger'}
+                  size="sm"
+                  onClick={() => setFiltreActif('annulees')}
+                >
+                  <i className="bi bi-x-circle me-1"></i>
+                  Annulées ({prestationsAnnulees.length})
+                </Button>
+              )}
+            </div>
           </div>
-        ))}
-      </div>
+        </Card>
 
-      {prestations.length === 0 && (
-        <Alert type="info">
-          <h5>Aucune prestation pour le moment</h5>
-          <p>Configurez vos disponibilités pour que les clients puissent réserver vos services.</p>
-          <Button variant="primary" onClick={() => setActiveTab('planning')}>
-            Configurer mes disponibilités
-          </Button>
-        </Alert>
-      )}
-    </div>
-  );
+        {prestations && prestations.length > 0 ? (
+          filtreActif === 'tous' ? (
+            <div>
+              {/* Affichage groupé quand "Tous" est sélectionné */}
+              {prestationsReservees.length > 0 && (
+                <div className="mb-5">
+                  <h5 className="text-primary mb-3">
+                    <i className="bi bi-clock me-2"></i>
+                    Réservées ({prestationsReservees.length})
+                  </h5>
+                  <div className="row g-4">
+                    {prestationsReservees.map((prestation) => (
+                      <div key={prestation.id} className="col-lg-6">
+                        <PrestationCard
+                          prestation={prestation as any}
+                          currentUser={currentUser?.user as any}
+                          onEvaluationSubmitted={loadPrestations}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {prestationsTerminees.length > 0 && (
+                <div className="mb-5">
+                  <h5 className="text-success mb-3">
+                    <i className="bi bi-check-circle me-2"></i>
+                    Terminées ({prestationsTerminees.length})
+                  </h5>
+                  <div className="row g-4">
+                    {prestationsTerminees.map((prestation) => (
+                      <div key={prestation.id} className="col-lg-6">
+                        <PrestationCard
+                          prestation={prestation as any}
+                          currentUser={currentUser?.user as any}
+                          onEvaluationSubmitted={loadPrestations}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {prestationsEvaluees.length > 0 && (
+                <div className="mb-5">
+                  <h5 className="text-info mb-3">
+                    <i className="bi bi-star me-2"></i>
+                    Évaluées ({prestationsEvaluees.length})
+                  </h5>
+                  <div className="row g-4">
+                    {prestationsEvaluees.map((prestation) => (
+                      <div key={prestation.id} className="col-lg-6">
+                        <PrestationCard
+                          prestation={prestation as any}
+                          currentUser={currentUser?.user as any}
+                          onEvaluationSubmitted={loadPrestations}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {prestationsAnnulees.length > 0 && (
+                <div className="mb-5">
+                  <h5 className="text-danger mb-3">
+                    <i className="bi bi-x-circle me-2"></i>
+                    Annulées ({prestationsAnnulees.length})
+                  </h5>
+                  <div className="row g-4">
+                    {prestationsAnnulees.map((prestation) => (
+                      <div key={prestation.id} className="col-lg-6">
+                        <PrestationCard
+                          prestation={prestation as any}
+                          currentUser={currentUser?.user as any}
+                          onEvaluationSubmitted={loadPrestations}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="row g-4">
+              {prestationsFiltrees.map((prestation) => (
+                <div key={prestation.id} className="col-lg-6">
+                  <PrestationCard
+                    prestation={prestation as any}
+                    currentUser={currentUser?.user as any}
+                    onEvaluationSubmitted={loadPrestations}
+                  />
+                </div>
+              ))}
+            </div>
+          )
+        ) : (
+          <Alert type="info">
+            <h5>Aucune prestation pour le moment</h5>
+            <p>Configurez vos disponibilités pour que les clients puissent réserver vos services.</p>
+            <Button variant="primary" onClick={() => setActiveTab('planning')}>
+              Configurer mes disponibilités
+            </Button>
+          </Alert>
+        )}
+      </div>
+    );
+  };
 
   const renderPlanning = () => (
     <div>

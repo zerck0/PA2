@@ -80,7 +80,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   }>({
     jour: '',
     heureDebut: '',
-    duree: 1,
+    duree: 0,
     prix: 0
   });
   
@@ -117,7 +117,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
         genererOptionsDropdowns();
       });
       setEtapeActuelle(1);
-      setCreneauSelectionne({ jour: '', heureDebut: '', duree: 1, prix: 0 });
+      setCreneauSelectionne({ jour: '', heureDebut: '', duree: 0, prix: 0 });
       setFormData({ titre: '', adresse: '', ville: '', codePostal: '' });
     }
   }, [isOpen, prestation]);
@@ -223,7 +223,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
       
       // Réinitialiser l'heure sélectionnée si elle n'est plus disponible
       if (!heures.includes(creneauSelectionne.heureDebut)) {
-        setCreneauSelectionne(prev => ({ ...prev, heureDebut: '', duree: 1 }));
+        setCreneauSelectionne(prev => ({ ...prev, heureDebut: '', duree: 0 }));
       }
     }
   };
@@ -241,7 +241,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
       const heureDebutInt = parseInt(heureDebut.split(':')[0]);
       const heureFinInt = parseInt(plageJour.heureFin.split(':')[0]);
       
-      const durees = [];
+      const durees: number[] = [];
       
       // Calculer la durée max possible
       let heureMaxPossible = heureFinInt;
@@ -272,7 +272,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
       ...prev, 
       jour, 
       heureDebut: '', 
-      duree: 1,
+      duree: 0,
       prix: 0 
     }));
   };
@@ -281,7 +281,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     setCreneauSelectionne(prev => ({ 
       ...prev, 
       heureDebut, 
-      duree: 1 
+      duree: 0 
     }));
   };
 
@@ -289,46 +289,8 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     setCreneauSelectionne(prev => ({ ...prev, duree }));
   };
 
-  // Gérer la sélection d'un créneau
-  const handleCreneauClick = (date: string, heure: string) => {
-    const dateHeure = new Date(`${date}T${heure}:00`);
-    
-    if (!creneauSelectionne.debut) {
-      // Premier clic : sélectionner l'heure de début
-      setCreneauSelectionne({
-        debut: dateHeure,
-        fin: null,
-        dureeHeures: 0
-      });
-    } else if (!creneauSelectionne.fin) {
-      // Deuxième clic : sélectionner l'heure de fin
-      if (dateHeure > creneauSelectionne.debut) {
-        const dureeMs = dateHeure.getTime() - creneauSelectionne.debut.getTime();
-        const dureeHeures = dureeMs / (1000 * 60 * 60);
-        
-        setCreneauSelectionne({
-          debut: creneauSelectionne.debut,
-          fin: dateHeure,
-          dureeHeures
-        });
-      } else {
-        showError('L\'heure de fin doit être après l\'heure de début');
-      }
-    } else {
-      // Nouvelle sélection : recommencer
-      setCreneauSelectionne({
-        debut: dateHeure,
-        fin: null,
-        dureeHeures: 0
-      });
-    }
-  };
-
-  // Calculer le prix total
-  const calculerPrixTotal = (): number => {
-    if (!prestation || !creneauSelectionne.dureeHeures) return 0;
-    return creneauSelectionne.dureeHeures * prestation.tauxHoraire;
-  };
+  // Note: Fonction supprimée car elle utilisait des propriétés inexistantes
+  // La sélection se fait maintenant via les dropdowns uniquement
 
   // Gérer le changement d'adresse avec Google Places
   const handleAddressChange = (adresse: string) => {
@@ -415,20 +377,6 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     }
   };
 
-  // Vérifier si un créneau est sélectionné
-  const isCreneauSelectionne = (date: string, heure: string): boolean => {
-    if (!creneauSelectionne.debut) return false;
-    
-    const dateHeure = new Date(`${date}T${heure}:00`);
-    
-    if (creneauSelectionne.fin) {
-      // Créneau complet sélectionné
-      return dateHeure >= creneauSelectionne.debut && dateHeure < creneauSelectionne.fin;
-    } else {
-      // Seulement heure de début sélectionnée
-      return dateHeure.getTime() === creneauSelectionne.debut.getTime();
-    }
-  };
 
   if (!prestation) return null;
 
