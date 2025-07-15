@@ -4,6 +4,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import CreateAnnonceCommercantModal from '../../components/CreateAnnonceCommercantModal';
+import DocumentSection from '../../components/DocumentSection';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { AnnonceCommercant, ContratCommercant } from '../../types';
@@ -139,6 +140,7 @@ const CommercantDashboard: React.FC = () => {
     { id: 'overview', label: 'Vue d\'ensemble', icon: 'bi-house-door' },
     { id: 'annonces', label: 'Mes annonces', icon: 'bi-megaphone' },
     { id: 'contrat', label: 'Mon contrat', icon: 'bi-file-earmark-text' },
+    { id: 'documents', label: 'Documents', icon: 'bi-file-earmark-check' },
     { id: 'facturation', label: 'Facturation', icon: 'bi-receipt' },
     { id: 'paiements', label: 'Paiements', icon: 'bi-credit-card' }
   ];
@@ -535,6 +537,71 @@ const CommercantDashboard: React.FC = () => {
     </Card>
   );
 
+  const renderDocuments = () => (
+    <div>
+      <div className="mb-4">
+        <h4>Documents requis</h4>
+        <p className="text-muted">
+          Pour valider votre compte commerçant, vous devez fournir les documents suivants.
+          Tous les documents marqués comme "requis" sont obligatoires.
+        </p>
+      </div>
+
+      {/* Documents obligatoires */}
+      <div className="row">
+        <div className="col-lg-6 mb-4">
+          <DocumentSection
+            userId={currentUser?.user.id || 0}
+            documentType="CARTE_IDENTITE"
+            title="Carte d'identité du représentant"
+            required={true}
+          />
+        </div>
+        
+        <div className="col-lg-6 mb-4">
+          <DocumentSection
+            userId={currentUser?.user.id || 0}
+            documentType="KBIS"
+            title="Kbis/SIRET de l'entreprise"
+            required={true}
+          />
+        </div>
+      </div>
+
+      <div className="row">
+        <div className="col-lg-6 mb-4">
+          <DocumentSection
+            userId={currentUser?.user.id || 0}
+            documentType="ASSURANCE_PROFESSIONNELLE"
+            title="Assurance responsabilité civile"
+            required={true}
+          />
+        </div>
+        
+        {/* Documents optionnels */}
+        <div className="col-lg-6 mb-4">
+          <DocumentSection
+            userId={currentUser?.user.id || 0}
+            documentType="JUSTIFICATIF_DOMICILE"
+            title="Justificatif siège social"
+            required={false}
+          />
+        </div>
+      </div>
+
+      {/* Message d'information */}
+      <div className="alert alert-info mt-4">
+        <h6><i className="bi bi-info-circle me-2"></i>Informations importantes</h6>
+        <ul className="mb-0">
+          <li><strong>Délai de traitement :</strong> 2 à 5 jours ouvrés après réception de tous les documents</li>
+          <li><strong>Formats acceptés :</strong> PDF, JPG, PNG (max 5MB par fichier)</li>
+          <li><strong>Kbis :</strong> Le document doit dater de moins de 3 mois</li>
+          <li><strong>Assurance :</strong> Vérifiez que votre police couvre l'activité de commerce</li>
+        </ul>
+      </div>
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
@@ -543,6 +610,8 @@ const CommercantDashboard: React.FC = () => {
         return renderAnnonces();
       case 'contrat':
         return renderContrat();
+      case 'documents':
+        return renderDocuments();
       case 'facturation':
         return renderFacturation();
       case 'paiements':

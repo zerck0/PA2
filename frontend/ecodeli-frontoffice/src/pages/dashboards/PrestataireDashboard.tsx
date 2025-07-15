@@ -8,6 +8,7 @@ import Button from '../../components/ui/Button';
 import Alert from '../../components/ui/Alert';
 import Input from '../../components/ui/Input';
 import PhotoUpload from '../../components/ui/PhotoUpload';
+import DocumentSection from '../../components/DocumentSection';
 
 interface Prestation {
   id: number;
@@ -44,7 +45,7 @@ interface DashboardStats {
 const PrestataireDashboard: React.FC = () => {
   const { currentUser } = useAuth();
   const { showSuccess, showError } = useToast();
-  const [activeTab, setActiveTab] = useState<'overview' | 'prestations' | 'ma-prestation' | 'planning' | 'planning-config' | 'revenus'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'prestations' | 'ma-prestation' | 'planning' | 'planning-config' | 'revenus' | 'documents'>('overview');
   
   // États
   const [prestations, setPrestations] = useState<Prestation[]>([]);
@@ -935,6 +936,91 @@ const PrestataireDashboard: React.FC = () => {
     </div>
   );
 
+  const renderDocuments = () => (
+    <div>
+      <div className="mb-4">
+        <h4>Documents requis</h4>
+        <p className="text-muted">
+          Pour valider votre compte prestataire, vous devez fournir les documents suivants.
+          Tous les documents marqués comme "requis" sont obligatoires.
+        </p>
+      </div>
+
+      {/* Documents obligatoires */}
+      <div className="row">
+        <div className="col-lg-6 mb-4">
+          <DocumentSection
+            userId={currentUser?.user.id || 0}
+            documentType="CARTE_IDENTITE"
+            title="Carte d'identité"
+            required={true}
+          />
+        </div>
+        
+        <div className="col-lg-6 mb-4">
+          <DocumentSection
+            userId={currentUser?.user.id || 0}
+            documentType="JUSTIFICATIF_DOMICILE"
+            title="Justificatif de domicile"
+            required={true}
+          />
+        </div>
+      </div>
+
+      <div className="row">
+        <div className="col-lg-6 mb-4">
+          <DocumentSection
+            userId={currentUser?.user.id || 0}
+            documentType="STATUT_AUTOENTREPRENEUR"
+            title="Statut autoentrepreneur (SIRET)"
+            required={true}
+          />
+        </div>
+        
+        <div className="col-lg-6 mb-4">
+          <DocumentSection
+            userId={currentUser?.user.id || 0}
+            documentType="ASSURANCE_PROFESSIONNELLE"
+            title="Assurance responsabilité civile"
+            required={true}
+          />
+        </div>
+      </div>
+
+      <div className="row">
+        <div className="col-lg-6 mb-4">
+          <DocumentSection
+            userId={currentUser?.user.id || 0}
+            documentType="CASIER_JUDICIAIRE"
+            title="Extrait de casier judiciaire"
+            required={true}
+          />
+        </div>
+        
+        {/* Documents optionnels */}
+        <div className="col-lg-6 mb-4">
+          <DocumentSection
+            userId={currentUser?.user.id || 0}
+            documentType="DIPLOMES_CERTIFICATIONS"
+            title="Diplômes et certifications"
+            required={false}
+          />
+        </div>
+      </div>
+
+      {/* Message d'information */}
+      <Alert type="info" className="mt-4">
+        <h6><i className="bi bi-info-circle me-2"></i>Informations importantes</h6>
+        <ul className="mb-0">
+          <li><strong>Délai de traitement :</strong> 2 à 5 jours ouvrés après réception de tous les documents</li>
+          <li><strong>Formats acceptés :</strong> PDF, JPG, PNG (max 5MB par fichier)</li>
+          <li><strong>Services à la personne :</strong> Le casier judiciaire est obligatoire pour tous les services</li>
+          <li><strong>Statut autoentrepreneur :</strong> Votre SIRET doit être actif et en règle</li>
+        </ul>
+      </Alert>
+    </div>
+  );
+
   const renderContent = () => {
     if (loading) {
       return (
@@ -953,6 +1039,7 @@ const PrestataireDashboard: React.FC = () => {
       case 'planning': return renderPlanning();
       case 'planning-config': return renderPlanningConfig();
       case 'revenus': return renderRevenus();
+      case 'documents': return renderDocuments();
       default: return renderOverview();
     }
   };
@@ -962,11 +1049,12 @@ const PrestataireDashboard: React.FC = () => {
     { id: 'prestations', label: 'Mes prestations', icon: 'bi-list-task' },
     { id: 'ma-prestation', label: 'Ma Prestation', icon: 'bi-person-badge' },
     { id: 'planning', label: 'Planning', icon: 'bi-calendar3' },
-    { id: 'revenus', label: 'Revenus', icon: 'bi-currency-euro' }
+    { id: 'revenus', label: 'Revenus', icon: 'bi-currency-euro' },
+    { id: 'documents', label: 'Documents', icon: 'bi-file-earmark-text' }
   ];
 
   const handleTabChange = (tab: string) => {
-    setActiveTab(tab as 'overview' | 'prestations' | 'ma-prestation' | 'planning' | 'revenus');
+    setActiveTab(tab as 'overview' | 'prestations' | 'ma-prestation' | 'planning' | 'revenus' | 'documents');
   };
 
   return (

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from './ui/Card';
 import Button from './ui/Button';
+import Modal from './ui/Modal';
 import NoteMoyenne from './NoteMoyenne';
 import EvaluationModal from './EvaluationModal';
 import { Prestation, User } from '../types';
@@ -19,8 +21,46 @@ const PrestationCard: React.FC<PrestationCardProps> = ({
   onEvaluationSubmitted
 }) => {
   const { showSuccess, showError } = useToast();
+  const navigate = useNavigate();
   const [showEvaluationModal, setShowEvaluationModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [statistiquesPrestataire, setStatistiquesPrestataire] = useState<any>(null);
+
+  // Charger les statistiques du prestataire
+  useEffect(() => {
+    const loadStatistiques = async () => {
+      try {
+        const stats = await evaluationApi.getStatistiques(prestation.prestataire.id);
+        setStatistiquesPrestataire(stats);
+      } catch (error) {
+        // Gestion silencieuse des erreurs
+        console.log('Impossible de charger les statistiques du prestataire');
+      }
+    };
+    
+    loadStatistiques();
+  }, [prestation.prestataire.id]);
+
+  // Navigation vers le profil public du prestataire
+  const handleVoirProfil = () => {
+    navigate(`/profil-public/prestataire/${prestation.prestataire.id}`);
+  };
+
+  // Gérer l'annulation avec confirmation
+  const handleAnnuler = async () => {
+    setIsLoading(true);
+    try {
+      await prestationApi.annuler(prestation.id, currentUser.id);
+      showSuccess('Prestation annulée avec succès !');
+      setShowConfirmModal(false);
+      onEvaluationSubmitted?.(); // Recharger les prestations
+    } catch (error: any) {
+      showError(error.message || 'Erreur lors de l\'annulation');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Fonction pour obtenir l'URL complète d'une image
   const getImageUrl = (photoUrl?: string) => {
@@ -313,8 +353,8 @@ const PrestationCard: React.FC<PrestationCardProps> = ({
                       <div>
                         {/* Composant NoteMoyenne réutilisé */}
                         <NoteMoyenne 
-                          note={prestation.prestataire.noteMoyenne || 0} 
-                          nombreEvaluations={0} // TODO: Récupérer le vrai nombre d'évaluations
+                          note={statistiquesPrestataire?.noteMoyenne || prestation.prestataire.noteMoyenne || 0} 
+                          nombreEvaluations={statistiquesPrestataire?.totalEvaluations || 0}
                           typeService="PRESTATION"
                           size="sm"
                           showDetails={true}
@@ -371,6 +411,7 @@ const PrestationCard: React.FC<PrestationCardProps> = ({
                     <Button 
                       variant="outline-danger" 
                       size="sm"
+                      onClick={() => setShowConfirmModal(true)}
                     >
                       <i className="bi bi-x-circle me-1"></i>
                       Annuler
@@ -380,9 +421,10 @@ const PrestationCard: React.FC<PrestationCardProps> = ({
                   <Button 
                     variant="outline-secondary" 
                     size="sm"
+                    onClick={handleVoirProfil}
                   >
-                    <i className="bi bi-eye me-1"></i>
-                    Détails
+                    <i className="bi bi-person me-1"></i>
+                    Voir profil
                   </Button>
                 </div>
               </div>
@@ -403,6 +445,49 @@ const PrestationCard: React.FC<PrestationCardProps> = ({
         serviceTitre={prestation.titre}
         onEvaluationSubmitted={handleEvaluationSubmitted}
       />
+
+      {/* Modal de confirmation d'annulation */}
+      <Modal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        title="Confirmer l'annulation"
+        size="sm"
+      >
+        <div className="mb-3">
+          <p className="mb-2">Êtes-vous sûr de vouloir annuler cette prestation ?</p>
+          <div className="alert alert-warning py-2">
+            <i className="bi bi-exclamation-triangle me-2"></i>
+            <small>Cette action est irréversible.</small>
+          </div>
+        </div>
+        
+        <div className="d-flex gap-2 justify-content-end">
+          <Button 
+            variant="secondary" 
+            onClick={() => setShowConfirmModal(false)}
+            disabled={isLoading}
+          >
+            Non, garder
+          </Button>
+          <Button 
+            variant="danger" 
+            onClick={handleAnnuler}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Annulation...
+              </>
+            ) : (
+              <>
+                <i className="bi bi-x-circle me-1"></i>
+                Oui, annuler
+              </>
+            )}
+          </Button>
+        </div>
+      </Modal>
     </>
   );
 };

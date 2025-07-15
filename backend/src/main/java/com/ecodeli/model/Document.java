@@ -44,7 +44,13 @@ public class Document {
         ASSURANCE,
         KBIS,
         CERTIFICAT,
-        PHOTO_ANNONCE
+        PHOTO_ANNONCE,
+        JUSTIFICATIF_DOMICILE,
+        STATUT_AUTOENTREPRENEUR,
+        ASSURANCE_PROFESSIONNELLE,
+        CASIER_JUDICIAIRE,
+        DIPLOMES_CERTIFICATIONS,
+        ASSURANCE_VEHICULE
     }
     
     public enum StatutDocument {
