@@ -266,19 +266,27 @@ export const annonceService = {
 
 export const livraisonService = {
   async getAllLivraisons(): Promise<Livraison[]> {
-    // TODO: Implémenter un endpoint pour récupérer toutes les livraisons
-    const response = await fetch(`${API_BASE_URL}/livraisons/stats`, {
+    const response = await fetch(`${API_BASE_URL}/livraisons/disponibles`, {
       method: 'GET',
       headers: getAuthHeaders(),
     });
     
     await handleApiError(response);
-    // Pour l'instant on retourne un tableau vide
-    return [];
+    return response.json();
   },
 
   async getLivraisonById(id: number): Promise<Livraison> {
     const response = await fetch(`${API_BASE_URL}/livraisons/${id}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    
+    await handleApiError(response);
+    return response.json();
+  },
+
+  async getStats(): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/livraisons/stats`, {
       method: 'GET',
       headers: getAuthHeaders(),
     });

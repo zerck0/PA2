@@ -179,19 +179,19 @@ const DashboardPage: React.FC = () => {
             </div>
             <div className="p-3">
               <div className="d-grid gap-2">
-                <a href="/admin/documents" className="btn btn-outline-warning">
+                <a href="/documents" className="btn btn-outline-warning">
                   <i className="bi bi-file-earmark-check me-2"></i>
                   Valider les documents
                 </a>
-                <a href="/admin/users" className="btn btn-outline-primary">
+                <a href="/users" className="btn btn-outline-primary">
                   <i className="bi bi-people me-2"></i>
                   Gérer les utilisateurs
                 </a>
-                <a href="/admin/annonces" className="btn btn-outline-info">
+                <a href="/annonces" className="btn btn-outline-info">
                   <i className="bi bi-megaphone me-2"></i>
                   Modérer les annonces
                 </a>
-                <a href="/admin/livraisons" className="btn btn-outline-success">
+                <a href="/livraisons" className="btn btn-outline-success">
                   <i className="bi bi-truck me-2"></i>
                   Suivre les livraisons
                 </a>
