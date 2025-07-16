@@ -4,7 +4,7 @@ export interface User {
   nom: string;
   prenom: string;
   telephone?: string;
-  role: 'CLIENT' | 'LIVREUR' | 'COMMERCANT' | 'PRESTATAIRE';
+  role: 'CLIENT' | 'LIVREUR' | 'COMMERCANT' | 'PRESTATAIRE' | 'ADMIN';
   statut: 'NON_VERIFIE' | 'EN_ATTENTE' | 'VALIDE' | 'SUSPENDU' | 'REFUSE';
   // Champs spécifiques au livreur
   statutAffiliation?: 'NON_AFFILIE' | 'DEMANDE_AFFILIATION' | 'AFFILIE' | 'AFFILIATION_REFUSEE';
@@ -76,7 +76,7 @@ export interface RegisterData {
   adresse?: string;
   ville?: string;
   codePostal?: string;
-  role: 'CLIENT' | 'LIVREUR' | 'COMMERCANT' | 'PRESTATAIRE';
+  role: 'CLIENT' | 'LIVREUR' | 'COMMERCANT' | 'PRESTATAIRE' | 'ADMIN';
 }
 
 export interface Entrepot {

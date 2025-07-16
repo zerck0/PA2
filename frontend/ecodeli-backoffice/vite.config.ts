@@ -15,8 +15,9 @@ export default defineConfig({
       interval: 1000
     },
     hmr: {
-      port: 5173,
-      host: '0.0.0.0'
+      // Configuration HMR pour Docker - utilise le port externe
+      clientPort: 3001,
+      host: 'localhost'
     },
     // Configuration proxy pour les appels API en développement
     proxy: {

@@ -34,7 +34,7 @@ public abstract class Utilisateur {
     private StatutCompte statut = StatutCompte.NON_VERIFIE;
 
     public enum Role {
-        LIVREUR, CLIENT, PRESTATAIRE, COMMERCANT
+        LIVREUR, CLIENT, PRESTATAIRE, COMMERCANT, ADMIN
     }
 
     public enum StatutCompte {

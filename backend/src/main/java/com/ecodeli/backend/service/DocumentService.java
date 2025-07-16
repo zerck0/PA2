@@ -31,6 +31,10 @@ public class DocumentService {
     
     private final String uploadDir = "uploads/documents/";
     
+    public List<Document> getAllDocuments() {
+        return documentRepository.findAll();
+    }
+    
     public List<Document> getDocumentsByUtilisateur(Long utilisateurId) {
         return documentRepository.findByUtilisateurId(utilisateurId);
     }

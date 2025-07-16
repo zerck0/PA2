@@ -21,7 +21,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/documents")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "http://localhost:5174"})
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:5173", "http://localhost:5174"})
 public class DocumentController {
     
     @Autowired
@@ -46,6 +46,12 @@ public class DocumentController {
         }
         
         return cleaned;
+    }
+    
+    @GetMapping
+    public ResponseEntity<List<Document>> getAllDocuments() {
+        List<Document> documents = documentService.getAllDocuments();
+        return ResponseEntity.ok(documents);
     }
     
     @GetMapping("/user/{userId}")
