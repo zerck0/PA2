@@ -63,16 +63,21 @@ const DocumentsPage: React.FC = () => {
 
     try {
       setValidatingId(documentId);
+      setError('');
+      
+      console.log('Validation document:', { documentId, statut, commentaire: commentaire.trim() });
+      
       await documentService.validateDocument({
         documentId,
         statut,
-        commentaire: commentaire.trim()
+        commentaire: statut === 'REFUSE' ? commentaire.trim() : ''
       });
       
       await loadData();
       setCommentaire('');
       setSelectedDoc(null);
     } catch (err) {
+      console.error('Erreur validation:', err);
       setError(err instanceof Error ? err.message : 'Erreur lors de la validation');
     } finally {
       setValidatingId(null);

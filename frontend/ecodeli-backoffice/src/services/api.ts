@@ -193,11 +193,16 @@ export const documentService = {
       ? `${API_BASE_URL}/documents/${documentId}/valider`
       : `${API_BASE_URL}/documents/${documentId}/refuser`;
     
-    const response = await fetch(endpoint, {
-      method: 'POST',
+    const requestOptions: RequestInit = {
+      method: 'PUT',
       headers: getAuthHeaders(),
-      body: commentaire ? JSON.stringify({ commentaire }) : undefined,
-    });
+    };
+    
+    if (commentaire && commentaire.trim()) {
+      requestOptions.body = JSON.stringify({ commentaire });
+    }
+    
+    const response = await fetch(endpoint, requestOptions);
     
     await handleApiError(response);
   },
