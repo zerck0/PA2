@@ -33,8 +33,6 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
-
-        
         Optional<Utilisateur> utilisateurOpt = utilisateurService.findByEmail(loginDTO.email);
         
         if (utilisateurOpt.isEmpty()) {
@@ -45,7 +43,6 @@ public class AuthController {
         
         Utilisateur utilisateur = utilisateurOpt.get();
         
-        // Vérification du mot de passe avec BCrypt
         boolean passwordMatches = passwordEncoder.matches(loginDTO.password, utilisateur.getPassword());
         
         if (!passwordMatches) {
@@ -53,15 +50,12 @@ public class AuthController {
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("message", "Email ou mot de passe incorrect"));
         }
-                
-        // Génération du token JWT
+        
         String token = jwtService.generateToken(utilisateur);
         
-        // Préparation de la réponse
         Map<String, Object> response = new HashMap<>();
         response.put("token", token);
         
-        // Informations de l'utilisateur (sans le mot de passe)
         Map<String, Object> userInfo = new HashMap<>();
         userInfo.put("id", utilisateur.getId());
         userInfo.put("nom", utilisateur.getNom());
@@ -70,12 +64,10 @@ public class AuthController {
         userInfo.put("role", utilisateur.getRole().toString());
         userInfo.put("statut", utilisateur.getStatut() != null ? utilisateur.getStatut().toString() : "NON_VERIFIE");
         
-        // Ajouter statutAffiliation pour les livreurs
         if (utilisateur instanceof Livreur) {
             Livreur livreur = (Livreur) utilisateur;
             String statutAffiliation = livreur.getStatutAffiliation() != null ? livreur.getStatutAffiliation().toString() : "NON_AFFILIE";
             userInfo.put("statutAffiliation", statutAffiliation);
-            
         }
         
         response.put("user", userInfo);
@@ -85,16 +77,13 @@ public class AuthController {
     
     @PostMapping("/verify-token")
     public ResponseEntity<?> verifyToken(@RequestHeader("Authorization") String authHeader) {
-        // Vérifier si l'en-tête d'autorisation est présent et formaté correctement
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("valid", false));
         }
         
-        // Extraire le token JWT
         String token = authHeader.substring(7);
         
         try {
-            // Vérifier le token
             boolean isValid = jwtService.validateToken(token);
             if (isValid) {
                 String email = jwtService.getEmailFromToken(token);
@@ -105,7 +94,6 @@ public class AuthController {
                     Map<String, Object> response = new HashMap<>();
                     response.put("valid", true);
                     
-                    // Informations utilisateur avec statutAffiliation pour les livreurs
                     Map<String, Object> userInfo = new HashMap<>();
                     userInfo.put("id", user.getId());
                     userInfo.put("nom", user.getNom());
@@ -114,7 +102,6 @@ public class AuthController {
                     userInfo.put("role", user.getRole().toString());
                     userInfo.put("statut", user.getStatut() != null ? user.getStatut().toString() : "NON_VERIFIE");
                     
-                    // Ajouter statutAffiliation pour les livreurs
                     if (user instanceof Livreur) {
                         Livreur livreur = (Livreur) user;
                         userInfo.put("statutAffiliation", livreur.getStatutAffiliation() != null ? livreur.getStatutAffiliation().toString() : "NON_AFFILIE");

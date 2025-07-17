@@ -31,13 +31,11 @@ const LivreurDashboard: React.FC = () => {
     }
   }, []);
 
-  // Charger les livraisons du livreur - SUPPRESSION AUTO-REFRESH
   useEffect(() => {
     if (currentUser?.user.id && activeTab === 'livraisons' && !livraisons.length) {
-      // Charger SEULEMENT si pas encore chargé
       loadLivraisons();
     }
-  }, [currentUser?.user.id, activeTab]); // Dépendances stables uniquement
+  }, [currentUser?.user.id, activeTab]);
 
   const loadLivraisons = async () => {
     if (!currentUser?.user.id) return;
@@ -159,10 +157,7 @@ const LivreurDashboard: React.FC = () => {
 
   const tabs = [
     { id: 'overview', label: 'Vue d\'ensemble', icon: 'bi-house-door' },
-    { id: 'annonces', label: 'Mes annonces', icon: 'bi-megaphone' },
     { id: 'livraisons', label: 'Mes livraisons', icon: 'bi-truck' },
-    { id: 'planning', label: 'Mon planning', icon: 'bi-calendar' },
-    { id: 'paiements', label: 'Mes paiements', icon: 'bi-credit-card' },
     { id: 'documents', label: 'Pièces justificatives', icon: 'bi-file-earmark-text' }
   ];
 
@@ -253,18 +248,6 @@ const LivreurDashboard: React.FC = () => {
     </div>
   );
 
-  const renderAnnonces = () => (
-    <Card title="Mes trajets prévisionnels">
-      <div className="text-center py-5">
-        <i className="bi bi-road" style={{fontSize: '3rem', color: '#6c757d'}}></i>
-        <p className="mt-3 text-muted">Fonctionnalité en cours de développement</p>
-        <p className="text-muted small">
-          Cette section permettra de gérer vos trajets prévisionnels 
-          pour recevoir des notifications de missions correspondantes.
-        </p>
-      </div>
-    </Card>
-  );
 
 
   const renderLivraisons = () => {

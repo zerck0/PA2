@@ -19,8 +19,6 @@ public class LivraisonController {
     @Autowired
     private LivraisonService livraisonService;
 
-    // === CRÉATION DE LIVRAISONS ===
-
     @PostMapping("/complete")
     public ResponseEntity<?> creerLivraisonComplete(
             @RequestParam Long annonceId,
@@ -31,7 +29,6 @@ public class LivraisonController {
             
             if (prixConvenu != null) {
                 livraison.setPrixConvenu(prixConvenu);
-                // Note: Il faudrait sauvegarder à nouveau si on modifie le prix
             }
             
             return ResponseEntity.status(HttpStatus.CREATED).body(livraison);
@@ -48,7 +45,6 @@ public class LivraisonController {
             @RequestParam Long entrepotId,
             @RequestParam(required = false) BigDecimal prixConvenu) {
         try {
-            // Utiliser la nouvelle méthode qui gère correctement le workflow
             Livraison livraison = livraisonService.prendreEnChargeAnnonce(annonceId, livreurId, "PARTIELLE_DEPOT", entrepotId);
             
             if (prixConvenu != null) {
@@ -69,7 +65,6 @@ public class LivraisonController {
             @RequestParam Long entrepotId,
             @RequestParam(required = false) BigDecimal prixConvenu) {
         try {
-            // Utiliser la nouvelle méthode qui gère correctement le workflow
             Livraison livraison = livraisonService.prendreEnChargeAnnonce(annonceId, livreurId, "PARTIELLE_RETRAIT", entrepotId);
             
             if (prixConvenu != null) {
@@ -95,8 +90,6 @@ public class LivraisonController {
                 .body(Map.of("message", e.getMessage()));
         }
     }
-
-    // === NOUVEAUX ENDPOINTS POUR LE WORKFLOW ===
 
     @PostMapping("/prendre-en-charge/{annonceId}")
     public ResponseEntity<?> prendreEnChargeAnnonce(
@@ -124,8 +117,6 @@ public class LivraisonController {
         }
     }
 
-    // === GESTION DES STATUTS ===
-
     @PutMapping("/{id}/terminer")
     public ResponseEntity<?> terminerLivraison(
             @PathVariable Long id,
@@ -149,8 +140,6 @@ public class LivraisonController {
                 .body(Map.of("message", e.getMessage()));
         }
     }
-
-    // === CONSULTATION ===
 
     @GetMapping("/disponibles")
     public ResponseEntity<List<Livraison>> getLivraisonsDisponibles() {
@@ -189,8 +178,6 @@ public class LivraisonController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // === STATISTIQUES ===
-
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getStats() {
         Map<String, Object> stats = Map.of(
@@ -206,8 +193,6 @@ public class LivraisonController {
         return ResponseEntity.ok(stats);
     }
 
-    // === UTILITAIRES ===
-
     @GetMapping("/annonce/{annonceId}/has-livraisons")
     public ResponseEntity<Map<String, Boolean>> annonceHasLivraisons(@PathVariable Long annonceId) {
         boolean hasLivraisons = livraisonService.annonceHasLivraisons(annonceId);
@@ -219,7 +204,6 @@ public class LivraisonController {
         try {
             List<Livraison> livraisons = livraisonService.getLivraisonsByAnnonce(annonceId);
             
-            // Analyser les segments existants
             boolean hasSegmentDepot = false;
             boolean hasSegmentRetrait = false;
             boolean hasLivraisonComplete = false;
@@ -267,14 +251,12 @@ public class LivraisonController {
         try {
             List<Livraison> livraisons = livraisonService.getLivraisonsByAnnonce(annonceId);
             
-            // Chercher le segment dépôt
             for (Livraison livraison : livraisons) {
                 if (livraison.getTypeLivraison() == Livraison.TypeLivraison.PARTIELLE_DEPOT) {
                     return ResponseEntity.ok(livraison);
                 }
             }
             
-            // Aucun segment dépôt trouvé
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -282,9 +264,6 @@ public class LivraisonController {
         }
     }
 
-    // === ENDPOINT GÉNÉRIQUE - DOIT ÊTRE EN DERNIER ===
-    // Ce mapping doit être après tous les autres mappings spécifiques
-    // pour éviter qu'il capture des URLs comme /complete, /stats, etc.
     @GetMapping("/{id}")
     public ResponseEntity<Livraison> getLivraisonById(@PathVariable Long id) {
         return livraisonService.getLivraisonById(id)

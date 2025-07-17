@@ -35,27 +35,23 @@ const ClientDashboard: React.FC = () => {
     execute: loadAnnonces 
   } = useApi<Annonce[]>(() => annonceApi.getMesAnnonces(currentUser?.user.id || 0));
 
-  // SUPPRESSION DU useEffect AUTO-REFRESH - Chargement manuel uniquement
   useEffect(() => {
     if (currentUser?.user.id && !annonces) {
-      // Charger SEULEMENT si pas encore chargé
       loadAnnonces();
     }
-  }, [currentUser?.user.id]); // Dépendance stable uniquement
+  }, [currentUser?.user.id]);
 
-  // Charger les livraisons de toutes les annonces du client
   useEffect(() => {
     if (currentUser?.user.id && activeTab === 'livraisons' && annonces && annonces.length > 0) {
       loadLivraisons();
     }
-  }, [currentUser?.user.id, activeTab, annonces?.length]); // Dépendances stables
+  }, [currentUser?.user.id, activeTab, annonces?.length]);
 
-  // Charger les prestations du client
   useEffect(() => {
     if (currentUser?.user.id && activeTab === 'reservations') {
       loadPrestations();
     }
-  }, [currentUser?.user.id, activeTab]); // Dépendances stables
+  }, [currentUser?.user.id, activeTab]);
 
   const loadLivraisons = async () => {
     if (!currentUser?.user.id || !annonces?.length) return;
@@ -121,7 +117,6 @@ const ClientDashboard: React.FC = () => {
     { id: 'annonces', label: 'Mes annonces', icon: 'bi-megaphone' },
     { id: 'livraisons', label: 'Suivi livraisons', icon: 'bi-truck' },
     { id: 'reservations', label: 'Mes réservations', icon: 'bi-calendar-check' },
-    { id: 'paiements', label: 'Mes paiements', icon: 'bi-credit-card' },
     { id: 'documents', label: 'Documents', icon: 'bi-file-earmark-text' }
   ];
 
@@ -792,19 +787,6 @@ const ClientDashboard: React.FC = () => {
     );
   };
 
-  const renderPaiements = () => (
-    <Card title="Mes paiements">
-      <div className="text-center py-5">
-        <i className="bi bi-credit-card" style={{fontSize: '3rem', color: '#6c757d'}}></i>
-        <p className="mt-3 text-muted">Système de paiement en cours de développement</p>
-        <p className="text-muted small">
-          Cette section permettra de gérer vos moyens de paiement 
-          et l'historique de vos transactions.
-        </p>
-      </div>
-    </Card>
-  );
-
   const renderDocuments = () => (
     <div>
       <div className="mb-4">
@@ -837,8 +819,6 @@ const ClientDashboard: React.FC = () => {
         return renderLivraisons();
       case 'reservations':
         return renderReservations();
-      case 'paiements':
-        return renderPaiements();
       case 'documents':
         return renderDocuments();
       default:

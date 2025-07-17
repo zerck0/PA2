@@ -290,7 +290,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             <div className="col-md-6 text-md-end">
               <p className="mb-0 text-light">
-                &copy; 2024 EcoDéli - Tous droits réservés
+                &copy; 2025 EcoDéli - Tous droits réservés
               </p>
               <small className="text-light opacity-75">
                 <i className="bi bi-heart-fill me-1" style={{color: '#ff6b6b'}}></i>
